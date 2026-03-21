@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="container mt-4">
+    <h2>Available Tests</h2>
+
+    <div class="list-group">
+        {% for test in tests %}
+            <a href="{% url 'attempt_test' test.id %}" class="list-group-item list-group-item-action">
+                {{ test.title }}
+                <span class="badge bg-info float-end">
+                    {{ test.duration_minutes }} min
+                </span>
+            </a>
+        {% empty %}
+            <p>No tests available.</p>
+        {% endfor %}
+    </div>
+</div>
+
+{% endblock %}

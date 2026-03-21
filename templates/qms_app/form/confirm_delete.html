@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="card shadow-sm p-4">
+        <h4 class="mb-3">Confirm Delete</h4>
+
+        <p>
+            Are you sure you want to delete
+            <strong>"{{ field.label }}"</strong> ?
+        </p>
+
+        <form method="post">
+            {% csrf_token %}
+
+            <button type="submit" class="btn btn-danger">
+                Yes, Delete
+            </button>
+
+            <a href="{% url 'add_field' stage_id %}" 
+               class="btn btn-secondary">
+                Cancel
+            </a>
+        </form>
+    </div>
+</div>
+{% endblock %}

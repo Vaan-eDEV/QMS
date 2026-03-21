@@ -1,0 +1,251 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+
+<style>
+    .project-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 30px;
+    }
+
+    .project-card {
+        border-radius: 12px;
+        border: none;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        transition: all .2s ease;
+    }
+
+    .project-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 18px rgba(0, 0, 0, 0.12);
+    }
+
+    .project-title {
+        font-weight: 600;
+        font-size: 18px;
+        margin-bottom: 6px;
+    }
+
+    .project-description {
+        font-size: 14px;
+        color: #64748b;
+        min-height: 40px;
+    }
+
+    .project-actions {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 12px;
+    }
+</style>
+
+
+<div class="container-fluid">
+
+    <!-- ================= HEADER ================= -->
+
+    <div class="project-header">
+
+        <h3>Project Management</h3>
+
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addProjectModal">
+            + Add Project
+        </button>
+
+    </div>
+
+
+    <!-- ================= PROJECT GRID ================= -->
+
+    <div class="row g-4">
+
+        {% for project in projects %}
+
+        <div class="col-lg-4 col-md-6">
+
+            <div class="card project-card">
+
+                <div class="card-body">
+
+                    <div class="project-title">
+                        {{ project.name }}
+                    </div>
+
+                    <div class="project-description">
+                        {{ project.description|default:"No description provided." }}
+                    </div>
+
+                    <div class="project-actions">
+
+                        <a class="btn btn-outline-primary btn-sm" href="{% url 'project_kanban' project.id %}">
+                            Open Board
+                        </a>
+
+                        <button class="btn btn-outline-danger btn-sm"
+                            onclick="deleteProject('{% url 'project_delete' project.id %}')">
+                            Delete
+                        </button>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        {% empty %}
+
+        <div class="col-12">
+
+            <div class="alert alert-info text-center">
+                No projects created yet.
+            </div>
+
+        </div>
+
+        {% endfor %}
+
+    </div>
+
+</div>
+
+
+<!-- ================= ADD PROJECT MODAL ================= -->
+
+<div class="modal fade" id="addProjectModal" tabindex="-1">
+
+    <div class="modal-dialog">
+
+        <div class="modal-content">
+
+            <div class="modal-header">
+
+                <h5 class="modal-title">Create Project</h5>
+
+                <button type="button" class="btn-close" data-bs-dismiss="modal">
+                </button>
+
+            </div>
+
+            <div class="modal-body">
+
+                <form id="projectForm">
+
+                    {% csrf_token %}
+
+                    <div class="mb-3">
+
+                        <label class="form-label">
+                            Project Name
+                        </label>
+
+                        <input type="text" name="name" class="form-control" required>
+
+                    </div>
+
+                    <div class="mb-3">
+
+                        <label class="form-label">
+                            Description
+                        </label>
+
+                        <textarea name="description" class="form-control" rows="3"></textarea>
+
+                    </div>
+
+                </form>
+
+            </div>
+
+            <div class="modal-footer">
+
+                <button class="btn btn-secondary" data-bs-dismiss="modal">
+                    Cancel
+                </button>
+
+                <button class="btn btn-success" onclick="createProject()">
+                    Create
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- ================= JAVASCRIPT ================= -->
+
+<script>
+
+
+    function createProject() {
+
+        let form = document.getElementById("projectForm")
+
+        let formData = new FormData(form)
+
+        fetch("{% url 'project_create' %}", {
+
+            method: "POST",
+
+            headers: {
+                "X-CSRFToken": "{{ csrf_token }}"
+            },
+
+            body: formData
+
+        })
+            .then(response => response.json())
+            .then(data => {
+
+                if (data.status == "success") {
+
+                    location.reload()
+
+                }
+
+            })
+
+    }
+
+
+
+    function deleteProject(url) {
+
+        if (!confirm("Delete this project? All tasks will be removed.")) {
+            return
+        }
+
+        fetch(url, {
+
+            method: "POST",
+
+            headers: {
+                "X-CSRFToken": "{{ csrf_token }}"
+            }
+
+        })
+            .then(res => res.json())
+            .then(data => {
+
+                if (data.status === "success") {
+
+                    location.reload()
+
+                }
+
+            })
+
+    }
+
+</script>
+
+{% endblock %}

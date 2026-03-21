@@ -1,0 +1,435 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>VAAN QMS</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap" rel="stylesheet">
+  <!-- Bootstrap -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <style>
+    
+    body {
+      min-height: 100vh;
+      overflow-x: hidden;
+      background-color: #f8f9fa;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ================= SIDEBAR ================= */
+    .sidebar {
+      width: 240px;
+      position: fixed;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      background-color: #028bbd;
+      padding: 1rem 0;
+      overflow-y: auto;
+      transition: all 0.3s ease;
+      z-index: 1030;
+    }
+
+    .sidebar.collapsed {
+      margin-left: -240px;
+    }
+    .signature-name {
+      font-family: 'Great Vibes', cursive;
+      font-size: 24px;
+      color: #1f2937;
+    }
+    .sidebar h5 {
+      font-weight: 700;
+    }
+
+    .sidebar a,
+    .submenu-toggle {
+      display: block;
+      color: #e5e7eb;
+      padding: 0.6rem 1.2rem;
+      text-decoration: none;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    .sidebar a:hover,
+    .submenu-toggle:hover {
+      background-color: #374151;
+    }
+
+    .submenu {
+      display: none;
+      background-color: #111827;
+    }
+
+    .submenu a {
+      padding-left: 2.8rem;
+      font-size: 13px;
+    }
+
+    .submenu.show {
+      display: block;
+      animation: fadeIn 0.2s ease-in-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    /* ================= MAIN CONTENT ================= */
+    .main-content {
+      margin-left: 240px;
+      padding: 1.5rem;
+      transition: all 0.3s ease;
+
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+    .content-wrapper {
+      flex: 1;
+    }
+    .main-content.collapsed {
+      margin-left: 0;
+    }
+
+    /* ================= SIDEBAR ARROW ================= */
+    .sidebar-arrow {
+      position: fixed;
+      top: 20px;
+      left: 240px;
+      width: 30px;
+      height: 30px;
+      background: #028bbd;
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      z-index: 1100;
+      font-size: 14px;
+      font-weight: bold;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+    }
+
+    .sidebar.collapsed + .sidebar-arrow {
+      left: 10px;
+    }
+
+    /* ================= MOBILE ================= */
+    @media (max-width: 768px) {
+      .sidebar {
+        margin-left: -240px;
+      }
+
+      .sidebar.show {
+        margin-left: 0;
+      }
+
+      .main-content {
+        margin-left: 0;
+      }
+
+      .overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.4);
+        z-index: 1020;
+      }
+
+      .overlay.show {
+        display: block;
+      }
+
+      .sidebar-arrow {
+        display: none;
+      }
+    }
+
+    /* ================= FOOTER ================= */
+  .footer {
+    background: #028bbd;
+    border-top: 1px solid #028bbd;
+    padding: 10px 20px;
+    font-size: 12px;
+    color: #ffffff;
+    text-align: center;
+    transition: all 0.3s ease;
+  }
+
+  .footer.collapsed {
+    margin-left: 0;
+  }
+
+  @media (max-width: 768px) {
+    .footer {
+      margin-left: 0;
+    }
+  }
+
+  </style>
+</head>
+
+<body>
+
+<!-- ================= SIDEBAR ================= -->
+<div class="sidebar" id="sidebar">
+
+  <!-- BRAND -->
+  <div class="px-3 mb-3">
+    <h5 class="text-white mb-0">Avi</h5>
+    <small class="text-dark">Quality Management System</small>
+  </div>
+
+  <hr class="text-secondary mx-3">
+
+  <!-- USER INFO -->
+  {% if user.is_authenticated %}
+    <div class="px-3 mb-3">
+      <div class="text-white small fw-semibold">
+        {{ user.email }}
+      </div>
+      <div class="text-dark small">
+        Role: {{ user.role }}
+      </div>
+
+      <a href="{% url 'logout' %}"
+         class="btn btn-outline-light btn-sm w-100 mt-2">
+        Logout
+      </a>
+    </div>
+
+    <hr class="text-secondary mx-3">
+  {% endif %}
+
+  {% if user.is_authenticated %}
+  {% with access=request.user.page_access|default_if_none:None %}
+
+  {% if request.user.is_superuser or access and access.can_dashboard %}
+    <hr class="text-secondary mx-2">
+    <a href="{% url 'dashboard' %}">Dashboard</a>
+  {% endif %}
+
+  {% if request.user.is_superuser or access and access.can_documents %}
+    <hr class="text-secondary mx-2">
+    <div class="submenu-toggle">Wiki ▾</div>
+    <div class="submenu">
+        <a href="{% url 'document_home' %}">All Documents</a>
+    </div>
+  {% endif %}
+  <hr class="text-secondary mx-2">
+
+<div class="submenu-toggle">RFQ ▾</div>
+
+<div class="submenu">
+    {% if request.user.is_superuser or access and access.can_form_build %}
+    <a href="{% url 'form_builder' %}">
+        Form Builder
+    </a>
+    {% endif %}
+    <a href="{% url 'form_lists' %}">
+        All Forms
+    </a>
+    <a href="{% url 'kanban_view' %}">
+      Kanban
+    </a>
+    {% if request.user.is_superuser or access and access.can_costing_dashboard %}
+      <a href="{% url 'dashboard' %}">Dashboard</a>
+    {% endif %}
+</div>
+  {% if request.user.is_superuser or access and access.can_forms %}
+    <hr class="text-secondary mx-2">
+    <div class="submenu-toggle">Forms ▾</div>
+    <div class="submenu px-2">
+        {% if request.user.is_superuser %}
+            <a href="{% url 'form_create' %}"
+               class="btn btn-success btn-sm w-100 text-start mb-2">
+               + Create Form
+            </a>
+        {% endif %}
+
+        <a href="{% url 'form_list' %}">Forms</a>
+
+        {% if request.user.is_superuser or access and access.can_submitted %}
+            <a href="{% url 'submitted_forms_list' %}">Data</a>
+        {% endif %}
+
+        {% if request.user.is_superuser or access and access.can_materialBatch %}
+        <a href="{% url 'material_batches' %}">
+            Material Batches
+        </a>
+        {% endif %}
+
+        {% if request.user.is_superuser or access and access.can_userdetail %}
+        <a href="{% url 'user_work_trace' %}">
+            User Detail
+        </a>
+        {% endif %}
+
+        <a href="{% url 'machine_dashboard' %}">
+            Machine Detail
+        </a>
+        
+    </div>
+  {% endif %}
+
+  {% if request.user.is_superuser or access and access.can_goods_entry %}
+    <hr class="text-secondary mx-2">
+    <div class="submenu-toggle">Goods Entry ▾</div>
+    <div class="submenu">
+        <a href="{% url 'goods_entry' %}">New Entry</a>
+        <a href="{% url 'receivable_page' %}">Receivable</a>
+    </div>
+  {% endif %}
+
+
+  {% if request.user.is_superuser %}
+  <hr class="text-secondary mx-2">
+  <div class="submenu-toggle">Projects ▾</div>
+
+  <div class="submenu">
+    <a href="{% url 'project_list' %}">Project List</a>
+  </div>
+  {% endif %}
+  {% if request.user.is_superuser or access and access.can_tests %}
+    <hr class="text-secondary mx-2">
+    <div class="submenu-toggle">Tests ▾</div>
+    <div class="submenu">
+        {% if request.user.role == "student" %}
+            <a href="{% url 'student_home' %}">Tests</a>
+        {% else %}
+            <a href="{% url 'test_list' %}">Question Paper List</a>
+            <a href="{% url 'result_list' %}">View Results</a>
+        {% endif %}
+    </div>
+  {% endif %}
+
+  {% endwith %}
+  {% endif %}
+  {% if request.user.is_superuser or access and access.can_forms %}
+    <hr class="text-secondary mx-2">
+    <a href="{% url 'capa_list' %}">CAPA Management</a>
+  {% endif %}
+
+  {% if request.user.is_superuser %}
+    <hr class="text-secondary mx-2">
+    <div class="submenu-toggle">Settings ▾</div>
+    <div class="submenu">
+      <a href="{% url 'page_settings' %}">User Access</a>
+      {% if request.user.is_superuser or access and access.can_audit %}
+        <a href="{% url 'audit_list' %}">Audit Logs</a>
+      {% endif %}
+    </div>
+
+  {% endif %}
+
+
+
+
+
+</div>
+
+<!-- SIDEBAR ARROW -->
+<div class="sidebar-arrow" id="sidebarArrow">❮</div>
+
+<!-- MOBILE OVERLAY -->
+<div class="overlay" id="overlay"></div>
+
+<!-- ================= MAIN CONTENT ================= -->
+<div class="main-content" id="mainContent">
+
+  <button class="btn btn-outline-secondary d-md-none mb-3"
+          id="sidebarToggle">
+    ☰ Menu
+  </button>
+
+  <div class="content-wrapper flex-grow-1">
+    {% block content %}{% endblock %}
+  </div>
+
+
+</div>
+  <!-- <div class="footer" id="footer">
+    © {{ now|date:"Y" }} VAAN QMS | All Rights Reserved
+  </div> -->
+  <!-- ================= FOOTER ================= -->
+
+<!-- Bootstrap -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+  const sidebar = document.getElementById('sidebar');
+  const mainContent = document.getElementById('mainContent');
+  const toggleBtn = document.getElementById('sidebarToggle');
+  const overlay = document.getElementById('overlay');
+  const arrowBtn = document.getElementById('sidebarArrow');
+  const footer = document.getElementById('footer');
+
+  // ===============================
+  // Restore Sidebar State
+  // ===============================
+  if (localStorage.getItem("sidebarCollapsed") === "true") {
+    sidebar.classList.add("collapsed");
+    mainContent.classList.add("collapsed");
+    if (footer) footer.classList.add("collapsed");
+    if (arrowBtn) arrowBtn.innerHTML = "❯";
+  }
+
+  // ===============================
+  // Desktop Arrow Toggle
+  // ===============================
+  if (arrowBtn) {
+    arrowBtn.addEventListener("click", () => {
+
+      sidebar.classList.toggle("collapsed");
+      mainContent.classList.toggle("collapsed");
+      if (footer) footer.classList.toggle("collapsed");
+
+      const isCollapsed = sidebar.classList.contains("collapsed");
+
+      // Change arrow
+      arrowBtn.innerHTML = isCollapsed ? "❯" : "❮";
+
+      // Save state
+      localStorage.setItem("sidebarCollapsed", isCollapsed);
+    });
+  }
+
+  // ===============================
+  // Mobile Toggle
+  // ===============================
+  if (toggleBtn) {
+    toggleBtn.addEventListener('click', () => {
+      sidebar.classList.toggle('show');
+      overlay.classList.toggle('show');
+    });
+  }
+
+  if (overlay) {
+    overlay.addEventListener('click', () => {
+      sidebar.classList.remove('show');
+      overlay.classList.remove('show');
+    });
+  }
+
+  // ===============================
+  // Submenu Toggle
+  // ===============================
+  document.querySelectorAll('.submenu-toggle').forEach(toggle => {
+    toggle.addEventListener('click', () => {
+      toggle.nextElementSibling.classList.toggle('show');
+    });
+  });
+</script>
+
+
+
+</body>
+</html>

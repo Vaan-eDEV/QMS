@@ -1,0 +1,205 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+body {
+    background: #f1f5f9;
+    font-family: "Inter", system-ui;
+    color: #1e293b;
+}
+
+/* ===== HEADER ===== */
+.page-header {
+    margin-bottom: 35px;
+}
+
+.page-title {
+    font-size: 22px;
+    font-weight: 600;
+}
+
+/* ===== PART CARD ===== */
+.part-card {
+    background: #ffffff;
+    border-radius: 16px;
+    border: 1px solid #e2e8f0;
+    padding: 22px;
+    transition: all .25s ease;
+    height: 100%;
+    position: relative;
+}
+
+.part-card:hover {
+    box-shadow: 0 18px 35px rgba(0,0,0,.08);
+    transform: translateY(-4px);
+}
+
+.part-title {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 10px;
+}
+
+.part-meta {
+    font-size: 13px;
+    color: #475569;
+    margin-bottom: 6px;
+}
+
+.forms-count {
+    display: inline-block;
+    background: #e0f2fe;
+    color: #0369a1;
+    font-size: 12px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    margin-top: 10px;
+}
+
+.view-link {
+    display: inline-block;
+    margin-top: 15px;
+    font-size: 13px;
+    font-weight: 500;
+    text-decoration: none;
+    color: #2563eb;
+}
+
+.view-link:hover {
+    text-decoration: underline;
+}
+
+/* ===== DELETE ICON (Admin Only) ===== */
+.delete-form {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+}
+
+.delete-btn {
+    background: #fee2e2;
+    color: #dc2626;
+    border: none;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all .2s ease;
+}
+
+.delete-btn:hover {
+    background: #dc2626;
+    color: white;
+}
+</style>
+
+
+<div class="container mt-4">
+
+    <div class="page-header">
+        <div class="page-title">
+            Batch : <strong>{{ batch_id }}</strong> | {{ company_name }}
+        </div>
+    </div>
+
+    <div class="row g-4">
+
+        {% for part in parts %}
+        <div class="col-md-6 col-lg-4">
+
+            <div class="part-card">
+
+                <!-- 🔥 ADMIN DELETE BUTTON -->
+                {% if request.user.is_superuser or request.user.role == "admin" %}
+                <form class="delete-form"
+                    onsubmit="deletePart(event, '{{ part.part_pk }}')">
+                {% csrf_token %}
+                <input type="hidden" name="part_id" value="{{ part.part_pk }}">
+                <input type="hidden" name="action" value="delete">
+
+                <button type="submit" class="delete-btn">
+                    ✕
+                </button>
+                </form>
+                {% endif %}
+
+                <div class="part-title">
+                    Part ID : {{ part.part_id }}
+                </div>
+                
+                <div class="part-meta">
+                    Created By : {{ part.created_by }}
+                </div>
+
+                <div class="part-meta">
+                    Created At : {{ part.created_at }}
+                </div>
+
+                <div class="forms-count">
+                    {{ part.forms_count }} Form{{ part.forms_count|pluralize }} Submitted
+                </div><hr>
+
+                <a href="{% url 'submitted_part_detail' part.part_pk %}"
+                   class="view-link">
+                    View Details →
+                </a>
+
+            </div>
+
+        </div>
+        {% empty %}
+        <div class="col-12">
+            <div class="text-center text-muted mt-5">
+                No parts submitted yet.
+            </div>
+        </div>
+        {% endfor %}
+
+    </div>
+
+</div>
+<script>
+function deletePart(e, partId) {
+
+    e.preventDefault();
+
+    if (!confirm("Are you sure you want to permanently delete this part?")) {
+        return false;
+    }
+
+    fetch("{% url 'delete_form_batch' %}", {
+        method: "POST",
+        headers: {
+            "X-CSRFToken": "{{ csrf_token }}",
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            part_id: partId,
+            action: "delete"
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+
+        if (data.success) {
+
+            if (data.redirect_url) {
+                window.location.href = data.redirect_url;
+            } else {
+                location.reload();
+            }
+
+        } else {
+            alert(data.error || "Delete failed");
+        }
+
+    })
+    .catch(() => {
+        alert("Server error.");
+    });
+
+    return false;
+}
+</script>
+{% endblock %}

@@ -1,0 +1,271 @@
+<script src="https://cdn.tailwindcss.com"></script>
+
+<form method="POST" enctype="multipart/form-data"
+
+      class="w-full max-w-[1150px] max-h-[640px] overflow-auto mx-auto bg-white rounded-xl shadow-lg border p-8 space-y-6">
+
+{% csrf_token %}
+
+<div class="text-center md:text-left">
+
+  <h2 class="text-xl md:text-2xl font-bold text-gray-800">Customer RFQ → PO Confirmation</h2>
+
+  <p class="text-[10px] md:text-xs text-gray-500">Form Code: VAAN_FRM_020 | Rev. 1.0</p>
+
+</div>
+
+<div class="flex gap-2 text-sm font-medium overflow-x-auto pb-2 whitespace-nowrap">
+
+  <button type="button" id="tab1" class="step-tab bg-blue-600 text-white px-4 py-2 rounded-lg shadow">1. Requisition</button>
+
+  <button type="button" id="tab2" class="step-tab bg-gray-100 text-gray-600 px-4 py-2 rounded-lg">2. Supplier & PO</button>
+
+  <button type="button" id="tab3" class="step-tab bg-gray-100 text-gray-600 px-4 py-2 rounded-lg">3. Invoice & Delivery</button>  
+
+  <button type="button" id="tab4" class="step-tab bg-gray-100 text-gray-600 px-4 py-2 rounded-lg">4. Closer</button>
+
+  <button type="button" id="tab5" class="step-tab bg-gray-100 text-gray-600 px-4 py-2 rounded-lg shadow">5. Final Review</button>
+
+  <button type="button" id="tab6" class="step-tab bg-gray-100 text-gray-600 px-4 py-2 rounded-lg">6. Review Record</button>
+
+  <button type="button" id="tab7" class="step-tab bg-gray-100 text-gray-600 px-4 py-2 rounded-lg">7. Final Approval</button>
+
+</div>
+
+<style>
+
+.form-field { border:1px solid hsla(192, 90%, 49%, 0.466); border-radius:8px; padding:8px 10px; width:100%; font-size:14px; }
+
+.form-label { font-size:13px; color:#ff000091; font-weight:600; margin-bottom:3px; display:block; }
+
+.hidden { display:none; }
+
+</style>
+
+<!-- ================= SECTION 1 ================= -->
+
+<div id="section1" class="space-y-5">
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+  <div><label class="form-label"> Reviewed On </label><input type="date" name="reviewed_on" class="form-field" value="{{ form_data.reviewed_on }}"></div>
+
+  <div><label class="form-label"> Next Review Date </label><input type="date" name="next_review" class="form-field" value="{{ form_data.next_review }}"></div>
+  
+  <div><lable class="form-label"> next method </lable><input type="date" name="next_review" class="form-field" value="{{ form_data.next_review }}"></div>
+  
+  <div><lable class="form-label"> before method </lable><input type="date" name="before_method" class="form-field" value="{{ form_data.before_method }}"></div>
+
+  <div><lable class="form-label"> After method </lable><input type="date" name="after_method" class="form-field" value="{{ form_data.after_method }}"></div>
+
+  <div><lable class="form-label"> method </lable><input type="date" name="method" class="form-field" value="{{ form_data.method }}"></div>
+
+</div>
+
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+  <div><label class="form-label">Process Owner Name</label><input name="process_owner_name" class="form-field" value="{{ form_data.process_owner_name }}"></div>
+
+  <div><label class="form-label">Process Owner Designation</label><input name="process_owner_designation" class="form-field" value="{{ form_data.process_owner_designation }}"></div>
+
+</div>
+
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+  <div><label class="form-label">Approved By Name</label><input name="approved_by_name" class="form-field" value="{{ form_data.approved_by_name }}"></div>
+
+  <div><label class="form-label">Approved By Designation</label><input name="approved_by_designation" class="form-field" value="{{ form_data.approved_by_designation }}"></div>
+
+  <div><label class="form-label">Approved By Signature</label><input name="approved_by_signature" class="form-field" value="{{ form_data.approved_by_signature }}"></div>
+
+</div>
+
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+  <div><label class="form-label">Name</label><input name="approved_by_name" class="form-field" value="{{ form_data.approved_by_name }}"></div>
+
+  <div><label class="form-label">Designation</label><input name="approved_by_designation" class="form-field" value="{{ form_data.approved_by_designation }}"></div>
+
+  <div><label class="form-label">Signature</label><input name="approved_by_signature" class="form-field" value="{{ form_data.approved_by_signature }}"></div>
+
+</div>
+
+<div>
+
+  <div><label class="form-label">Comments</label><textarea name="comments" rows="3" class="form-field">{{ form_data.comments }}</textarea></div>
+
+</div>
+
+<table>
+
+  <th>Exploratory Data Analysis</th>
+
+  <tr>
+
+    <td>- 7.30PM - 8.30PM -a</td>
+
+    <td>Data visualization.</td>
+
+    <td>Analization'</td>
+
+    <td>Data Quality Check.</td>
+
+    <td>Data cleaning.</td>
+
+    <td>Data Validation.</td>
+
+  </tr>
+
+</table>
+
+<h3 class="font-bold text-gray-700">1. PURCHASE REQUEST INITIATION</h3>
+
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+  <div><label class="form-label">Requested By</label><input name="requested_by" class="form-field" value="{{ form_data.requested_by }}"></div>
+
+  <div><label class="form-label">Department</label><input name="department" class="form-field" value="{{ form_data.department }}"></div>
+
+  <div><label class="form-label">Department Head</label><input name="department head" class="form-field" value="{{ form_data.department_head }}"></div>
+
+
+
+</div>
+
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+  <div><label class="form-label">PR Date</label><input type="date" name="pr_date" class="form-field" value="{{ form_data.pr_date }}"></div>
+
+  <div><label class="form-label">Justification</label><input name="justification" class="form-field" value="{{ form_data.justification }}"></div>
+
+</div>
+
+<textarea name="item_service" rows="3" class="form-field">{{ form_data.item_service }}</textarea>
+
+<h3 class="font-bold text-gray-700">2. BUDGET VERIFICATION</h3>
+
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+
+  <div><label class="form-label">Budget Code</label><input name="budget_code" class="form-field" value="{{ form_data.budget_code }}"></div>
+
+  <div><label class="form-label">Allocated (₹)</label><input type="number" name="allocated_amount" class="form-field" value="{{ form_data.allocated_amount }}"></div>
+
+  <div><label class="form-label">Balance (₹)</label><input type="number" name="available_balance" class="form-field" value="{{ form_data.available_balance }}"></div>
+
+  <div><label class="form-label">Status</label><input name="budget_status" class="form-field" value="{{ form_data.budget_status }}"></div>
+
+</div>
+
+</div>
+
+<!-- ================= SECTION 2 ================= -->
+
+<div class="demo">
+
+  <h1>Demo</h1>
+
+  <select>
+
+    <option value="">Select an option</option>
+
+    <option value="option1">Passed</option>
+
+    <option value="option2">Failed</option>
+
+    <option value="option3">Wait</option>
+
+    <option value="option4">Not Approval</option>
+
+    <option value="option5">Pending</option>
+
+  </select>
+
+</div>
+
+<!-- ================= BUTTONS ================= -->
+
+<div class="flex flex-col md:flex-row justify-between gap-2 border-t pt-4">
+
+  <button id="prevBtn" type="button" class="w-full md:w-auto px-4 py-2 bg-gray-200 rounded">Back</button>
+
+  <button type="submit" class="w-full md:w-auto px-6 py-2 bg-green-600 text-white rounded font-medium">Submit</button>
+
+  <button id="nextBtn" type="button" class="w-full md:w-auto px-4 py-2 bg-blue-600 text-white rounded">Next</button>
+  
+  <button id="closeBtn" type="button" class="w-full md:w-auto px-4 py-2 bg-blue-600 text-white rounded">Close</button>
+
+  <button id="pauseBtn" type="button" class="w-full md:w-auto px-4 py-2 bg-blue-600 text-white rounded">Pause</button>
+
+</div>
+
+<div class="flex flex-col md:flex-row justify-between gap-2 border-t pt-1">
+
+  <ul>
+
+    <li>Item 1</li>
+
+    <li>Po is to make sure that is in correct details.</li>
+
+    <li>You have to mention that all the component are include in the Po.</li>
+
+    <li>Component details must be clearly mentioned in the PO.</li>
+
+    <li>Po is to make sure that is in correct details.</li>
+
+  </ul>
+
+</div>
+
+  <ul>
+
+    <li>Item 2</li>
+
+    <li>You have to mention that all the components are include in the Po.</li>
+
+    <li>Component details must be clearly mentioned in the Po.</li>
+
+    <li>Po is to make sure that is in correct details.</li>
+
+    <li>Quotation is to make sure that is in correct details.</li>
+
+    <li>Po is to make sure that is in correct details.</li>
+
+    <li>Quotation is to make sure that is in correct details.</li>
+
+  </ul>
+
+</div>
+
+</form>
+
+<script>
+
+let step = 1;
+
+function show(n){
+
+  document.querySelectorAll("[id^='section']").forEach(s=>s.classList.add("hidden"));
+
+  document.querySelectorAll(".step-tab").forEach(b=>b.classList.remove("bg-blue-600","text-white"));
+
+  document.querySelectorAll(".step-tab").forEach(b=>b.classList.remove("bg-blue-500","text-black"));
+
+  document.getElementById("section"+n).classList.remove("hidden");
+
+  document.getElementById("tab"+n).classList.add("bg-blue-600","text-white");
+
+  document.getElementById("prevBtn").classList.toggle("hidden", n==1);
+
+  document.getElementById("nextBtn").classList.toggle("hidden", n==4);
+
+}
+
+document.getElementById("nextBtn").onclick = ()=>{ if(step<4) step++; show(step); };
+
+document.getElementById("prevBtn").onclick = ()=>{ if(step>1) step--; show(step); };
+
+show(1);
+
+</script>
+
+

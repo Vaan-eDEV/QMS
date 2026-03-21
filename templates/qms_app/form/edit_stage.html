@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+/* ---------- UI POLISH ---------- */
+.page-title {
+    font-weight: 600;
+}
+.card {
+    border-radius: 14px;
+}
+.role-pill {
+    border-radius: 999px;
+    padding: 6px 14px;
+    font-size: 13px;
+    cursor: pointer;
+}
+</style>
+
+<div class="container mt-5" style="max-width: 720px;">
+
+    <!-- HEADER -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h3 class="page-title mb-1">Edit Stage</h3>
+            <small class="text-muted">
+                Form: <strong>{{ stage.form.name }}</strong>
+            </small>
+        </div>
+
+        <a href="{% url 'add_stage' stage.form.id %}"
+           class="btn btn-outline-secondary btn-sm">
+            ← Back to Stages
+        </a>
+    </div>
+
+    <!-- EDIT CARD -->
+    <div class="card shadow-sm border-0">
+
+        <div class="card-header bg-white border-bottom">
+            <strong>Stage Details</strong>
+        </div>
+
+        <div class="card-body">
+            <form method="post">
+                {% csrf_token %}
+
+                <!-- Stage Name -->
+                <div class="mb-4">
+                    <label class="form-label fw-semibold">
+                        Stage Name
+                    </label>
+                    <input type="text"
+                           name="name"
+                           class="form-control"
+                           value="{{ stage.name }}"
+                           placeholder="Enter stage name"
+                           required>
+                </div>
+
+                <!-- Allowed Roles -->
+                <div class="mb-4">
+                    <label class="form-label fw-semibold">
+                        Allowed Roles
+                    </label>
+
+                    <div class="d-flex flex-wrap gap-2 mt-2">
+
+                        {% for value, label in role_choices %}
+                            <input type="checkbox"
+                                   class="btn-check"
+                                   name="allowed_roles"
+                                   value="{{ value }}"
+                                   id="role_{{ value }}"
+                                   {% if value in stage.allowed_roles %}checked{% endif %}>
+
+                            <label class="btn btn-outline-primary role-pill"
+                                   for="role_{{ value }}">
+                                {{ label }}
+                            </label>
+                        {% endfor %}
+
+                    </div>
+
+                    <small class="text-muted d-block mt-2">
+                        Select which roles are allowed to fill this stage
+                    </small>
+                </div>
+
+                <!-- Actions -->
+                <div class="d-flex justify-content-end gap-2">
+                    <a href="{% url 'add_stage' stage.form.id %}"
+                       class="btn btn-outline-secondary">
+                        Cancel
+                    </a>
+
+                    <button type="submit" class="btn btn-primary px-4">
+                        Save Changes
+                    </button>
+                </div>
+
+            </form>
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}
+

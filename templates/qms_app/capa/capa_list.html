@@ -1,0 +1,261 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+body { background:#f3f4f6; }
+
+.page-header {
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:20px;
+}
+
+.kpi-bar {
+    display:flex;
+    gap:15px;
+    margin-bottom:15px;
+}
+
+.kpi-card {
+    background:#fff;
+    padding:10px 15px;
+    border-radius:6px;
+    font-size:13px;
+    border:1px solid #e5e7eb;
+}
+
+.overdue { color:#dc2626; font-weight:600; }
+
+.priority-badge {
+    padding:3px 8px;
+    border-radius:12px;
+    font-size:11px;
+    font-weight:600;
+}
+
+.priority-critical { background:#dc2626; color:#fff; }
+.priority-high { background:#f97316; color:#fff; }
+.priority-medium { background:#facc15; color:#000; }
+.priority-low { background:#16a34a; color:#fff; }
+
+/* Kanban styling remains same */
+.kanban-wrapper {
+    display:none;
+    gap:15px;
+    overflow-x:auto;
+}
+
+.kanban-column {
+    flex:1;
+    min-width:280px;
+    background:#fff;
+    border:1px solid #e5e7eb;
+    border-radius:8px;
+    display:flex;
+    flex-direction:column;
+    max-height:75vh;
+}
+
+.kanban-header {
+    padding:12px;
+    font-size:13px;
+    font-weight:600;
+    border-bottom:1px solid #e5e7eb;
+    background:#f9fafb;
+    text-transform:uppercase;
+}
+
+.kanban-body {
+    padding:12px;
+    overflow-y:auto;
+    min-height:200px;
+}
+
+.capa-card {
+    background:#fff;
+    border:1px solid #e5e7eb;
+    border-radius:8px;
+    padding:12px;
+    margin-bottom:12px;
+    font-size:12px;
+    cursor:grab;
+    transition:0.2s ease;
+}
+
+.capa-card:hover {
+    box-shadow:0 6px 18px rgba(0,0,0,0.08);
+}
+
+.priority-border-critical { border-left:4px solid #dc2626; }
+.priority-border-high { border-left:4px solid #f97316; }
+.priority-border-medium { border-left:4px solid #facc15; }
+.priority-border-low { border-left:4px solid #16a34a; }
+
+</style>
+
+<div class="container-fluid px-4 mt-3">
+
+    <!-- HEADER -->
+    <div class="page-header">
+        <h4>CAPA Management</h4>
+
+        <div class="d-flex gap-2">
+            <div class="btn-group">
+                <button id="tableBtn" class="btn btn-sm btn-dark" onclick="showTable()">Table</button>
+                <button id="kanbanBtn" class="btn btn-sm btn-outline-dark" onclick="showKanban()">Kanban</button>
+            </div>
+
+            <a href="{% url 'capa_create' %}" class="btn btn-primary btn-sm">
+                + New CAPA
+            </a>
+        </div>
+    </div>
+
+    <!-- KPI BAR -->
+    <div class="kpi-bar">
+        <div class="kpi-card">Total: {{ total }}</div>
+        <div class="kpi-card">Open: {{ open_count }}</div>
+        <div class="kpi-card">Critical: {{ critical_count }}</div>
+        <div class="kpi-card overdue">Overdue: {{ overdue_count }}</div>
+    </div>
+
+    <!-- ================= TABLE VIEW ================= -->
+    <div id="tableView">
+
+        <table class="table table-striped table-hover bg-white">
+            <thead>
+                <tr>
+                    <th>CAPA No</th>
+                    <th>Title</th>
+                    <th>Status</th>
+                    <th>Priority</th>
+                    <th>Risk</th>
+                    <th>Assigned</th>
+                    <th>Due</th>
+                    <th>NCR</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for capa in capas %}
+                <tr {% if capa.is_overdue %}class="table-danger"{% endif %}>
+                    <td>{{ capa.capa_number }}</td>
+                    <td>
+                        <a href="{% url 'capa_detail' capa.id %}">
+                            {{ capa.title }}
+                        </a>
+                    </td>
+                    <td>{{ capa.get_status_display }}</td>
+                    <td>
+                        <span class="priority-badge priority-{{ capa.priority|lower }}">
+                            {{ capa.get_priority_display }}
+                        </span>
+                    </td>
+                    <td>{{ capa.risk_score }}</td>
+                    <td>{{ capa.assigned_to|default:"-" }}</td>
+                    <td>
+                        {{ capa.due_date|default:"-" }}
+                        {% if capa.is_overdue %}
+                            <div class="overdue">Overdue</div>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if capa.related_ncr %}
+                            {{ capa.related_ncr.ncr_number }}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="8">No CAPA records found.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- ================= KANBAN VIEW ================= -->
+    <div id="kanbanView" class="kanban-wrapper">
+
+        {% for status, label in capa_statuses %}
+        <div class="kanban-column"
+             data-status="{{ status }}"
+             ondragover="allowDrop(event)"
+             ondrop="drop(event)">
+
+            <div class="kanban-header">
+                {{ label }}
+            </div>
+
+            <div class="kanban-body">
+                {% for capa in capas %}
+                    {% if capa.status == status %}
+                        <div class="capa-card priority-border-{{ capa.priority|lower }}"
+                             draggable="true"
+                             id="capa-{{ capa.id }}"
+                             data-id="{{ capa.id }}"
+                             data-url="{% url 'capa_detail' capa.id %}"
+                             onclick="openCard(event, this)"
+                             ondragstart="drag(event)">
+
+                            <strong>{{ capa.capa_number }}</strong><br>
+                            {{ capa.title }}<br>
+
+                            <small>
+                                Risk: {{ capa.risk_score }}<br>
+                                Due: {{ capa.due_date|default:"-" }}
+                            </small>
+                        </div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+        {% endfor %}
+
+    </div>
+
+</div>
+
+<script>
+function showTable(){
+    document.getElementById("tableView").style.display = "block";
+    document.getElementById("kanbanView").style.display = "none";
+}
+
+function showKanban(){
+    document.getElementById("tableView").style.display = "none";
+    document.getElementById("kanbanView").style.display = "flex";
+}
+
+function allowDrop(ev) { ev.preventDefault(); }
+
+function drag(ev) {
+    ev.dataTransfer.setData("text", ev.target.id);
+}
+
+function drop(ev) {
+    ev.preventDefault();
+
+    let data = ev.dataTransfer.getData("text");
+    let card = document.getElementById(data);
+    let column = ev.currentTarget;
+    let newStatus = column.getAttribute("data-status");
+
+    column.querySelector(".kanban-body").appendChild(card);
+
+    let capaId = card.getAttribute("data-id");
+
+    fetch("{% url 'update_capa_status' %}", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+            "X-CSRFToken": "{{ csrf_token }}"
+        },
+        body: `capa_id=${capaId}&status=${newStatus}`
+    });
+}
+</script>
+
+{% endblock %}

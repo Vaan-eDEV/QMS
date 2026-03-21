@@ -1,0 +1,217 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<style>
+    .task-container {
+        max-width: 1000px;
+        margin: auto;
+    }
+
+    .task-card {
+        border-radius: 14px;
+        border: none;
+        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+    }
+
+    .task-title {
+        font-size: 24px;
+        font-weight: 600;
+        margin-bottom: 10px;
+    }
+
+    .meta-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-bottom: 16px;
+    }
+
+    .meta-badge {
+        background: #f1f5f9;
+        padding: 6px 10px;
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: 500;
+        color: #334155;
+    }
+
+    .user-chip {
+        background: #e0e7ff;
+        color: #3730a3;
+        padding: 4px 8px;
+        border-radius: 6px;
+        font-size: 12px;
+        margin-right: 5px;
+    }
+
+    .section-title {
+        font-weight: 600;
+        margin-bottom: 8px;
+        margin-top: 20px;
+    }
+
+    .file-list {
+        margin-top: 10px;
+    }
+
+    .file-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: #f8fafc;
+        padding: 8px 12px;
+        border-radius: 6px;
+        margin-bottom: 6px;
+    }
+
+    .file-item a {
+        text-decoration: none;
+        font-weight: 500;
+    }
+
+    .file-date {
+        font-size: 12px;
+        color: #94a3b8;
+    }
+
+    .header-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+</style>
+
+
+<div class="task-container">
+
+    <div class="card task-card">
+
+        <div class="card-body">
+
+            <!-- HEADER -->
+
+            <div class="header-row">
+
+                <div>
+
+                    <div class="task-title">
+                        {{ task.title }}
+                    </div>
+
+                    <div class="meta-row">
+
+                        <span class="meta-badge">
+                            Project: {{ task.project.name }}
+                        </span>
+
+                        <span class="meta-badge">
+                            Stage:
+                            {% if task.stage %}
+                            {{ task.stage.name }}
+                            {% else %}
+                            No Stage
+                            {% endif %}
+                        </span>
+
+                        <span class="meta-badge">
+                            Deadline:
+                            {% if task.deadline %}
+                            {{ task.deadline }}
+                            {% else %}
+                            No deadline
+                            {% endif %}
+                        </span>
+
+                    </div>
+
+                    <div>
+
+                        {% for user in task.assigned_to.all %}
+                        <span class="user-chip">{{ user.email }}</span>
+                        {% empty %}
+                        <span class="text-muted">Unassigned</span>
+                        {% endfor %}
+
+                    </div>
+
+                </div>
+
+                <a href="{% url 'project_kanban' task.project.id %}" class="btn btn-outline-secondary btn-sm">
+                    ← Back to Board
+                </a>
+
+            </div>
+
+
+            <form method="POST" enctype="multipart/form-data">
+
+                {% csrf_token %}
+
+                <!-- INSTRUCTION -->
+
+                <div class="section-title">
+                    Task Instructions
+                </div>
+
+                <textarea name="instruction" class="form-control" rows="5"
+                    placeholder="Write task instructions...">{{ task.instruction }}</textarea>
+
+
+                <!-- FILE UPLOAD -->
+
+                <div class="section-title">
+                    Upload Documents / Photos
+                </div>
+
+                <input type="file" name="documents" class="form-control" multiple>
+
+
+                <button class="btn btn-primary mt-3">
+                    Save Changes
+                </button>
+
+            </form>
+
+
+            <!-- FILE LIST -->
+
+            <div class="section-title">
+                Uploaded Files
+            </div>
+
+            <div class="file-list">
+
+                {% for file in attachments %}
+
+                <div class="file-item">
+
+                    <a href="{{ file.file.url }}" target="_blank">
+                        {{ file.file.name|cut:"task_documents/" }}
+                    </a>
+
+                    <span class="file-date">
+                        {{ file.uploaded_at|date:"Y-m-d H:i" }}
+                    </span>
+
+                </div>
+
+                {% empty %}
+
+                <div class="text-muted">
+                    No documents uploaded yet
+                </div>
+
+                {% endfor %}
+
+            </div>
+
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

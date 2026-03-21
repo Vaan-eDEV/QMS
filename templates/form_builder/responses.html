@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="container">
+
+<h3 class="mb-4">{{ form.name }} - Responses</h3>
+
+{% for r in responses %}
+
+<div class="card mb-4 shadow-sm pdf-card">
+
+    <div class="card-header bg-dark text-white">
+        Response #{{ r.id }} | {{ r.created_at }}
+    </div>
+
+    <div class="card-body">
+
+        {% for key, value in r.data.items %}
+
+            <!-- ================= TABLE DATA ================= -->
+
+            {% if value|slice:":1" == "[" %}
+
+                <h5 class="mt-4">{{ key }}</h5>
+
+                <table class="table table-bordered">
+
+                    <thead class="table-light">
+                        <tr>
+
+                            {% for col in value.0.keys %}
+                                <th>{{ col }}</th>
+                            {% endfor %}
+
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                        {% for row in value %}
+
+                        <tr>
+                            {% for cell in row.values %}
+                                <td>{{ cell }}</td>
+                            {% endfor %}
+                        </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            {% else %}
+
+            <!-- ================= NORMAL FIELD ================= -->
+
+            <div class="row mb-2">
+
+                <div class="col-md-4 fw-bold">
+                    {{ key }}
+                </div>
+
+                <div class="col-md-8">
+                    {{ value }}
+                </div>
+
+            </div>
+
+            {% endif %}
+
+        {% endfor %}
+
+    </div>
+
+</div>
+
+{% endfor %}
+
+
+<!-- PRINT BUTTON -->
+<div class="text-end">
+    <button class="btn btn-primary" onclick="window.print()">
+        🖨 Print / Save as PDF
+    </button>
+</div>
+
+</div>
+
+
+<style>
+
+/* ================= PRINT STYLE ================= */
+
+@media print {
+
+.sidebar,
+.btn {
+    display: none !important;
+}
+
+.pdf-card {
+    page-break-inside: avoid;
+}
+
+}
+
+</style>
+
+{% endblock %}

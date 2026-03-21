@@ -1,0 +1,260 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap');
+
+.pdf-wrapper {
+    background:#fff;
+    padding:40px 45px 80px;
+    max-width:1000px;
+    margin:40px auto;
+    border:1px solid #e5e7eb;
+    box-shadow:0 10px 25px rgba(0,0,0,0.08);
+    font-family:Inter, Arial, sans-serif;
+    position: relative;
+}
+
+.pdf-title{ text-align:center; font-size:26px; font-weight:700; margin-bottom:6px; text-transform:uppercase;}
+
+.pdf-meta{text-align:center; font-size:13px; color:#6b7280; margin-bottom:30px;} 
+
+.form-title{
+    font-size:20px;
+    font-weight:700;
+    margin-top:40px;
+    margin-bottom:10px;
+    border-bottom:2px solid #e5e7eb;
+    padding-bottom:6px;
+    text-transform:uppercase;
+    text-align: center;
+}
+
+.stage-title{ font-size:18px; font-weight:600; margin:30px 0 16px; text-transform:uppercase;}
+
+.field-row{display:flex;gap:14px;padding:6px 0;font-size:14px;}
+
+.field-label{ width:30%; font-weight:600; }
+
+.field-value{ width:70%; background:#f9fafb; padding:6px 10px; border-radius:4px; border:1px solid #e5e7eb;}
+
+.pdf-table{ width:100%; border-collapse:collapse; margin:12px 0 22px; font-size:13px;}
+
+.pdf-table th,.pdf-table td{ border:1px solid #d1d5db; padding:8px; text-align:center;}
+
+.pdf-table th{background:#f3f4f6; font-weight:600;}
+
+.sig-name{font-family:'Great Vibes',cursive;font-size:22px;}
+
+.sig-meta{font-size:10px;margin-top:4px;color:#374151;}
+
+.signature-controls{
+    position:absolute;
+    bottom:20px;
+    right:40px;
+    display:flex;
+    gap:18px;
+}
+
+.sig-btn{
+    border:none;
+    padding:10px 22px;
+    border-radius:8px;
+    font-size:12px;
+    color:#fff;
+    cursor:pointer;
+    box-shadow:0 6px 16px rgba(0,0,0,.15);
+}
+
+.sig-btn.green{background:#16a34a;}
+
+.sig-btn.yellow{background:#facc15;color:#000;}
+
+.modal{
+    display:none;
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,.4);
+    align-items:center;
+    justify-content:center;
+    z-index:1000;
+}
+
+.modal-box{background:#fff;padding:22px;border-radius:10px;width:300px;}
+</style>
+
+
+<div class="pdf-wrapper">
+
+<div class="pdf-title">Workflow Details</div>
+
+<div class="pdf-meta">
+    Company: <strong>{{ company_name }}</strong><br>
+    Submitted by <strong>{{ submitted_by }}</strong> | {{ submitted_at|date:"d M Y, H:i" }}
+</div>
+
+{# ================= FORM LOOP ================= #}
+{% for form_name, stages in display_forms.items %}
+
+<div class="form-title">{{ form_name }}</div>
+
+    {% for stage in stages %}
+
+        <div class="stage-title">{{ stage.stage_name }}</div>
+
+        {# -------- NORMAL FIELDS -------- #}
+        <!-- {% for field in stage.fields %}
+            {% if field.type == "field" and not field.substage %}
+                <div class="field-row">
+                    <div class="field-label">{{ field.label }}</div>
+                    <div class="field-value">{{ field.value|default:"—" }}</div>
+                </div>
+            {% endif %}
+        {% endfor %} -->
+        {% for field in stage.fields %}
+            {% if field.type == "field" and not field.substage %}
+
+                {% if field.is_image %}
+                    <div class="field-row">
+                        <div class="field-label">{{ field.label }}</div>
+                        <div class="field-value">
+                            {% if field.value %}
+                                <img src="/media/{{ field.value }}" 
+                                    style="max-width:200px; border-radius:6px;">
+                            {% else %}
+                            —
+                            {% endif %}
+                        </div>
+                    </div>
+
+                {% else %}
+                    <div class="field-row">
+                        <div class="field-label">{{ field.label }}</div>
+                        <div class="field-value">
+                            {{ field.value|default:"—" }}
+                        </div>
+                    </div>
+                {% endif %}
+
+            {% endif %}
+        {% endfor %}
+
+
+        {# -------- TABLE FIELDS -------- #}
+        {% for field in stage.fields %}
+            {% if field.type == "table" and not field.substage %}
+                <table class="pdf-table">
+                    <thead>
+                        <tr>
+                            <th>{{ field.row_header|default:"" }}</th>
+                            {% for col in field.columns %}
+                                <th>{{ col.name }}</th>
+                            {% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in field.rows %}
+                        <tr>
+                            <td style="font-weight:600;">
+                                {{ row.name }}
+                            </td>
+                            {% for cell in row.cells %}
+                                <td>
+                                    {% if cell.value %}
+                                        {{ cell.value }}
+                                    {% else %}
+                                        —
+                                    {% endif %}
+                                </td>
+                            {% endfor %}
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% endif %}
+        {% endfor %}
+
+    {% endfor %}
+
+{% endfor %}
+{# ================= END FORM LOOP ================= #}
+
+
+<div class="signature-controls">
+
+<div id="preparedControl">
+    {% if prepared_sig %}
+        <div class="sig-name">{{ prepared_sig.display_name }}</div>
+        <div class="sig-meta">
+            {{ prepared_sig.verified_at|date:"d M Y H:i" }}<br>
+            {{ prepared_sig.reference_code }}
+        </div>
+    {% else %}
+        <button class="sig-btn green" onclick="openSign('prepared')">Prepared By</button>
+    {% endif %}
+</div>
+
+<div id="approvedControl">
+    {% if approved_sig %}
+        <div class="sig-name">{{ approved_sig.display_name }}</div>
+        <div class="sig-meta">
+            {{ approved_sig.verified_at|date:"d M Y H:i" }}<br>
+            {{ approved_sig.reference_code }}
+        </div>
+    {% else %}
+        <button class="sig-btn yellow" onclick="openSign('approved')">Approved By</button>
+    {% endif %}
+</div>
+
+</div>
+
+</div>
+
+
+<div id="sigModal" class="modal">
+    <div class="modal-box">
+        <h6>Confirm Password</h6>
+        <input id="sigPass" type="password" class="form-control mt-2">
+        <button class="btn btn-primary w-100 mt-3" onclick="submitSignature()">Sign</button>
+    </div>
+</div>
+
+
+<script>
+let currentSlot=null;
+
+function openSign(slot){
+    currentSlot=slot;
+    document.getElementById("sigModal").style.display="flex";
+}
+
+function submitSignature(){
+    fetch("/verify-signature/",{
+        method:"POST",
+        headers:{
+            "Content-Type":"application/json",
+            "X-CSRFToken":"{{ csrf_token }}"
+        },
+        body:JSON.stringify({
+            password: document.getElementById("sigPass").value,
+            slot: currentSlot
+        })
+    })
+    .then(r=>r.json())
+    .then(d=>{
+        if(!d.ok){ alert("Wrong password"); return; }
+
+        const html = `
+            <div class="sig-name">${d.name}</div>
+            <div class="sig-meta">${d.time}<br>${d.code}</div>
+        `;
+
+        document.getElementById(currentSlot + "Control").innerHTML = html;
+
+        document.getElementById("sigModal").style.display="none";
+        document.getElementById("sigPass").value="";
+    });
+}
+</script>
+
+{% endblock %}

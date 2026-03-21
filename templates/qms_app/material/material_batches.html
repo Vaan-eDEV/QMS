@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="container mt-4">
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h4>Material Batches</h4>
+
+        <button class="btn btn-primary" onclick="openModal()">
+            + New Material Batch
+        </button>
+    </div>
+
+    {% if messages %}
+    {% for message in messages %}
+    <div class="alert alert-info">
+        {{ message }}
+    </div>
+    {% endfor %}
+    {% endif %}
+
+    <div class="card shadow-sm">
+
+        <table class="table table-bordered mb-0">
+
+            <thead class="table-light">
+                <tr>
+                    <th>Material</th>
+                    <th>Supplier</th>
+                    <th>Lot Number</th>
+                    <th>Received Date</th>
+                    <th>Created By</th>
+                </tr>
+            </thead>
+
+            <tbody>
+
+                {% for batch in batches %}
+
+                <tr>
+                    <td>{{ batch.material_name }}</td>
+                    <td>{{ batch.supplier }}</td>
+                    <td>{{ batch.lot_number }}</td>
+                    <td>{{ batch.received_date|date:"d M Y H:i" }}</td>
+                    <td>{{ batch.created_by.email }}</td>
+                </tr>
+
+                {% empty %}
+
+                <tr>
+                    <td colspan="5" class="text-center text-muted">
+                        No material batches created.
+                    </td>
+                </tr>
+
+                {% endfor %}
+
+            </tbody>
+        </table>
+
+    </div>
+
+</div>
+
+
+<!-- CREATE MODAL -->
+
+<div id="materialModal" class="modal-overlay">
+
+    <div class="modal-box">
+
+        <h5>Create Material Batch</h5>
+
+        <form method="post">
+            {% csrf_token %}
+
+            <input type="text" name="material_name" class="form-control mt-2" placeholder="Material Name" required>
+
+            <input type="text" name="supplier" class="form-control mt-2" placeholder="Supplier">
+
+            <input type="text" name="lot_number" class="form-control mt-2" placeholder="Lot Number" required>
+
+            <input type="datetime-local" name="received_date" class="form-control mt-2" required>
+
+            <button class="btn btn-success w-100 mt-3">
+                Create
+            </button>
+
+        </form>
+
+    </div>
+
+</div>
+
+
+<style>
+    .modal-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, .4);
+        align-items: center;
+        justify-content: center;
+        z-index: 999;
+    }
+
+    .modal-box {
+        background: #fff;
+        padding: 25px;
+        border-radius: 10px;
+        width: 350px;
+    }
+</style>
+
+<script>
+
+    function openModal() {
+        document.getElementById("materialModal").style.display = "flex";
+    }
+
+</script>
+
+{% endblock %}

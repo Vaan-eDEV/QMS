@@ -1,0 +1,241 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<style>
+body {
+    background: #f3f4f6;
+}
+
+/* HEADER */
+.dashboard-header {
+    background: #111827;
+    color: #ffffff;
+    padding: 14px 20px;
+    border-radius: 6px;
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 15px;
+}
+
+/* KPI */
+.kpi {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    padding: 12px 14px;
+    transition: 0.2s ease;
+}
+.kpi:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+.kpi-title {
+    font-size: 11px;
+    color: #6b7280;
+}
+
+.kpi-value {
+    font-size: 18px;
+    font-weight: 700;
+}
+
+/* Risk */
+.risk-low { border-left: 4px solid #16a34a; }
+.risk-medium { border-left: 4px solid #f59e0b; }
+.risk-high { border-left: 4px solid #dc2626; }
+
+.card {
+    border-radius: 6px;
+    border: 1px solid #e5e7eb;
+}
+
+/* SECTION TITLE */
+.section-title {
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 12px;
+    color: #374151;
+}
+
+/* FIXED HEIGHT CHARTS */
+.chart-container {
+    height: 180px;
+}
+
+/* SEARCH RESULT FIXED AREA */
+.search-result-container {
+    height: 120px;
+    overflow-y: auto;
+    border-top: 1px solid #e5e7eb;
+    margin-top: 10px;
+    padding-top: 8px;
+    font-size: 13px;
+}
+
+/* ACTIVITY FIXED */
+.activity-container {
+    height: 180px;
+    overflow-y: auto;
+}
+</style>
+
+<div class="container-fluid mt-3">
+
+    <!-- HEADER -->
+    <div class="dashboard-header">
+        Executive Compliance Dashboard
+    </div>
+
+    <!-- KPI ROW -->
+    <div class="row g-3 mb-4">
+
+        <div class="col"><div class="kpi"><div class="kpi-title">Active Parts</div><div class="kpi-value">{{ active_parts }}</div></div></div>
+
+        <div class="col"><div class="kpi risk-low"><div class="kpi-title">Completed</div><div class="kpi-value">{{ completed_parts }}</div></div></div>
+
+        <div class="col"><div class="kpi risk-medium"><div class="kpi-title">Pending Approvals</div><div class="kpi-value">{{ pending_approvals }}</div></div></div>
+
+        <div class="col"><div class="kpi"><div class="kpi-title">Documents</div><div class="kpi-value">{{ total_documents }}</div></div></div>
+
+        <div class="col"><div class="kpi"><div class="kpi-title">Revisions</div><div class="kpi-value">{{ revised_this_month }}</div></div></div>
+
+        <div class="col"><div class="kpi risk-low"><div class="kpi-title">Training</div><div class="kpi-value">{{ training_compliance }}%</div></div></div>
+
+    </div>
+
+    <!-- MAIN GRID -->
+    <div class="row g-4">
+
+        <!-- CAPA OVERVIEW -->
+        <div class="col-md-3">
+            <div class="card p-3">
+                <div class="section-title">CAPA Overview</div>
+
+                <div class="kpi mb-2"><div class="kpi-title">Total</div><div class="kpi-value">{{ total_capa }}</div></div>
+                <div class="kpi risk-medium mb-2"><div class="kpi-title">Open</div><div class="kpi-value">{{ open_capa }}</div></div>
+                <div class="kpi risk-medium mb-2"><div class="kpi-title">In Progress</div><div class="kpi-value">{{ in_progress_capa }}</div></div>
+                <div class="kpi risk-low mb-2"><div class="kpi-title">Closed</div><div class="kpi-value">{{ closed_capa }}</div></div>
+                <div class="kpi risk-high"><div class="kpi-title">Overdue</div><div class="kpi-value">{{ overdue_capa }}</div></div>
+
+            </div>
+        </div>
+
+        <!-- CHART COLUMN -->
+        <div class="col-md-5">
+
+            <div class="card p-3 mb-3">
+                <div class="section-title">CAPA Status Distribution</div>
+                <div class="chart-container">
+                    <canvas id="capaChart"></canvas>
+                </div>
+            </div>
+
+            <div class="card p-3">
+                <div class="section-title">Production Trend</div>
+                <div class="chart-container">
+                    <canvas id="productionChart"></canvas>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- SEARCH + ACTIVITY -->
+        <div class="col-md-4">
+
+            <!-- SEARCH -->
+            <div class="card p-3 mb-3">
+                <div class="section-title">Quick Traceability Search</div>
+
+                <form method="GET">
+
+                    <input type="text" name="user" class="form-control mb-2"
+                           placeholder="User email">
+
+                    <input type="text" name="batch_id" class="form-control mb-2"
+                           placeholder="Batch ID">
+
+                    <input type="text" name="part_id" class="form-control mb-2"
+                           placeholder="Part ID">
+
+                    <button class="btn btn-sm btn-dark w-100">
+                        Search
+                    </button>
+
+                </form>
+
+                <div class="search-result-container">
+                    {% if search_result %}
+                        <strong>Company:</strong> {{ search_result.company_name }}<br>
+                        <strong>Stage:</strong> {{ search_result.stage_name }} <br>
+                        <strong>Status:</strong> {{ search_result.status }} <br>
+                        <strong>Created By:</strong> {{ search_result.created_by }} <br>
+                        <strong>Batch:</strong>{{ search_result.batch_id}}
+                        <strong>Part:</strong> {{ search_result.part_id }}
+                    {% else %}
+                        <span class="text-muted">No search executed.</span>
+                    {% endif %}
+                </div>
+
+            </div> 
+
+            <!-- ACTIVITY -->
+            <div class="card p-3">
+                <div class="section-title">Recent Activity</div>
+
+                <div class="activity-container">
+                    {% for log in recent_logs|slice:":6" %}
+                        <div class="mb-2 small">
+                            <strong>{{ log.user }}</strong> {{ log.action }}
+                            <div class="text-muted">{{ log.timestamp|date:"d M H:i" }}</div>
+                        </div>
+                    {% empty %}
+                        <p>No activity.</p>
+                    {% endfor %}
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+// CAPA PIE
+new Chart(document.getElementById('capaChart'), {
+    type: 'doughnut',
+    data: {
+        labels: ['Open','In Progress','Closed'],
+        datasets: [{
+            data: [{{ open_capa }}, {{ in_progress_capa }}, {{ closed_capa }}],
+            backgroundColor: ['#f59e0b','#6366f1','#16a34a']
+        }]
+    },
+    options: { responsive:true, maintainAspectRatio:false }
+});
+
+// PRODUCTION TREND
+new Chart(document.getElementById('productionChart'), {
+    type: 'line',
+    data: {
+        labels: {{ months|safe }},
+        datasets: [{
+            data: {{ counts|safe }},
+            borderColor:'#111827',
+            backgroundColor:'rgba(17,24,39,0.08)',
+            fill:true,
+            tension:0.4
+        }]
+    },
+    options:{
+        responsive:true,
+        maintainAspectRatio:false,
+        plugins:{ legend:{ display:false } }
+    }
+});
+</script>
+
+{% endblock %}

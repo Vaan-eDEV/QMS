@@ -1,0 +1,60 @@
+{% load widget_tweaks %}
+
+<div class="mb-3">
+
+    {# ✅ FORCE CORRECT LABEL #}
+    <label class="form-label">
+        {{ field.label }}
+        {% if field.field.required %}
+            <span class="text-danger">*</span>
+        {% endif %}
+    </label>
+
+    {% if field.field.widget.attrs.table == "true" %}
+        {# ===== TABLE FIELD ===== #}
+
+        <input type="hidden"
+               name="{{ field.name }}"
+               value="{{ field.value|default:'[]' }}">
+
+        <table class="table table-bordered mt-2"
+               data-field="{{ field.name }}"
+               data-columns='{{ field.field.widget.attrs.columns|safe }}'>
+            <thead>
+                <tr>
+                    {% for col in field.field.widget.attrs.columns %}
+                        <th>{{ col }}</th>
+                    {% endfor %}
+                    <th style="width:60px"></th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+
+        <button type="button"
+                class="btn btn-sm btn-outline-primary add-row"
+                data-field="{{ field.name }}">
+            + Add Row
+        </button>
+
+    {% elif field.field.widget.input_type == "select" %}
+        {{ field|add_class:"form-select" }}
+
+    {% elif field.field.widget.input_type == "checkbox" and field|length > 1 %}
+        {% for subwidget in field %}
+            <div class="form-check">
+                {{ subwidget.tag }}
+                <label class="form-check-label">
+                    {{ subwidget.choice_label }}
+                </label>
+            </div>
+        {% endfor %}
+
+    {% else %}
+        {{ field|add_class:"form-control" }}
+    {% endif %}
+
+    {% for error in field.errors %}
+        <div class="text-danger">{{ error }}</div>
+    {% endfor %}
+</div>

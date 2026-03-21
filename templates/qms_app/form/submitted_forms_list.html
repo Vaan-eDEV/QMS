@@ -1,0 +1,219 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<style>
+body {
+    background: #f8fafc;
+    font-family: "Inter", system-ui, -apple-system;
+    color: #1e293b;
+}
+
+/* ===== HEADER ===== */
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+}
+
+.page-title {
+    font-size: 24px;
+    font-weight: 600;
+}
+
+.search-input {
+    width: 320px;
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: 14px;
+    border: 1px solid #e2e8f0;
+    background: #ffffff;
+    transition: all .2s ease;
+}
+
+.search-input:focus {
+    outline: none;
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37,99,235,.12);
+}
+
+/* ===== CARD ===== */
+.submission-card {
+    background: #ffffff;
+    border-radius: 16px;
+    border: 1px solid #e2e8f0;
+    padding: 20px;
+    position: relative;
+    transition: all .2s ease;
+    height: 100%;
+}
+
+.submission-card:hover {
+    box-shadow: 0 14px 32px rgba(0,0,0,.06);
+    transform: translateY(-3px);
+}
+
+/* ===== COMPANY TITLE ===== */
+.company-title {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 12px;
+}
+
+/* ===== META INFO ===== */
+.meta-item {
+    font-size: 13px;
+    margin-bottom: 6px;
+    color: #475569;
+}
+
+.meta-label {
+    font-weight: 600;
+    color: #0f172a;
+}
+
+/* ===== DATE ===== */
+.meta-date {
+    font-size: 12px;
+    color: #94a3b8;
+    margin-top: 10px;
+}
+
+/* ===== BUTTONS ===== */
+.btn-view {
+    margin-top: 14px;
+    border-radius: 8px;
+    font-size: 13px;
+    padding: 8px 14px;
+}
+
+/* ===== DELETE BUTTON ===== */
+.delete-btn {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    font-size: 16px;
+    color: #94a3b8;
+    cursor: pointer;
+    transition: color .2s ease;
+}
+
+.delete-btn:hover {
+    color: #dc2626;
+}
+
+/* ===== EMPTY STATE ===== */
+.empty-state {
+    background: #ffffff;
+    border: 1px dashed #cbd5e1;
+    border-radius: 14px;
+    padding: 40px;
+    text-align: center;
+    color: #64748b;
+    font-size: 14px;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+    .page-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 14px;
+    }
+
+    .search-input {
+        width: 100%;
+    }
+}
+</style>
+
+<div class="container mt-4">
+
+    <!-- HEADER -->
+    <div class="page-header">
+        <div class="page-title">Submitted Workflows</div>
+
+        <input type="text"
+               id="searchInput"
+               class="search-input"
+               placeholder="Search company, batch, user">
+    </div>
+
+    {% if form_data %}
+    <div class="row g-4" id="cardContainer">
+
+        {% for item in form_data %}
+        <div class="col-md-6 col-lg-4 submission-wrapper"
+             data-search="{{ item.company_name|lower }} {{ item.batch_id|lower }} {{ item.created_by|lower }}">
+
+            <div class="submission-card">
+
+                <!-- DELETE -->
+                <form method="post"
+                      action="{% url 'delete_submission' item.flow_id %}">
+                    {% csrf_token %}
+                    <span class="delete-btn"
+                          onclick="event.stopPropagation(); if(confirm('Delete this workflow?')) { this.closest('form').submit(); }">
+                        🗑
+                    </span>
+                </form>
+
+                <!-- CONTENT -->
+                <div class="company-title">
+                    {{ item.company_name }}
+                </div>
+
+                <div class="meta-item">
+                    <span class="meta-label">Batch:</span>
+                    {{ item.batch_id }}
+                </div>
+                <!-- 
+                <div class="meta-item">
+                    <span class="meta-label">Forms Filled:</span>
+                    {{ item.forms_count }}
+                </div> -->
+
+                {% if item.parts_count %}
+                <div class="meta-item">
+                    <span class="meta-label">Parts:</span>
+                    {{ item.parts_count }}
+                </div>
+                {% endif %}
+
+                <!-- <div class="meta-item">
+                    <span class="meta-label">Created By:</span>
+                    {{ item.created_by }}
+                </div> -->
+
+                <div class="meta-date">
+                    {{ item.created_at|date:"d M Y, H:i" }}
+                </div>
+
+                <a href="{% url 'submitted_parts_list' item.flow_id %}"
+                   class="btn btn-info btn-view">
+                    View Workflow →
+                </a>
+
+            </div>
+        </div>
+        {% endfor %}
+
+    </div>
+    {% else %}
+        <div class="empty-state">
+            No workflows submitted yet.
+        </div>
+    {% endif %}
+
+</div>
+
+<script>
+document.getElementById("searchInput").addEventListener("keyup", function () {
+    const value = this.value.toLowerCase();
+    document.querySelectorAll(".submission-wrapper").forEach(card => {
+        card.style.display = card.dataset.search.includes(value) ? "" : "none";
+    });
+});
+</script>
+
+{% endblock %}

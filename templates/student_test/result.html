@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="container mt-5">
+
+    <div class="card shadow-lg">
+        <div class="card-body text-center">
+
+            <h2 class="mb-4">Test Result</h2>
+
+            {% if is_admin_preview %}
+                <div class="alert alert-info">
+                    👀 Admin Preview Result (Not Saved)
+                </div>
+            {% endif %}
+
+            <div class="row justify-content-center mb-4">
+                <div class="col-md-4">
+                    <div class="border rounded p-3">
+                        <h5>Score</h5>
+                        <h3>{{ score }} / {{ total }}</h3>
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <div class="border rounded p-3">
+                        <h5>Percentage</h5>
+                        <h3>{{ percentage }}%</h3>
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <div class="border rounded p-3">
+                        <h5>Pass Mark</h5>
+                        <h3>{{ pass_mark }}%</h3>
+                    </div>
+                </div>
+            </div>
+
+            {% if status == "PASS" %}
+                <div class="alert alert-success">
+                    🎉 Congratulations! You Passed!
+                </div>
+            {% else %}
+                <div class="alert alert-danger">
+                    ❌ You Failed. Try Again Next Time.
+                </div>
+            {% endif %}
+
+            <a href="{% url 'student_home' %}" class="btn btn-secondary mt-3">
+                Back to Tests
+            </a>
+
+        </div>
+    </div>
+
+</div>
+
+{% endblock %}

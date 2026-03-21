@@ -1,0 +1,516 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="container">
+
+    <h4 class="mb-4">{{ form.name }}</h4>
+
+    <form method="POST" action="{% url 'save_response' form.id %}">
+        {% csrf_token %}
+
+        <!-- ✅ RFQ ID (IMPORTANT) -->
+        <!-- <input type="hidden" name="rfq_id" value="{{ request.GET.rfq_id }}"> -->
+        <input type="hidden" name="rfq_id" value="{{ ref_id }}">
+
+        {% for stage in stages %}
+
+        <div class="card mb-4">
+
+            <div class="card-header">
+                <strong>{{ stage.name }}</strong>
+            </div>
+
+            <div class="card-body">
+
+                <!-- ================= FIELDS ================= -->
+
+                {% for field in stage.field_set.all %}
+
+                <div class="mb-3">
+
+                    <label class="form-label">{{ field.label }}</label>
+
+                    {% if field.field_type == "text" %}
+
+                    {% if field.label == "RFQ No" %}
+                    <input type="text" name="{{ field.label }}" class="form-control" value="{{ ref_id }}" readonly>
+                    {% else %}
+                    <input type="text" name="{{ field.label }}" class="form-control" data-colname="{{ field.label }}"
+                        data-type="text">
+                    {% endif %}
+
+                    {% elif field.field_type == "textarea" %}
+
+                    <textarea name="{{ field.label }}" class="form-control" data-colname="{{ field.label }}"
+                        data-type="text"></textarea>
+
+                    {% elif field.field_type == "number" %}
+
+                    <input type="number" step="any" name="{{ field.label }}" class="form-control"
+                        data-colname="{{ field.label }}" data-type="number">
+
+                    {% elif field.field_type == "date" %}
+
+                    <input type="date" name="{{ field.label }}" class="form-control">
+
+                    {% elif field.field_type == "percentage" %}
+
+                    <input type="number" step="any" name="{{ field.label }}" class="form-control"
+                        data-colname="{{ field.label }}" data-type="percentage">
+
+                    {% elif field.field_type == "select" %}
+
+                    <select name="{{ field.label }}" class="form-control">
+                        {% for opt in field.option_list %}
+                        <option value="{{ opt }}">{{ opt }}</option>
+                        {% endfor %}
+                    </select>
+
+                    {% elif field.field_type == "checkbox" %}
+
+                    <input type="checkbox" name="{{ field.label }}" value="1">
+
+                    {% elif field.field_type == "formula" %}
+
+                    <input type="number" step="any" name="{{ field.label }}" class="form-control"
+                        data-colname="{{ field.label }}" data-type="formula" data-formula="{{ field.formula }}"
+                        readonly>
+
+                    {% endif %}
+
+
+                </div>
+                {% endfor %}
+
+
+                <!-- ================= TABLES ================= -->
+
+                {% for table in stage.table_set.all %}
+
+                <h5 class="mt-4">{{ table.name }}</h5>
+
+                <table class="table table-bordered dynamic-table" data-table="{{ table.name }}">
+
+                    <thead class="table-light">
+                        <tr>
+                            {% for col in table.tablecolumn_set.all %}
+                            <th>{{ col.name }}</th>
+                            {% endfor %}
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+
+                    <tbody class="table-body">
+
+                        <tr>
+
+                            {% for col in table.tablecolumn_set.all %}
+                            <td>
+
+                                {% if col.column_type == "text" %}
+                                <input type="text" name="{{ table.name }}__{{ col.name }}__0" class="form-control"
+                                    data-colname="{{ col.name|slugify|cut:'-' }}" data-type="text">
+
+                                {% elif col.column_type == "number" %}
+                                <input type="number" step="any" name="{{ table.name }}__{{ col.name }}__0"
+                                    class="form-control" data-colname="{{ col.name|slugify|cut:'-' }}"
+                                    data-type="number">
+
+                                {% elif col.column_type == "percentage" %}
+                                <input type="number" step="any" name="{{ table.name }}__{{ col.name }}__0"
+                                    class="form-control" data-colname="{{ col.name|slugify|cut:'-' }}"
+                                    data-type="percentage">
+
+                                {% elif col.column_type == "formula" %}
+                                <input type="number" step="any" name="{{ table.name }}__{{ col.name }}__0"
+                                    class="form-control" data-colname="{{ col.name|slugify|cut:'-' }}"
+                                    data-type="formula" data-formula="{{ col.formula }}" readonly>
+
+                                {% elif col.column_type == "signature" %}
+
+                                <input type="hidden" name="{{ table.name }}__{{ col.name }}__0" class="signature-input">
+
+                                <button type="button" class="btn btn-primary btn-sm sign-btn">
+                                    Sign
+                                </button>
+
+                                {% endif %}
+
+                            </td>
+                            {% endfor %}
+                            <td>
+                                
+                                <button type="button" class="btn btn-danger btn-sm" onclick="deleteRow(this)">
+                                    Delete
+                                </button>
+                            </td>
+
+                        </tr>
+
+                    </tbody>
+
+                    <!-- ================= TOTAL ================= -->
+
+                    <tfoot>
+                        <tr>
+
+                            {% for col in table.tablecolumn_set.all %}
+                            {% if col.is_total %}
+                            <td>
+                                <input type="text" class="form-control total-column"
+                                    data-colname="{{ col.name|slugify|cut:'-' }}" readonly>
+                            </td>
+                            {% else %}
+                            <td></td>
+                            {% endif %}
+                            {% endfor %}
+
+                            <td><strong>Total</strong></td>
+
+                        </tr>
+                    </tfoot>
+
+                </table>
+
+                <button type="button" class="btn btn-success btn-sm mb-3" onclick="addRow(this)">
+                    + Add Row
+                </button>
+
+                {% endfor %}
+
+            </div>
+
+        </div>
+
+        {% endfor %}
+
+        <button class="btn btn-success">Submit Form</button>
+
+    </form>
+<!-- SIGNATURE MODAL -->
+<div class="modal fade" id="signatureModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+
+      <div class="modal-header">
+        <h5 class="modal-title">Verify Signature</h5>
+      </div>
+
+      <div class="modal-body">
+        <input type="password"
+               id="signaturePassword"
+               class="form-control"
+               placeholder="Enter your password">
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-secondary"
+                data-bs-dismiss="modal">Cancel</button>
+
+        <button class="btn btn-primary"
+                id="confirmSignature">
+            Confirm
+        </button>
+      </div>
+
+    </div>
+  </div>
+</div>
+</div>
+
+
+<script>
+    function getCSRFToken() {
+        return document.cookie
+            .split('; ')
+            .find(row => row.startsWith('csrftoken='))
+            ?.split('=')[1];
+    }
+
+    /* ================= NORMALIZE KEY ================= */
+
+
+    function normalizeKey(name) {
+        return name
+            .toLowerCase()
+            .replace(/\s+/g, "")
+            .replace(/[^a-z0-9]/g, "");
+    }
+
+    function calculateFormulas() {
+
+        document.querySelectorAll(".dynamic-table").forEach(table => {
+
+            table.querySelectorAll("tbody tr").forEach(row => {
+
+                let inputs = {};
+
+                // collect values
+                row.querySelectorAll("input[data-colname]").forEach(input => {
+
+                    let key = normalizeKey(input.dataset.colname);
+                    let value = parseFloat(input.value) || 0;
+
+                    if (input.dataset.type === "percentage") {
+                        value = value / 100;
+                    }
+
+                    inputs[key] = value;
+
+                });
+
+                // apply formula
+                row.querySelectorAll("[data-type='formula']").forEach(field => {
+
+                    let expression = field.dataset.formula;
+
+                    if (!expression) return;
+
+                    // 🔥 REPLACE FULL WORD MATCH ONLY
+                    Object.keys(inputs).forEach(key => {
+
+                        let regex = new RegExp("\\b" + key + "\\b", "g");
+
+                        expression = expression.replace(regex, inputs[key]);
+
+                    });
+
+                    try {
+                        console.log("FINAL:", expression);
+
+                        let result = Function("return " + expression)();
+
+                        field.value = isNaN(result) ? "" : result.toFixed(2);
+
+                    } catch (e) {
+                        console.error("ERROR:", expression);
+                        field.value = "";
+                    }
+
+                });
+
+            });
+
+        });
+
+    }
+
+    document.addEventListener("input", function () {
+        calculateFormulas();
+        calculateDynamicTotal();
+    });
+
+    window.onload = function () {
+        calculateFormulas();
+        calculateDynamicTotal();
+    }
+
+
+
+    /* ================= TOTAL ================= */
+    function calculateDynamicTotal() {
+
+        document.querySelectorAll(".dynamic-table").forEach(table => {
+
+            let rows = table.querySelectorAll("tbody tr");
+
+            table.querySelectorAll(".total-column").forEach(totalField => {
+
+                let totalKey = normalizeKey(totalField.dataset.colname);
+                let total = 0;
+
+                rows.forEach(row => {
+
+                    row.querySelectorAll("input[data-colname]").forEach(input => {
+
+                        let key = normalizeKey(input.dataset.colname);
+
+                        if (key === totalKey) {
+
+                            let value = parseFloat(input.value) || 0;
+
+                            if (input.dataset.type === "percentage") {
+                                value = value / 100;
+                            }
+
+                            total += value;
+                        }
+
+                    });
+
+                });
+
+                totalField.value = total.toFixed(2);
+
+            });
+
+        });
+
+    }
+
+
+    /* ================= EVENTS ================= */
+    document.addEventListener("input", function () {
+        calculateFormulas();
+        calculateDynamicTotal();
+    });
+
+
+    /* ================= ADD ROW ================= */
+    function addRow(btn) {
+
+        let table = btn.previousElementSibling;
+        let body = table.querySelector(".table-body");
+        let newRow = body.querySelector("tr").cloneNode(true);
+
+        let rowIndex = body.rows.length;
+
+        newRow.querySelectorAll("input").forEach(input => {
+
+            input.value = "";
+
+            let parts = input.name.split("__");
+            input.name = parts[0] + "__" + parts[1] + "__" + rowIndex;
+
+        });
+
+        body.appendChild(newRow);
+
+    }
+
+
+    /* ================= DELETE ROW ================= */
+    function deleteRow(btn) {
+
+        let row = btn.closest("tr");
+        let tbody = row.parentElement;
+
+        if (tbody.rows.length > 1) {
+            row.remove();
+        }
+
+        calculateFormulas();
+        calculateDynamicTotal();
+
+    }
+
+
+    /* ================= INITIAL LOAD ================= */
+    window.onload = function () {
+        calculateFormulas();
+        calculateDynamicTotal();
+    }
+
+
+    let activeSignatureCell = null;
+
+// ================= OPEN MODAL =================
+document.addEventListener("click", function(e){
+
+    if(e.target.classList.contains("sign-btn")){
+
+        activeSignatureCell = e.target.closest("td");
+
+        let modalEl = document.getElementById("signatureModal");
+
+        let modal = new bootstrap.Modal(modalEl);
+        modal.show();
+    }
+});
+
+
+// ================= CONFIRM SIGN =================
+document.getElementById("confirmSignature").addEventListener("click", function(){
+
+    let password = document.getElementById("signaturePassword").value;
+
+    if(!password){
+        alert("Enter password");
+        return;
+    }
+
+    fetch("{% url 'verify_signature' %}", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": document.querySelector('[name=csrfmiddlewaretoken]').value
+        },
+        body: JSON.stringify({
+            password: password
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+
+        if(data.ok){
+
+            // ================= GET EXISTING INPUT =================
+            let hidden = activeSignatureCell.querySelector(".signature-input");
+
+            if(!hidden){
+                console.error("Hidden input not found");
+                return;
+            }
+
+            // ================= CREATE DISPLAY =================
+            let box = document.createElement("div");
+            box.className = "signature-box border p-2 bg-light rounded mt-2";
+
+            box.innerHTML = `
+                <strong>${data.name}</strong><br>
+                <small>${data.time}</small><br>
+                <span class="text-primary">ID-${data.code}</span>
+            `;
+
+            // remove old signature UI
+            let oldBox = activeSignatureCell.querySelector(".signature-box");
+            if(oldBox) oldBox.remove();
+
+            // append UI
+            activeSignatureCell.appendChild(box);
+
+            // ================= SAVE JSON =================
+            let signatureData = {
+                signed_by: data.name,
+                signed_at: data.time,
+                reference_code: data.code
+            };
+
+            hidden.value = JSON.stringify(signatureData);
+
+            // ================= HIDE BUTTON =================
+            let btn = activeSignatureCell.querySelector(".sign-btn");
+            if(btn) btn.style.display = "none";
+
+            // ================= CLOSE MODAL CLEAN =================
+            let modalEl = document.getElementById("signatureModal");
+            let modal = bootstrap.Modal.getInstance(modalEl);
+
+            if(modal){
+                modal.hide();
+            }
+
+            // 🔥 FIX BLACK SCREEN ISSUE
+            setTimeout(() => {
+                document.querySelectorAll(".modal-backdrop").forEach(el => el.remove());
+                document.body.classList.remove("modal-open");
+                document.body.style = "";
+            }, 200);
+
+            // clear password field
+            document.getElementById("signaturePassword").value = "";
+
+        } else {
+            alert(data.error || "Invalid password");
+        }
+
+    })
+    .catch(err => {
+        console.error(err);
+        alert("Something went wrong");
+    });
+
+});
+</script>
+
+{% endblock %}

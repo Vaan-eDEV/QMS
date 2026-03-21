@@ -1,0 +1,283 @@
+{% extends "base.html" %}
+{% block title %}Audit Logs{% endblock %}
+
+{% block content %}
+
+<style>
+.audit-wrapper {
+    max-width: 1600px;
+    margin: auto;
+}
+
+.audit-header {
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 12px;
+}
+
+/* ===== FILTER BAR ===== */
+.audit-filters {
+    display: flex;
+    gap: 15px;
+    align-items: end;
+    flex-wrap: wrap;
+    margin-bottom: 10px;
+}
+
+.audit-filters label {
+    font-size: 11px;
+    font-weight: 600;
+    color: #6b7280;
+    display: block;
+    margin-bottom: 3px;
+}
+
+.audit-filters input,
+.audit-filters select {
+    padding: 5px 8px;
+    font-size: 12px;
+    border-radius: 5px;
+    border: 1px solid #d1d5db;
+    min-width: 150px;
+}
+
+.filter-btn {
+    padding: 6px 14px;
+    font-size: 12px;
+    border-radius: 5px;
+    background: #2563eb;
+    color: white;
+    border: none;
+    height: 32px;
+}
+
+/* ===== CARD ===== */
+.audit-card {
+    background: #ffffff;
+    border-radius: 8px;
+    border: 1px solid #e5e7eb;
+    padding: 12px;
+    height: 75vh;              
+    display: flex;
+    flex-direction: column;
+}
+
+/* ===== TABLE WRAPPER ===== */
+.audit-table-wrapper {
+    flex: 1;
+    overflow-y: auto;          
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+}
+
+.audit-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+}
+
+.audit-table thead {
+    position: sticky;
+    top: 0;
+    background: #f9fafb;
+    z-index: 10;
+}
+
+.audit-table th,
+.audit-table td {
+    padding: 7px 8px;
+    border-bottom: 1px solid #f1f5f9;
+    vertical-align: top;
+}
+
+.audit-table th {
+    font-size: 11px;
+    text-transform: uppercase;
+    color: #6b7280;
+}
+
+/* ===== BADGES ===== */
+.audit-badge {
+    padding: 2px 6px;
+    font-size: 10px;
+    border-radius: 5px;
+    font-weight: 600;
+}
+
+.badge-create { background: #dcfce7; color: #166534; }
+.badge-update { background: #dbeafe; color: #1e40af; }
+.badge-delete { background: #fee2e2; color: #991b1b; }
+.badge-confirm { background: #fef3c7; color: #92400e; }
+.badge-complete { background: #ede9fe; color: #5b21b6; }
+
+/* ===== USER INFO ===== */
+.audit-user {
+    font-weight: 600;
+    font-size: 12px;
+}
+
+.audit-role {
+    font-size: 10px;
+    color: #6b7280;
+}
+
+/* ===== JSON BOX ===== */
+.audit-json {
+    font-family: monospace;
+    font-size: 10px;
+    background: #f8fafc;
+    padding: 5px;
+    border-radius: 5px;
+    max-height: 70px;
+    overflow: auto;
+    white-space: pre-wrap;
+}
+
+.audit-description {
+    font-size: 11px;
+}
+</style>
+
+<div class="container mt-3 audit-wrapper">
+
+    <div class="audit-header">
+        Log History
+    </div>
+
+    <!-- ================= FILTERS ================= -->
+
+    <form method="get"
+        style="margin-bottom:12px; display:flex; gap:12px; align-items:end; flex-wrap:wrap;">
+
+        <!-- DATE -->
+        <div>
+            <label style="font-size:11px;font-weight:600;">Date</label><br>
+            <input type="date"
+                name="date"
+                value="{{ selected_date }}"
+                style="padding:5px 8px;font-size:12px;border:1px solid #d1d5db;border-radius:5px;">
+        </div>
+
+        <!-- USER -->
+        <div>
+            <label style="font-size:11px;font-weight:600;">User</label><br>
+            <select name="user"
+                    style="padding:5px 8px;font-size:12px;border:1px solid #d1d5db;border-radius:5px;">
+                <option value="">All Users</option>
+                {% for u in users %}
+                    <option value="{{ u.id }}"
+                        {% if selected_user == u.id|stringformat:"s" %}
+                            selected
+                        {% endif %}>
+                        {{ u.email }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <!-- BUTTONS -->
+        <div>
+            <button type="submit"
+                    style="padding:6px 14px;font-size:12px;background:#2563eb;color:white;border:none;border-radius:5px;">
+                Apply
+            </button>
+        </div>
+
+        <div>
+            <a href="{% url 'audit_list' %}"
+                style="font-size:12px;color:#6b7280;text-decoration:none;">
+                    Reset
+            </a>
+        </div>
+
+    </form>
+
+
+
+    <!-- ================= TABLE CARD ================= -->
+    <div class="audit-card">
+
+        <div class="audit-table-wrapper">
+            <table class="audit-table">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>User</th>
+                        <th>Module</th>
+                        <th>Action</th>
+                        <th>Description</th>
+                        <th>Model</th>
+                        <th>Object</th>
+                        <th>Old</th>
+                        <th>New</th>
+                        <th>IP</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for log in logs %}
+                    <tr>
+                        <td>{{ log.timestamp|date:"d M Y H:i" }}</td>
+
+                        <td>
+                            <div class="audit-user">
+                                {% if log.user %}
+                                    {{ log.user.email }}
+                                {% else %}
+                                    System
+                                {% endif %}
+                            </div>
+                            <div class="audit-role">
+                                {% if log.user %}
+                                    {{ log.user.role }}
+                                {% endif %}
+                            </div>
+                        </td>
+
+                        <td>{{ log.module|default:"-" }}</td>
+
+                        <td>
+                            <span class="audit-badge badge-{{ log.action|lower }}">
+                                {{ log.action }}
+                            </span>
+                        </td>
+
+                        <td class="audit-description">
+                            {{ log.description|default:"-" }}
+                        </td>
+
+                        <td>{{ log.model_name|default:"-" }}</td>
+
+                        <td>{{ log.object_repr|default:"-" }}</td>
+
+                        <td>
+                            {% if log.old_data %}
+                                <div class="audit-json">{{ log.old_data|safe }}</div>
+                            {% else %}-{% endif %}
+                        </td>
+
+                        <td>
+                            {% if log.new_data %}
+                                <div class="audit-json">{{ log.new_data|safe }}</div>
+                            {% else %}-{% endif %}
+                        </td>
+
+                        <td>{{ log.ip_address|default:"-" }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="10" style="text-align:center;padding:20px;">
+                            No audit logs found.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+
+            </table>
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

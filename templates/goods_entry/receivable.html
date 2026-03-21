@@ -1,0 +1,216 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+.receivable-card {
+    border-radius: 10px;
+    border: 1px solid #e6e9ef;
+}
+.detail-label {
+    font-size: 13px;
+    color: #666;
+}
+.detail-value {
+    font-weight: 500;
+}
+.item-box {
+    padding: 8px 12px;
+    border-radius: 6px;
+    border: 1px solid #eef1f6;
+    margin-bottom: 8px;
+    background: #fafbfd;
+}
+.status-badge {
+    padding: 5px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+}
+.status-pending {
+    background: #fff3cd;
+    color: #856404;
+}
+.status-confirmed {
+    background: #d4edda;
+    color: #155724;
+}
+</style>
+
+<div class="container mt-4">
+
+<h4 class="mb-3">Receivable Section</h4>
+
+<div class="card receivable-card p-3 mb-3">
+    <div class="row g-2">
+        <div class="col-md-9">
+            <input type="text" id="searchBatch"
+                   class="form-control"
+                   placeholder="Enter Batch ID (e.g. B2026-001)">
+        </div>
+        <div class="col-md-3">
+            <button class="btn btn-primary w-100"
+                    onclick="searchBatch()">Search</button>
+        </div>
+    </div>
+</div>
+
+<div id="batchDetails"></div>
+
+</div>
+
+<script>
+
+function searchBatch() {
+
+    const batchID = document.getElementById("searchBatch").value;
+
+    fetch(`/goods/batch/${batchID}/`)
+    .then(res => res.json())
+    .then(data => {
+
+        if(data.status === "success") {
+
+            let statusClass = data.status_value === "Confirmed"
+                ? "status-confirmed"
+                : "status-pending";
+
+            let html = `
+                <div class="card receivable-card p-4">
+
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="mb-0">Batch: ${data.batch_id}</h5>
+                        <span class="status-badge ${statusClass}">
+                            ${data.status_value}
+                        </span>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <div class="detail-label">From</div>
+                            <div class="detail-value">${data.from}</div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="detail-label">To</div>
+                            <div class="detail-value">${data.to}</div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="detail-label">Transporter</div>
+                            <div class="detail-value">${data.transporter || '-'}</div>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <div class="detail-label">Created At</div>
+                            <div class="detail-value">${data.created_at}</div>
+                        </div>
+                        ${data.confirmed_by ? `
+                        <div class="col-md-4">
+                            <div class="detail-label">Confirmed By</div>
+                            <div class="detail-value">${data.confirmed_by}</div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="detail-label">Confirmed At</div>
+                            <div class="detail-value">${data.confirmed_at}</div>
+                        </div>
+                        ` : ''}
+                    </div>
+
+                    ${data.image ? `
+                        <div class="mb-3">
+                            <img src="${data.image}"
+                                 width="120"
+                                 style="cursor:pointer; border-radius:6px;"
+                                 onclick="showImage('${data.image}')">
+                        </div>
+                    ` : ''}
+
+                    <hr>
+                    <h6 class="mb-3">Items</h6>
+            `;
+
+            if(data.status_value === "Pending") {
+
+                data.items.forEach(item => {
+                    html += `
+                        <div class="item-box">
+                            <input type="checkbox"
+                                   class="itemCheck me-2"
+                                   onchange="checkAll()">
+                            ${item.product} (Qty: ${item.qty})
+                        </div>
+                    `;
+                });
+
+                html += `
+                    <button id="confirmBtn"
+                            class="btn btn-success mt-3"
+                            style="display:none;"
+                            onclick="confirmBatch('${data.batch_id}')">
+                            Confirm Batch
+                    </button>
+                `;
+
+            } else {
+
+                data.items.forEach(item => {
+                    html += `
+                        <div class="item-box">
+                            ✔ ${item.product} (Qty: ${item.qty})
+                        </div>
+                    `;
+                });
+
+            }
+
+            html += `</div>`;
+
+            document.getElementById("batchDetails").innerHTML = html;
+
+        } else {
+            alert("Batch not found");
+        }
+
+    });
+}
+
+
+function checkAll() {
+
+    const checks = document.querySelectorAll(".itemCheck");
+    const confirmBtn = document.getElementById("confirmBtn");
+
+    let allChecked = true;
+
+    checks.forEach(chk => {
+        if(!chk.checked) allChecked = false;
+    });
+
+    confirmBtn.style.display = allChecked ? "block" : "none";
+}
+
+
+function confirmBatch(batchID) {
+
+    fetch(`/goods/confirm/${batchID}/`, {
+        method: "POST",
+        headers: {
+            "X-CSRFToken": "{{ csrf_token }}"
+        }
+    })
+    .then(res => res.json())
+    .then(data => {
+        if(data.status === "success") {
+            searchBatch(); // reload same batch without page refresh
+        }
+    });
+}
+
+function showImage(src) {
+    const modal = new bootstrap.Modal(document.getElementById('imageModal'));
+    document.getElementById("modalImage").src = src;
+    modal.show();
+}
+
+</script>
+
+{% endblock %}

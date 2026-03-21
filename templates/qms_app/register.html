@@ -1,0 +1,197 @@
+{% load widget_tweaks %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Create Account</title>
+
+    <style>
+        body {
+            margin: 0;
+            background: linear-gradient(135deg, #35b1eb, #1e40af);
+            font-family: "Inter", system-ui;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+        }
+
+        .auth-container {
+            width: 100%;
+            max-width: 430px;
+            background: #ffffff;
+            padding: 40px;
+            border-radius: 16px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, .15);
+        }
+
+        .auth-title {
+            font-size: 22px;
+            font-weight: 600;
+            margin-bottom: 25px;
+            text-align: center;
+            color: #111827;
+        }
+
+        label {
+            font-size: 13px;
+            font-weight: 500;
+            color: #374151;
+            margin-bottom: 6px;
+            display: block;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 10px 12px;
+            border-radius: 8px;
+            border: 1px solid #d1d5db;
+            font-size: 14px;
+            margin-bottom: 16px;
+            transition: .2s;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, .15);
+        }
+
+        .btn-primary {
+            width: 100%;
+            background: #2563eb;
+            border: none;
+            padding: 11px;
+            font-size: 14px;
+            font-weight: 500;
+            color: #fff;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: .2s;
+        }
+
+        .btn-primary:hover {
+            background: #1d4ed8;
+        }
+
+        .back-link {
+            display: block;
+            text-align: center;
+            margin-top: 18px;
+            font-size: 13px;
+            color: #6b7280;
+            text-decoration: none;
+        }
+
+        .back-link:hover {
+            color: #2563eb;
+        }
+
+        .errorlist {
+            color: #dc2626;
+            font-size: 12px;
+            margin-bottom: 10px;
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .password-rules {
+            background: #f8fafc;
+            border-radius: 8px;
+            padding: 10px;
+            font-size: 12px;
+            color: #475569;
+            margin-top: -10px;
+            margin-bottom: 15px;
+        }
+
+        .password-rules ul {
+            margin: 6px 0 0 16px;
+            padding: 0;
+        }
+
+        .password-rules li {
+            margin-bottom: 2px;
+        }
+    </style>
+
+</head>
+
+<body>
+
+    <div class="auth-container">
+
+        <div class="auth-title">
+            Create New Account
+        </div>
+
+        <form method="post">
+
+            {% csrf_token %}
+
+            <!-- FORM ERRORS -->
+            {% if form.non_field_errors %}
+            <ul class="errorlist">
+                {% for error in form.non_field_errors %}
+                <li>{{ error }}</li>
+                {% endfor %}
+            </ul>
+            {% endif %}
+
+            <!-- EMAIL -->
+            <label>Email</label>
+            {{ form.email|add_class:"form-control" }}
+            {{ form.email.errors }}
+
+            <!-- FIRST NAME -->
+            <label>First Name</label>
+            {{ form.first_name|add_class:"form-control" }}
+            {{ form.first_name.errors }}
+
+            <!-- LAST NAME -->
+            <label>Last Name</label>
+            {{ form.last_name|add_class:"form-control" }}
+            {{ form.last_name.errors }}
+
+            <!-- ROLE -->
+            <label>Role</label>
+            {{ form.role|add_class:"form-control" }}
+            {{ form.role.errors }}
+
+            <!-- PASSWORD -->
+            <label>Password</label>
+            {{ form.password|add_class:"form-control" }}
+            {{ form.password.errors }}
+
+            <div class="password-rules">
+
+                <strong>Password Requirements</strong>
+
+                <ul>
+                    <li>Minimum 12 characters</li>
+                    <li>At least 1 uppercase letter</li>
+                    <li>At least 1 number</li>
+                    <li>At least 1 special character</li>
+                </ul>
+
+            </div>
+
+            <button type="submit" class="btn-primary">
+                Create Account
+            </button>
+
+        </form>
+
+        <a href="{% url 'page_settings' %}" class="back-link">
+            ← Back to Settings
+        </a>
+
+    </div>
+
+</body>
+
+</html>

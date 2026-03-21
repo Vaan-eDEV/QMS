@@ -1,0 +1,678 @@
+{% extends 'base.html' %}
+{% load widget_tweaks %}
+{% block content %}
+
+<div class="container mt-5">
+    <div class="card shadow-sm">
+
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <div>
+                <h5 class="mb-1">{{ form_obj.name }}</h5>
+                <small class="text-muted">{{ stage.name }}</small>
+            </div>
+
+            <div class="d-flex gap-2">
+                <a href="{% url 'kanban_board' form_obj.id %}"
+                    class="btn btn-outline-dark btn-sm">
+                    ← Back
+                </a>
+                {% if prev_stage and part_id %}
+                <a href="{% url 'fill_stage' form_obj.id prev_stage.id part_id %}"
+                    class="btn btn-outline-secondary btn-sm">
+                    ← Previous
+                </a>
+                {% endif %}
+
+                {% if next_stage and part_id %}
+                <a href="{% url 'fill_stage' form_obj.id next_stage.id part_id %}"
+                    class="btn btn-outline-primary btn-sm">
+                    Next →
+                </a>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="card-body">
+            <form method="post" enctype="multipart/form-data" id="stageForm">
+                {% csrf_token %}
+
+                {% for field in form %}
+
+                {% if field.field.widget.attrs.is_table %}
+
+                <div class="mb-4 table-wrapper">
+                    <label class="fw-bold mb-2 d-block">
+                        {{ field.field.widget.attrs.field_label }}
+                    </label>
+
+                    <table class="table table-bordered mt-2 dynamic-table"
+                        data-columns='{{ field.field.widget.attrs.columns_json|safe }}'>
+                        <thead>
+                            <tr>
+                                <th>{{ field.field.widget.attrs.row_header|default:"" }}</th>
+                                {% for col in field.field.widget.attrs.columns %}
+                                <th>{{ col.name }}</th>
+                                {% endfor %}
+                            </tr>
+                        </thead>
+
+                        <tbody>
+
+                            {% for row in field.field.widget.attrs.rows %}
+                            <tr>
+
+                               
+                                    <td class="fw-semibold bg-light row-name-cell d-flex justify-content-between align-items-center gap-2">
+
+                                        <input type="text"class="form-control form-control-sm row-name-input"value="{{ row.name }}">
+                                                
+                                                {% if request.user.is_superuser or request.user.page_access.can_delete %}
+                                                <button type="button" class="btn btn-sm btn-danger delete-row-btn">
+                                                    ✕
+                                                </button>
+                                                {% endif %}
+                                    </td>
+
+                                {% for cell in row.cells %}
+                                <td>
+
+                                    {% if cell.type == "select" %}
+                                    <select class="form-select table-input" data-type="select"
+                                        data-options="{{ cell.options|join:',' }}">
+                                        <option value="">--</option>
+                                        {% for opt in cell.options %}
+                                        <option value="{{ opt }}" 
+                                            {% if cell.value == opt %}selected{% endif %}>
+                                            {{ opt }}
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+
+                                    {% elif cell.type == "checkbox" %}
+                                    <div data-type="checkbox" data-options="{{ cell.options|join:',' }}"
+                                        class="table-input">
+
+                                        {% for opt in cell.options %}
+                                        <div class="form-check text-start">
+                                            <input type="checkbox" class="form-check-input cell-checkbox"
+                                                value="{{ opt }}" {% if opt in cell.value %}checked{% endif %}>
+                                            <label class="form-check-label">
+                                                {{ opt }}
+                                            </label>
+                                        </div>
+                                        {% endfor %}
+
+                                    </div>
+
+                                    {% elif cell.type == "formula" %}
+                                    <input type="number" class="form-control table-input" data-type="formula"
+                                        data-formula="{{ cell.formula }}" data-colname="" value="{{ cell.value }}">
+
+                                    {% elif cell.type == "date" %}
+                                    <input type="date" class="form-control table-input" data-type="date"
+                                        value="{{ cell.value }}">
+
+                                    {% elif cell.type == "signature" %}
+
+                                    <div class="signature-cell text-center">
+
+                                        {% if cell.value and cell.value.reference_code %}
+                                        <div class="border rounded p-2 bg-light">
+                                            <strong class="signature-name">{{ cell.value.signed_by }}</strong><br>
+                                            <small>{{ cell.value.signed_at }}</small><br>
+                                            <span class="text-primary">
+                                                Ref: {{ cell.value.reference_code }}
+                                            </span>
+                                        </div>
+                                        {% else %}
+                                        <button type="button" class="btn btn-sm btn-primary sign-btn"
+                                            data-type="signature">
+                                            Sign
+                                        </button>
+                                        {% endif %}
+
+                                    </div>
+
+                                    {% else %}
+                                    <input type="text" class="form-control table-input" data-type="text"
+                                        data-colname="" value="{{ cell.value }}">
+                                    {% endif %}
+
+                                </td>
+                                {% endfor %}
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                        {% if field.field.widget.attrs.has_total %}
+<tfoot>
+    <tr>
+        <td class="fw-bold text-end">Total</td>
+
+        {% for col in field.field.widget.attrs.columns %}
+            {% if col.is_total %}
+                <td class="fw-bold text-primary total-{{ col.name|lower|cut:' ' }}"></td>
+            {% else %}
+                <td></td>
+            {% endif %}
+        {% endfor %}
+
+    </tr>
+</tfoot>
+{% endif %}
+                    </table>
+
+                    {{ field }}
+                    <div class="mt-2 d-flex gap-2">
+                        <button type="button" class="btn btn-sm btn-success add-row-btn">
+                            + Add Row
+                        </button>
+                    </div>
+                </div>
+
+                {% else %}
+
+                <div class="mb-3">
+
+                    {% if not field.field.widget.attrs.is_checkbox %}
+                    <label class="form-label fw-semibold">
+                        {{ field.label }}
+                    </label>
+                    {% endif %}
+
+                    {% if field.field.widget.attrs.is_select %}
+                    {{ field|add_class:"form-select" }}
+
+                    {% elif field.field.widget.attrs.is_checkbox %}
+                    <label class="form-label fw-semibold d-block">
+                        {{ field.label }}
+                    </label>
+                    <div class="mt-2">
+                        {{ field }}
+                    </div>
+
+                    {% else %}
+                    {{ field|add_class:"form-control" }}
+                    {% endif %}
+
+                </div>
+
+                {% endif %}
+                {% endfor %}
+
+                {% if can_submit %}
+                <div class="text-end mt-4">
+                    <button class="btn btn-primary">Submit</button>
+                </div>
+                {% endif %}
+
+            </form>
+
+            <!-- ✅ MOVED MODAL OUTSIDE LOOP (THIS FIXES SIGN BUTTON) -->
+            <div class="modal fade" id="signatureModal" tabindex="-1">
+                <div class="modal-dialog">
+                    <div class="modal-content p-3">
+                        <h5>Digital Signature</h5>
+                        <input type="password" id="signaturePassword" class="form-control my-2"
+                            placeholder="Enter your password">
+                        <button class="btn btn-success" id="confirmSignature">
+                            Confirm
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    const form = document.getElementById("stageForm");
+
+    /* ============================================================
+       🔥 FIX 1: CORRECT INPUT SELECTION (UNCHANGED)
+    ============================================================ */
+
+    document.querySelectorAll(".dynamic-table").forEach(table => {
+
+        const headers = table.querySelectorAll("thead th");
+
+        table.querySelectorAll("tbody tr").forEach(tr => {
+
+            tr.querySelectorAll("td").forEach((td, index) => {
+
+                if (index === 0) return;
+
+                const input = td.querySelector("input.table-input, select.table-input");
+
+                if (input) {
+                    const colName = headers[index].innerText.trim();
+
+                    input.dataset.colname =
+                        colName.toLowerCase().replace(/\s+/g, "").replace(/[^a-z0-9]/g, "");
+                }
+
+            });
+
+        });
+
+    });
+
+
+    
+    
+    /* ============================================================
+       FIELD MOVEMENT (UNCHANGED)
+    ============================================================ */
+
+    function getFocusableElements() {
+        return Array.from(
+            form.querySelectorAll(
+                "input:not([type='hidden']), select, textarea, button"
+            )
+        ).filter(el =>
+            !el.disabled &&
+            el.offsetParent !== null
+        );
+    }
+
+    form.addEventListener("keydown", function (e) {
+
+        if (
+            e.key !== "Enter" &&
+            e.key !== "ArrowDown" &&
+            e.key !== "ArrowUp"
+        ) return;
+
+        const focusable = getFocusableElements();
+        const currentIndex = focusable.indexOf(document.activeElement);
+
+        if (currentIndex === -1) return;
+
+        if (e.key === "Enter") {
+            e.preventDefault();
+        }
+
+        if (e.key === "Enter" || e.key === "ArrowDown") {
+            e.preventDefault();
+            if (currentIndex < focusable.length - 1) {
+                focusable[currentIndex + 1].focus();
+                focusable[currentIndex + 1].select?.();
+            }
+        }
+
+        if (e.key === "ArrowUp") {
+            e.preventDefault();
+            if (currentIndex > 0) {
+                focusable[currentIndex - 1].focus();
+                focusable[currentIndex - 1].select?.();
+            }
+        }
+
+    });
+
+    /* ============================================================
+       SIGNATURE (UNCHANGED)
+    ============================================================ */
+
+    let activeSignatureCell = null;
+
+    document.addEventListener("click", function (e) {
+
+        if (e.target.classList.contains("sign-btn")) {
+
+            activeSignatureCell = e.target.closest("td");
+
+            const modalElement = document.getElementById("signatureModal");
+
+            if (modalElement) {
+                const modal = new bootstrap.Modal(modalElement);
+                modal.show();
+            }
+        }
+
+    });
+
+    const confirmBtn = document.getElementById("confirmSignature");
+
+    if (confirmBtn) {
+        confirmBtn.addEventListener("click", function () {
+
+            const password =
+                document.getElementById("signaturePassword").value;
+
+            fetch("{% url 'verify_signature' %}", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": "{{ csrf_token }}"
+                },
+                body: JSON.stringify({
+                    password: password,
+                    slot: "prepared"
+                })
+            })
+                .then(res => res.json())
+                .then(data => {
+
+                    if (data.ok) {
+
+                        const signatureData = {
+                            signed_by: data.name,
+                            signed_at: data.time,
+                            reference_code: data.code
+                        };
+
+                        activeSignatureCell.innerHTML = `
+                        <div class="border rounded p-2 bg-light">
+                            <strong>${data.name}</strong><br>
+                            <small>${data.time}</small><br>
+                            <span class="text-primary">Ref: ${data.code}</span>
+                        </div>
+                    `;
+
+                        activeSignatureCell.dataset.signature =
+                            JSON.stringify(signatureData);
+
+                        bootstrap.Modal.getInstance(
+                            document.getElementById("signatureModal")
+                        ).hide();
+
+                    } else {
+                        alert("Invalid password");
+                    }
+
+                });
+
+        });
+    }
+
+    /* ============================================================
+       🔥 DYNAMIC TABLE SAVE (FIXED)
+    ============================================================ */
+
+    form.addEventListener("submit", function () {
+
+        document.querySelectorAll(".dynamic-table").forEach(table => {
+
+            const wrapper = table.closest(".table-wrapper");
+            const hidden = wrapper.querySelector("input[type='hidden']");
+            if (!hidden) return;
+
+            const rows = [];
+
+            table.querySelectorAll("tbody tr").forEach(tr => {
+
+                const rowNameInput = tr.querySelector(".row-name-input");
+                const rowName = rowNameInput && rowNameInput.value.trim()
+                    ? rowNameInput.value.trim()
+                    : "Row";
+
+                const cells = [];
+
+                tr.querySelectorAll("td").forEach(td => {
+
+                    const input = td.querySelector(".table-input");
+
+                    let type = null;
+
+                    if (input) {
+                        type = input.dataset.type || "text";
+                    }
+                    else if (td.dataset.signature) {
+                        type = "signature";
+                    }
+                    else if (td.querySelector(".signature-cell")) {
+                        type = "signature";
+                    }
+
+                    if (!type) return;
+
+                    const options = input && input.dataset.options
+                        ? input.dataset.options.split(",")
+                        : [];
+
+                    let value;
+
+                    if (type === "checkbox") {
+                        const checkedValues = [];
+                        input.querySelectorAll(".cell-checkbox:checked").forEach(cb => {
+                            checkedValues.push(cb.value);
+                        });
+                        value = checkedValues;
+
+                    } else if (type === "signature") {
+                        value = td.dataset.signature
+                            ? JSON.parse(td.dataset.signature)
+                            : {};
+
+                    } else {
+                        value = input ? input.value : "";
+                    }
+
+                    cells.push({
+                        type: type,
+                        options: options,
+                        value: value,
+                        colname: input && input.dataset.colname ? input.dataset.colname : "",
+                        formula: input ? input.dataset.formula : ""
+                    });
+
+                });
+
+                const hasValue = cells.some(c => {
+                    if (Array.isArray(c.value)) return c.value.length > 0;
+                    return c.value !== "" && c.value !== null;
+                });
+
+                if (!rowName && !hasValue) return;
+
+                rows.push({
+                    name: rowName,
+                    cells: cells
+                });
+
+            });
+
+            hidden.value = JSON.stringify(rows);
+
+        });
+
+    });
+
+    /* ============================================================
+       🔥 ADVANCED CALCULATION (UNCHANGED)
+    ============================================================ */
+
+    function normalizeKey(name) {
+        return (name || "").toLowerCase().replace(/\s+/g, "").replace(/[^a-z0-9]/g, "");
+    }
+
+    function calculateAdvancedTable(table) {
+
+        let columns = JSON.parse(table.dataset.columns || "[]");
+        const headers = table.querySelectorAll("thead th");
+        const rows = table.querySelectorAll("tbody tr");
+
+        let totals = {};
+
+        columns.forEach(col => {
+            if (col.is_total) {
+                totals[normalizeKey(col.name)] = 0;
+            }
+        });
+
+        rows.forEach(row => {
+
+            let values = {};
+
+            row.querySelectorAll("td").forEach((td, index) => {
+
+                if (index === 0) return;
+
+                const input = td.querySelector("input.table-input, select.table-input");
+                if (!input) return;
+
+                const key = normalizeKey(headers[index].innerText.trim());
+                const val = parseFloat(input.value);
+                // 🔥 FIND COLUMN
+                const col = columns.find(c =>
+                    normalizeKey(c.name) === key
+                );
+
+                let finalVal = isNaN(val) ? 0 : val;
+
+                // 🔥 PERCENTAGE FIX
+                if (col && col.type === "percentage") {
+                    finalVal = finalVal / 100;
+                }
+                values[key] = finalVal;
+            });
+
+            row.querySelectorAll("input.table-input").forEach(input => {
+
+                const colName = input.dataset.colname;
+
+                const col = columns.find(c =>
+                    normalizeKey(c.name) === normalizeKey(colName)
+                );
+
+                if (!col || col.type !== "formula") return;
+
+                let formula = col.formula;
+                if (!formula) return;
+
+                let expr = formula.toLowerCase();
+
+                Object.entries(values).forEach(([key, val]) => {
+                    expr = expr.replace(new RegExp("\\b" + key + "\\b", "g"), val);
+                });
+
+                try {
+                    let result = Function('"use strict"; return (' + expr + ')')();
+                    if (!isNaN(result)) {
+                        input.value = result.toFixed(2);
+                    }
+                } catch (e) {}
+
+            });
+
+            columns.forEach((col, colIndex) => {
+
+                if (!col.is_total) return;
+
+                let key = normalizeKey(col.name);
+
+                const td = row.querySelectorAll("td")[colIndex + 1];
+                const input = td?.querySelector(".table-input");
+
+                const val = parseFloat(input?.value);
+
+                totals[key] += isNaN(val) ? 0 : val;
+            });
+
+        });
+
+        Object.keys(totals).forEach(key => {
+            let el = table.querySelector(`.total-${key}`);
+            if (el) {
+                el.innerText = totals[key].toFixed(2);
+            }
+        });
+    }
+
+    document.querySelectorAll(".dynamic-table").forEach(table => {
+
+        table.addEventListener("input", function (e) {
+            if (e.target.classList.contains("table-input")) {
+                calculateAdvancedTable(table);
+            }
+        });
+
+        table.addEventListener("change", function (e) {
+            if (e.target.classList.contains("table-input")) {
+                calculateAdvancedTable(table);
+            }
+        });
+
+        calculateAdvancedTable(table);
+    });
+
+    /* ============================================================
+       🔥 ADD / DELETE ROW (FINAL FIXED)
+    ============================================================ */
+
+    document.addEventListener("click", function (e) {
+
+        if (e.target.classList.contains("add-row-btn")) {
+
+            const wrapper = e.target.closest(".table-wrapper");
+            const table = wrapper.querySelector(".dynamic-table");
+            const tbody = table.querySelector("tbody");
+            const firstRow = tbody.querySelector("tr");
+
+            if (!firstRow) return;
+
+            const newRow = firstRow.cloneNode(true);
+
+            newRow.querySelectorAll("input, select").forEach(input => {
+                if (input.type === "checkbox") {
+                    input.checked = false;
+                } else {
+                    input.value = "";
+                }
+            });
+
+            newRow.querySelectorAll("td").forEach(td => {
+                delete td.dataset.signature;
+
+                const sig = td.querySelector(".signature-cell");
+                if (sig) {
+                    sig.innerHTML = `
+                        <button type="button" class="btn btn-sm btn-primary sign-btn">
+                            Sign
+                        </button>
+                    `;
+                }
+            });
+
+            const rowCount = tbody.querySelectorAll("tr").length + 1;
+            const nameInput = newRow.querySelector(".row-name-input");
+
+            if (nameInput) {
+                nameInput.value = "Row " + rowCount;
+            }
+
+            tbody.appendChild(newRow);
+
+            calculateAdvancedTable(table);
+        }
+
+    });
+
+    document.querySelectorAll(".dynamic-table").forEach(table => {
+
+        table.addEventListener("click", function (e) {
+
+            if (e.target.classList.contains("delete-row-btn")) {
+
+                const row = e.target.closest("tr");
+                const tbody = table.querySelector("tbody");
+
+                if (tbody.querySelectorAll("tr").length <= 1) {
+                    alert("At least one row required");
+                    return;
+                }
+
+                row.remove();
+                calculateAdvancedTable(table);
+            }
+
+        });
+
+    });
+
+});
+</script>
+{% endblock %}

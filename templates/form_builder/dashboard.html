@@ -1,0 +1,267 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+.dashboard-card {
+    border-radius: 14px;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+}
+
+.kpi-box {
+    background: #f8f9fc;
+    padding: 18px;
+    border-radius: 12px;
+    text-align: center;
+}
+
+.kpi-title {
+    font-size: 13px;
+    color: #777;
+}
+
+.kpi-value {
+    font-size: 22px;
+    font-weight: bold;
+    color: #2c3e50;
+}
+
+.table td:last-child {
+    text-align: right;
+    font-weight: 600;
+}
+
+.table-hover tbody tr:hover {
+    background: #eef3ff;
+}
+</style>
+
+<div class="container mt-4">
+
+    <h3 class="mb-4">Costing Dashboard</h3>
+
+    <!-- ================= FILTER ================= -->
+    <div class="card p-3 mb-4 shadow-sm">
+        <div class="row">
+
+            <div class="col-md-4">
+                <label><strong>Company</strong></label>
+                <select id="company" class="form-control" onchange="loadDashboard()">
+                    <option value="">Select Company</option>
+                    {% for c in company_data.keys %}
+                    <option value="{{ c }}">{{ c }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="col-md-3">
+                <label><strong>Currency</strong></label>
+                <select id="currency" class="form-control" onchange="loadDashboard()">
+                    <option value="INR">INR</option>
+                    <option value="USD">USD</option>
+                    <option value="EUR">EURO</option>
+                    <option value="JPY">JPY</option>
+                    <option value="SGD">SGD</option>
+                </select>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ================= RESULT ================= -->
+    <div id="resultBox"></div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+
+let companyData = {{ company_data|safe }};
+
+// ✅ normalize rates once
+let RAW_RATES = {{ rates|safe }};
+let RATES = {};
+for(let k in RAW_RATES){
+    RATES[k.toLowerCase()] = RAW_RATES[k];
+}
+
+// ✅ Currency symbols
+const SYMBOLS = {
+    INR: "₹",
+    USD: "$",
+    EUR: "€",
+    JPY: "¥",
+    SGD: "S$"
+};
+
+// ✅ FIXED conversion (FINAL)
+function convert(val, cur){
+    if(cur === "INR") return val;
+    return val * (RATES[cur.toLowerCase()] || 1);
+}
+
+let chart = null;
+
+// ================= LOAD DASHBOARD =================
+function loadDashboard(){
+
+    let company = document.getElementById("company").value;
+    let currency = document.getElementById("currency").value;
+    let box = document.getElementById("resultBox");
+
+    if(!company){
+        box.innerHTML = "";
+        return;
+    }
+
+    let tables = companyData[company].tables;
+
+    let grandTotal = 0;
+    let labels = [];
+    let values = [];
+
+    let rows = "";
+
+    for(let t in tables){
+
+        let raw = tables[t];
+        let val = convert(raw, currency);
+
+        rows += `
+            <tr>
+                <td>${t}</td>
+                <td>${SYMBOLS[currency]} ${val.toLocaleString(undefined, {minimumFractionDigits:2})}</td>
+            </tr>
+        `;
+
+        grandTotal += val;
+        labels.push(t);
+        values.push(val);
+    }
+
+    box.innerHTML = `
+    <div class="card dashboard-card p-3">
+
+        <!-- KPI -->
+        <div class="row mb-4">
+
+            <div class="col-md-4">
+                <div class="kpi-box">
+                    <div class="kpi-title">Company</div>
+                    <div class="kpi-value">${company}</div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="kpi-box">
+                    <div class="kpi-title">Currency</div>
+                    <div class="kpi-value">${currency}</div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="kpi-box">
+                    <div class="kpi-title">Grand Total</div>
+                    <div class="kpi-value">
+                        ${SYMBOLS[currency]} ${grandTotal.toLocaleString(undefined, {minimumFractionDigits:2})}
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- CONTENT -->
+        <div class="row">
+
+            <!-- TABLE -->
+            <div class="col-md-6">
+
+                <table class="table table-bordered table-hover">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Cost Category</th>
+                            <th>Total (${currency})</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        ${rows}
+                    </tbody>
+
+                    <tfoot>
+                        <tr style="font-weight:bold;">
+                            <td>Grand Total</td>
+                            <td>${SYMBOLS[currency]} ${grandTotal.toLocaleString(undefined, {minimumFractionDigits:2})}</td>
+                        </tr>
+                    </tfoot>
+
+                </table>
+
+            </div>
+
+            <!-- CHART -->
+            <div class="col-md-6 d-flex justify-content-center align-items-center">
+                <div style="width:320px; height:320px;">
+                    <canvas id="chart"></canvas>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+    `;
+
+    drawChart(labels, values);
+}
+
+// ================= CHART =================
+function drawChart(labels, values){
+
+    let ctx = document.getElementById("chart");
+
+    if(chart){
+        chart.destroy();
+    }
+
+    chart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: labels,
+            datasets: [{
+                data: values,
+                backgroundColor: [
+                    '#4e73df',
+                    '#1cc88a',
+                    '#f6c23e',
+                    '#e74a3b',
+                    '#36b9cc',
+                    '#858796'
+                ]
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            cutout: "60%",
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(ctx){
+                            let total = ctx.dataset.data.reduce((a,b)=>a+b,0);
+                            let val = ctx.raw;
+                            let percent = ((val/total)*100).toFixed(1);
+                            return `${ctx.label}: ${percent}%`;
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+</script>
+
+{% endblock %}

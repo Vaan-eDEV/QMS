@@ -1,0 +1,91 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<div class="container mt-5 d-flex justify-content-center">
+
+<div class="card shadow-lg p-5" style="max-width: 520px; width: 100%;">
+
+    <!-- HEADER -->
+    <div class="text-center mb-4">
+        <i class="bi bi-file-earmark-plus" style="font-size:3rem; color:#0d6efd;"></i>
+        <h3 class="mt-2 fw-bold">Upload New Document</h3>
+    </div>
+
+    <form method="POST" enctype="multipart/form-data">
+    {% csrf_token %}
+
+    <!-- ===== TITLE ===== -->
+    <div class="mb-3">
+        <label class="form-label fw-semibold">Document Title</label>
+        <input type="text"
+               name="title"
+               class="form-control form-control-lg"
+               placeholder="Enter document title"
+               required>
+    </div>
+
+    <!-- ===== SELECT EXISTING FOLDER ===== -->
+    <div class="mb-3">
+        <label class="form-label fw-semibold">Select Folder</label>
+
+        <select name="folder_id" class="form-control form-control-lg">
+            <option value="">-- Root Location --</option>
+
+            {% for f in folders %}
+                <option value="{{ f.id }}">{{ f.name }}</option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <!-- ===== CREATE NEW FOLDER ===== -->
+    <div class="mb-3">
+        <label class="form-label fw-semibold">Or Create New Folder</label>
+
+        <input type="text"
+               name="new_folder"
+               class="form-control form-control-lg"
+               placeholder="Type new folder name (optional)">
+    </div>
+
+    <!-- ===== FILE UPLOAD ===== -->
+    <div class="mb-4">
+        <label class="form-label fw-semibold">Select File</label>
+
+        <input type="file"
+               name="file"
+               accept=".docx,.pdf"
+               class="form-control form-control-lg"
+               required>
+    </div>
+
+    <!-- ===== ACTION BUTTONS ===== -->
+    <div class="d-grid">
+        <button type="submit" class="btn btn-primary btn-lg">
+            <i class="bi bi-upload me-2"></i> Upload & Edit
+        </button>
+
+        <br>
+
+        <a href="{% url 'document_home' %}"
+           style="color: rgb(90, 89, 89);">
+           ← Back
+        </a>
+    </div>
+
+    </form>
+
+</div>
+</div>
+
+<style>
+.card input[type="file"] {
+    padding: 6px 10px;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    transition: transform 0.2s ease;
+}
+</style>
+
+{% endblock %}

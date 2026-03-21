@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="container">
+
+    <h3 class="mb-4">Create Project</h3>
+
+    <form method="POST">
+
+        {% csrf_token %}
+
+        <div class="mb-3">
+
+            <label class="form-label">Project Name</label>
+
+            <input type="text" name="name" class="form-control" required>
+
+        </div>
+
+        <div class="mb-3">
+
+            <label class="form-label">Description</label>
+
+            <textarea name="description" class="form-control" rows="4"></textarea>
+
+        </div>
+
+        <button class="btn btn-success">
+            Create Project
+        </button>
+
+    </form>
+
+</div>
+
+{% endblock %}

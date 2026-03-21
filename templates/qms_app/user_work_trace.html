@@ -1,0 +1,491 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+    .batch-box {
+        cursor: pointer;
+        transition: .2s;
+    }
+
+    .batch-box:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 6px 15px rgba(0, 0, 0, .1);
+    }
+
+    /* ================================
+ALTERNATING TIMELINE
+================================ */
+
+    .audit-timeline {
+        position: relative;
+        padding: 20px 0;
+    }
+
+    .audit-timeline::before {
+        content: "";
+        position: absolute;
+        left: 50%;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        background: #e5e7eb;
+        transform: translateX(-50%);
+    }
+
+    .audit-row {
+        position: relative;
+        width: 50%;
+        padding: 10px 25px;
+        margin-bottom: 20px;
+    }
+
+    .audit-row:nth-child(odd) {
+        left: 0;
+        text-align: right;
+    }
+
+    .audit-row:nth-child(even) {
+        left: 50%;
+    }
+
+    .audit-dot {
+        position: absolute;
+        top: 20px;
+        width: 14px;
+        height: 14px;
+        background: #2563eb;
+        border-radius: 50%;
+        border: 3px solid #fff;
+        box-shadow: 0 0 0 2px #2563eb;
+    }
+
+    .audit-row:nth-child(odd) .audit-dot {
+        right: -7px;
+    }
+
+    .audit-row:nth-child(even) .audit-dot {
+        left: -7px;
+    }
+
+    .audit-content {
+        background: #f9fafb;
+        padding: 12px 14px;
+        border-radius: 10px;
+        border: 1px solid #e5e7eb;
+        display: inline-block;
+        max-width: 360px;
+        transition: .2s;
+    }
+
+    .audit-content:hover {
+        background: #f3f4f6;
+    }
+
+    .audit-action {
+        font-weight: 600;
+        font-size: 14px;
+        margin-bottom: 4px;
+    }
+
+    .audit-user {
+        font-size: 13px;
+        color: #374151;
+        margin-top: 4px;
+    }
+
+    .audit-time {
+        font-size: 12px;
+        color: #6b7280;
+    }
+
+    /* ACTION COLORS */
+
+    .audit-create {
+        color: #dc2626;
+    }
+
+    .audit-submitted {
+        color: #16a34a;
+    }
+
+    .audit-stage {
+        color: #2563eb;
+    }
+
+    .audit-form {
+        color: #eab308;
+    }
+
+    /* CLICKABLE ROW */
+
+    .part-row {
+        cursor: pointer;
+        transition: .2s;
+    }
+
+    .part-row:hover {
+        background: #f8fafc;
+        transform: scale(1.01);
+    }
+</style>
+
+
+<div class="container-fluid mt-4">
+
+    <h4 class="fw-semibold mb-3">Traceability</h4>
+
+
+    <!-- FILTER AREA -->
+
+    <div class="card shadow-sm p-3 mb-3">
+
+        <div class="row g-2">
+
+            <div class="col-md-4">
+
+                <select id="companyFilter" class="form-select">
+
+                    <option value="">Select Company</option>
+
+                    {% for company in companies %}
+                    <option value="{{ company }}">{{ company }}</option>
+                    {% endfor %}
+
+                </select>
+
+            </div>
+
+            <div class="col-md-4">
+
+                <input type="text" id="searchInput" class="form-control" placeholder="Search Batch" />
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+
+    <!-- BATCH CARDS -->
+
+    <div id="batchContainer" class="row g-3 d-none">
+
+        {% for batch in batches %}
+
+        <div class="col-lg-3 col-md-4 col-sm-6 batch-card" data-company="{{ batch.company_name }}"
+            data-batch="{{ batch.batch_id }}">
+
+            <div class="card batch-box shadow-sm" onclick="openBatch('{{ batch.id }}')">
+
+                <div class="card-body">
+
+                    <div class="fw-semibold">
+                        {{ batch.company_name }}
+                    </div>
+
+                    <div class="text-muted small">
+                        Batch : {{ batch.batch_id }}
+                    </div>
+
+                    <div class="small">
+
+                        Lot :
+
+                        {% if batch.material_batch %}
+                        {{ batch.material_batch.lot_number }}
+                        {% else %}
+                        —
+                        {% endif %}
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        {% endfor %}
+
+    </div>
+
+
+
+    <!-- PART SECTION -->
+
+    <div id="partSection" class="card shadow-sm mt-3 d-none">
+
+        <div class="card-body">
+
+            <ul class="nav nav-tabs mb-3">
+
+                <li class="nav-item">
+                    <button class="nav-link active" data-bs-toggle="tab">
+                        Parts
+                    </button>
+                </li>
+
+            </ul>
+
+            <div class="tab-content">
+
+                <div class="tab-pane fade show active">
+
+                    <table class="table table-sm">
+
+                        <thead class="table-light">
+
+                            <tr>
+                                <th>Part</th>
+                                <th>Lot</th>
+                                <th>User</th>
+                                <th>Status</th>
+                                <th>Created</th>
+                            </tr>
+
+                        </thead>
+
+                        <tbody id="partTable"></tbody>
+
+                    </table>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+
+<!-- AUDIT MODAL -->
+
+<div class="modal fade" id="auditModal">
+
+    <div class="modal-dialog modal-xl">
+
+        <div class="modal-content">
+
+            <div class="modal-header bg-light">
+
+                <h6 class="fw-semibold">
+                    Traceability Timeline
+                </h6>
+
+                <button class="btn-close" data-bs-dismiss="modal"></button>
+
+            </div>
+
+            <div class="modal-body">
+
+                <div id="auditContent" class="audit-timeline"></div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+
+<script>
+
+    const batchData = {{ batches_json| safe }}
+
+
+    /* COMPANY FILTER */
+
+    document
+        .getElementById("companyFilter")
+        .addEventListener("change", function () {
+
+            const company = this.value
+            const container = document.getElementById("batchContainer")
+
+            container.classList.remove("d-none")
+
+            document.querySelectorAll(".batch-card").forEach(card => {
+
+                if (!company || card.dataset.company === company) {
+                    card.style.display = "block"
+                } else {
+                    card.style.display = "none"
+                }
+
+            })
+
+        })
+
+
+    /* SEARCH FILTER */
+
+    document
+        .getElementById("searchInput")
+        .addEventListener("keyup", function () {
+
+            const value = this.value.toLowerCase()
+
+            document.querySelectorAll(".batch-card").forEach(card => {
+
+                const batch = card.dataset.batch.toLowerCase()
+
+                if (batch.includes(value)) {
+                    card.style.display = "block"
+                } else {
+                    card.style.display = "none"
+                }
+
+            })
+
+        })
+
+
+    /* OPEN BATCH */
+
+    function openBatch(batchId) {
+
+        const batch = batchData.find(b => b.id == batchId)
+
+        if (!batch) return
+
+        document
+            .getElementById("partSection")
+            .classList.remove("d-none")
+
+        renderParts(batch.parts)
+
+    }
+
+
+    /* PART TABLE */
+
+    function renderParts(parts) {
+
+        let html = ""
+
+        parts.forEach(p => {
+
+            html += `
+
+                <tr class="part-row"
+                    onclick="openAudit('${p.id}')">
+
+                    <td class="fw-semibold">${p.part_id}</td>
+                    <td>${p.lot || "-"}</td>
+                    <td>${p.user || "-"}</td>
+
+                    <td>
+
+                        <span class="badge
+                            ${p.status === "Active" ? "bg-success" : ""}
+                            ${p.status === "NCR" ? "bg-danger" : ""}
+                            ${p.status === "Rework" ? "bg-warning" : ""}
+                            ${p.status === "Scrap" ? "bg-dark" : ""}
+                        ">
+
+                            ${p.status}
+
+                        </span>
+
+                    </td>
+
+                    <td>${p.created}</td>
+
+                </tr>
+
+            `
+
+        })
+
+        document.getElementById("partTable").innerHTML = html
+
+    }
+
+
+    /* AUDIT TIMELINE */
+
+    function openAudit(partId) {
+
+        fetch(`/audit/part/${partId}/`)
+            .then(res => res.json())
+            .then(data => {
+
+                let html = ""
+
+                if (!data.logs || data.logs.length === 0) {
+
+                    html = `<div class="text-muted">No audit logs found</div>`
+
+                } else {
+
+                    data.logs.forEach(log => {
+
+                        let actionClass = ""
+
+                        if (log.action === "CREATE") actionClass = "audit-create"
+                        if (log.action === "STAGE_SUBMITTED") actionClass = "audit-submitted"
+                        if (log.action === "STAGE_MOVED") actionClass = "audit-stage"
+                        if (log.action === "FORM_MOVED") actionClass = "audit-form"
+
+                        html += `
+
+                            <div class="audit-row">
+
+                                <div class="audit-dot"></div>
+
+                                    <div class="audit-content">
+
+                                        <div class="audit-action ${actionClass}">
+                                            ${log.action}
+                                        </div>
+
+                                            <div class="text-muted small">
+                                                Folder : ${log.folder || "-"} <br>
+                                                Form : ${log.form || "-"} <br>
+                                                Stage : ${log.stage || "-"}
+                                            </div>
+
+                                            <div class="audit-user">
+                                                ${log.user}
+                                            </div>
+
+                                            <div class="audit-time">
+                                                ${log.time}
+                                            </div>
+
+                                    </div>
+
+                            </div>
+
+                        `
+
+                    })
+
+                }
+
+                document.getElementById("auditContent").innerHTML = html
+
+                new bootstrap.Modal(
+                    document.getElementById("auditModal")
+                ).show()
+
+            })
+
+            .catch(() => {
+
+                document.getElementById("auditContent").innerHTML =
+                    "Failed to load audit logs."
+
+            })
+
+    }
+
+</script>
+
+{% endblock %}

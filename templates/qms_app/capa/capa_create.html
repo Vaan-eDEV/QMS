@@ -1,0 +1,182 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+.page-header {
+    font-size: 22px;
+    font-weight: 600;
+    margin-bottom: 20px;
+}
+
+.section-card {
+    background: #ffffff;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.section-title {
+    font-size: 15px;
+    font-weight: 600;
+    margin-bottom: 15px;
+    color: #212529;
+}
+
+.form-label {
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.required-star {
+    color: red;
+}
+
+.action-bar {
+    position: sticky;
+    bottom: 0;
+    background: #ffffff;
+    padding: 15px 0;
+    border-top: 1px solid #dee2e6;
+}
+</style>
+
+<div class="container-fluid mt-4">
+
+    <div class="page-header">
+        Create CAPA Record
+    </div>
+
+    <form method="POST">
+        {% csrf_token %}
+
+        {% if form.errors %}
+            <div class="alert alert-danger">
+                <strong>Please correct the errors below:</strong>
+                {{ form.errors }}
+            </div>
+        {% endif %}
+
+        <!-- ================= BASIC INFORMATION ================= -->
+        <div class="section-card">
+            <div class="section-title">Basic Information</div>
+
+            <div class="row g-3">
+
+                <div class="col-md-6">
+                    <label class="form-label">
+                        CAPA Title <span class="required-star">*</span>
+                    </label>
+                    {{ form.title }}
+                </div>
+
+                <div class="col-md-3">
+                    <label class="form-label">Related NCR</label>
+                    {{ form.related_ncr }}
+                </div>
+
+                <div class="col-md-3">
+                    <label class="form-label">Related Production Part</label>
+                    {{ form.related_batch_part }}
+                </div>
+
+                <div class="col-md-3">
+                    <label class="form-label">Assigned To</label>
+                    {{ form.assigned_to }}
+                </div>
+
+                <div class="col-md-3">
+                    <label class="form-label">Due Date</label>
+                    {{ form.due_date }}
+                </div>
+
+            </div>
+        </div>
+
+        <!-- ================= PROBLEM STATEMENT ================= -->
+        <div class="section-card">
+            <div class="section-title">Problem Statement</div>
+
+            {{ form.problem_statement }}
+        </div>
+
+        <!-- ================= ROOT CAUSE ================= -->
+        <div class="section-card">
+            <div class="section-title">Root Cause Analysis</div>
+
+            <div class="mb-3">
+                <label class="form-label">Root Cause Analysis</label>
+                {{ form.root_cause_analysis }}
+            </div>
+
+            <div>
+                <label class="form-label">5 Why Analysis</label>
+                {{ form.five_why_analysis }}
+            </div>
+        </div>
+
+        <!-- ================= ACTION PLAN ================= -->
+        <div class="section-card">
+            <div class="section-title">Action Plan</div>
+
+            <div class="mb-3">
+                <label class="form-label">Corrective Action Plan</label>
+                {{ form.corrective_action }}
+            </div>
+
+            <div>
+                <label class="form-label">Preventive Action Plan</label>
+                {{ form.preventive_action }}
+            </div>
+        </div>
+
+        <!-- ================= RISK ASSESSMENT ================= -->
+        <div class="section-card">
+            <div class="section-title">Risk Assessment (FMEA Based)</div>
+
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label">Severity (1-5)</label>
+                    {{ form.severity_score }}
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label">Occurrence (1-5)</label>
+                    {{ form.occurrence_score }}
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label">Detection (1-5)</label>
+                    {{ form.detection_score }}
+                </div>
+            </div>
+
+            <small class="text-muted">
+                Risk Score and Priority will be calculated automatically.
+            </small>
+        </div>
+
+        <!-- ================= EFFECTIVENESS ================= -->
+        <div class="section-card">
+            <div class="section-title">Effectiveness Verification</div>
+            {{ form.effectiveness_validation }}
+        </div>
+
+        <!-- ================= ACTION BAR ================= -->
+        <div class="action-bar d-flex justify-content-end gap-2">
+
+            <a href="{% url 'capa_list' %}" class="btn btn-outline-secondary">
+                Cancel
+            </a>
+
+            <button type="submit" class="btn btn-primary">
+                Save CAPA
+            </button>
+
+        </div>
+
+    </form>
+
+</div>
+
+{% endblock %}

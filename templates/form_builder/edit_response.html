@@ -1,0 +1,385 @@
+{% extends "base.html" %}
+{% block content %}
+{% load custom_tags %}
+
+<div class="container">
+
+    <h4 class="mb-4">Edit: {{ form.name }}</h4>
+
+    <form method="POST">
+        {% csrf_token %}
+
+        <!-- RFQ -->
+        <input type="hidden" name="rfq_id" value="{{ response.ref_id }}">
+
+        {% for stage in stages %}
+
+        <div class="card mb-4">
+
+            <div class="card-header">
+                <strong>{{ stage.name }}</strong>
+            </div>
+
+            <div class="card-body">
+
+                <!-- ================= FIELDS ================= -->
+
+                {% for field in stage.field_set.all %}
+                {% with val=data|get_item:field.label %}
+
+                <div class="mb-3">
+
+                    <label class="form-label">{{ field.label }}</label>
+
+                    {% if field.field_type == "text" %}
+                        <input type="text" name="{{ field.label }}" class="form-control"
+                               value="{{ val }}"
+                               data-colname="{{ field.label }}" data-type="text">
+
+                    {% elif field.field_type == "textarea" %}
+                        <textarea name="{{ field.label }}" class="form-control"
+                                  data-colname="{{ field.label }}" data-type="text">{{ val }}</textarea>
+
+                    {% elif field.field_type == "number" %}
+                        <input type="number" step="any" name="{{ field.label }}" class="form-control"
+                               value="{{ val }}"
+                               data-colname="{{ field.label }}" data-type="number">
+
+                    {% elif field.field_type == "date" %}
+                        <input type="date" name="{{ field.label }}" class="form-control"
+                               value="{{ val }}">
+
+                    {% elif field.field_type == "percentage" %}
+                        <input type="number" step="any" name="{{ field.label }}" class="form-control"
+                               value="{{ val }}"
+                               data-colname="{{ field.label }}" data-type="percentage">
+
+                    {% elif field.field_type == "select" %}
+                        <select name="{{ field.label }}" class="form-control">
+                            {% for opt in field.option_list %}
+                                <option value="{{ opt }}" {% if opt == val %}selected{% endif %}>{{ opt }}</option>
+                            {% endfor %}
+                        </select>
+
+                    {% elif field.field_type == "checkbox" %}
+                        <input type="checkbox" name="{{ field.label }}" value="1"
+                               {% if val %}checked{% endif %}>
+
+                    {% elif field.field_type == "formula" %}
+                        <input type="number" step="any" name="{{ field.label }}" class="form-control"
+                               value="{{ val }}"
+                               data-colname="{{ field.label }}"
+                               data-type="formula"
+                               data-formula="{{ field.formula }}"
+                               readonly>
+                    {% endif %}
+
+                </div>
+
+                {% endwith %}
+                {% endfor %}
+
+
+                <!-- ================= TABLES ================= -->
+
+                {% for table in stage.table_set.all %}
+
+                <h5 class="mt-4">{{ table.name }}</h5>
+
+                {% with table_data=data|get_item:table.name %}
+                {% with total_key=table.name|add:"_total" %}
+
+                <table class="table table-bordered dynamic-table" data-table="{{ table.name }}">
+
+                    <thead class="table-light">
+                        <tr>
+                            {% for col in table.tablecolumn_set.all %}
+                                <th>{{ col.name }}</th>
+                            {% endfor %}
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+
+                    <tbody class="table-body">
+
+                        {% if table_data %}
+                            {% for row in table_data %}
+                            <tr>
+
+                                {% for col in table.tablecolumn_set.all %}
+                                <td>
+
+                                    {% with val=row|get_item:col.name %}
+
+                                    {% if col.column_type == "text" %}
+                                        <input type="text"
+                                               name="{{ table.name }}__{{ col.name }}__{{ forloop.parentloop.counter0 }}"
+                                               value="{{ val }}"
+                                               class="form-control"
+                                               data-colname="{{ col.name|lower|cut:' ' }}"
+                                               data-type="text">
+
+                                    {% elif col.column_type == "number" %}
+                                        <input type="number" step="any"
+                                               name="{{ table.name }}__{{ col.name }}__{{ forloop.parentloop.counter0 }}"
+                                               value="{{ val }}"
+                                               class="form-control"
+                                               data-colname="{{ col.name|lower|cut:' ' }}"
+                                               data-type="number">
+
+                                    {% elif col.column_type == "percentage" %}
+                                        <input type="number" step="any"
+                                               name="{{ table.name }}__{{ col.name }}__{{ forloop.parentloop.counter0 }}"
+                                               value="{{ val }}"
+                                               class="form-control"
+                                               data-colname="{{ col.name|lower|cut:' ' }}"
+                                               data-type="percentage">
+
+                                    {% elif col.column_type == "formula" %}
+                                        <input type="number" step="any"
+                                               name="{{ table.name }}__{{ col.name }}__{{ forloop.parentloop.counter0 }}"
+                                               value="{{ val }}"
+                                               class="form-control"
+                                               data-colname="{{ col.name|lower|cut:' ' }}"
+                                               data-type="formula"
+                                               data-formula="{{ col.formula }}"
+                                               readonly>
+                                    {% endif %}
+
+                                    {% endwith %}
+
+                                </td>
+                                {% endfor %}
+
+                                <td>
+                                    <button type="button" class="btn btn-danger btn-sm"
+                                            onclick="deleteRow(this)">
+                                        Delete
+                                    </button>
+                                </td>
+
+                            </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr>
+                                {% for col in table.tablecolumn_set.all %}
+                                    <td><input class="form-control"></td>
+                                {% endfor %}
+                                <td></td>
+                            </tr>
+                        {% endif %}
+
+                    </tbody>
+
+                    <!-- ================= TOTAL ================= -->
+                    <tfoot>
+                    <tr>
+
+                        {% for col in table.tablecolumn_set.all %}
+                        
+                            {% if col.is_total %}
+                            <td>
+                                <input type="text"
+                                       class="form-control total-column"
+                                       data-colname="{{ col.name|lower|cut:' ' }}"
+                                       value="{{ data|get_item:total_key|default:'0.00' }}"
+                                       readonly>
+                            </td>
+                            {% else %}
+                            <td></td>
+                            {% endif %}
+
+                        {% endfor %}
+
+                        <td><strong>Total</strong></td>
+
+                    </tr>
+                    </tfoot>
+
+                </table>
+
+                {% endwith %}
+                {% endwith %}
+
+                <button type="button" class="btn btn-success btn-sm mb-3"
+                        onclick="addRow(this)">
+                    + Add Row
+                </button>
+
+                {% endfor %}
+
+            </div>
+
+        </div>
+
+        {% endfor %}
+
+        <button class="btn btn-primary">Update Data</button>
+
+    </form>
+
+</div>
+
+
+<script>
+
+/* ================= NORMALIZE ================= */
+function normalize(name){
+    return name.toLowerCase().replace(/\s+/g, "").replace(/[^a-z0-9]/g, "");
+}
+
+/* ================= FORMULA ================= */
+function calculateFormulas(){
+
+    document.querySelectorAll(".dynamic-table").forEach(table => {
+
+        table.querySelectorAll("tbody tr").forEach(row => {
+
+            let inputs = {};
+
+            // collect inputs
+            row.querySelectorAll("input[data-colname]").forEach(input => {
+
+                let key = normalize(input.dataset.colname);
+                let value = parseFloat(input.value) || 0;
+
+                if(input.dataset.type === "percentage"){
+                    value = value / 100;
+                }
+
+                inputs[key] = value;
+            });
+
+            // apply formula
+            row.querySelectorAll("[data-type='formula']").forEach(field => {
+
+                let formula = field.dataset.formula;
+                if(!formula) return;
+
+                let expression = formula.toLowerCase();
+
+                // 🔥 replace variables safely
+                Object.keys(inputs).forEach(key => {
+                    let regex = new RegExp(`\\b${key}\\b`, "g");
+                    expression = expression.replace(regex, inputs[key]);
+                });
+
+                try {
+                    let result = Function("return " + expression)();
+                    field.value = isNaN(result) ? "" : result.toFixed(2);
+                } catch (e) {
+                    console.log("Formula Error:", expression);
+                    field.value = "";
+                }
+
+            });
+
+        });
+
+    });
+}
+
+/* ================= TOTAL ================= */
+function calculateDynamicTotal(){
+
+    document.querySelectorAll(".dynamic-table").forEach(table => {
+
+        let rows = table.querySelectorAll("tbody tr");
+
+        table.querySelectorAll(".total-column").forEach(totalField => {
+
+            let totalKey = normalize(totalField.dataset.colname);
+            let total = 0;
+
+            rows.forEach(row => {
+
+                row.querySelectorAll("input[data-colname]").forEach(input => {
+
+                    let key = normalize(input.dataset.colname);
+
+                    if(key === totalKey){
+
+                        let value = parseFloat(input.value) || 0;
+
+                        if(input.dataset.type === "percentage"){
+                            value = value / 100;
+                        }
+
+                        total += value;
+                    }
+
+                });
+
+            });
+
+            totalField.value = total.toFixed(2);
+
+        });
+
+    });
+
+}
+
+/* ================= EVENTS ================= */
+document.addEventListener("input", function(){
+
+    calculateFormulas();
+
+    setTimeout(() => {
+        calculateDynamicTotal();
+    }, 50);
+
+});
+
+document.addEventListener("DOMContentLoaded", function () {
+
+    calculateFormulas();
+
+    setTimeout(() => {
+        calculateDynamicTotal();
+    }, 100);
+
+});
+
+/* ================= ADD ROW ================= */
+function addRow(btn){
+
+    let table = btn.previousElementSibling;
+    let body = table.querySelector(".table-body");
+    let newRow = body.querySelector("tr").cloneNode(true);
+
+    let rowIndex = body.rows.length;
+
+    newRow.querySelectorAll("input").forEach(input => {
+
+        input.value = "";
+
+        if(input.name){
+            let parts = input.name.split("__");
+            input.name = parts[0] + "__" + parts[1] + "__" + rowIndex;
+        }
+
+    });
+
+    body.appendChild(newRow);
+
+    calculateFormulas();
+    calculateDynamicTotal();
+}
+
+/* ================= DELETE ROW ================= */
+function deleteRow(btn){
+
+    let row = btn.closest("tr");
+    let tbody = row.parentElement;
+
+    if(tbody.rows.length > 1){
+        row.remove();
+    }
+
+    calculateFormulas();
+    calculateDynamicTotal();
+}
+
+</script>
+{% endblock %}

@@ -1,0 +1,240 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<style>
+
+.dashboard-title{
+font-weight:600;
+margin-bottom:25px;
+}
+
+.machine-card{
+border-radius:10px;
+padding:18px;
+background:#ffffff;
+border:1px solid #e5e7eb;
+box-shadow:0 4px 12px rgba(0,0,0,0.05);
+margin-bottom:25px;
+}
+
+.section-title{
+font-size:16px;
+font-weight:600;
+margin-bottom:15px;
+color:#374151;
+}
+
+.machine-badge{
+padding:4px 10px;
+border-radius:20px;
+font-size:12px;
+}
+
+.badge-running{
+background:#dcfce7;
+color:#166534;
+}
+
+.log-box{
+max-height:450px;
+overflow-y:auto;
+border:1px solid #e5e7eb;
+border-radius:8px;
+}
+
+.log-table th{
+background:#f9fafb;
+font-weight:600;
+}
+
+.log-table td{
+font-size:14px;
+}
+
+</style>
+
+
+<div class="container-fluid">
+
+<h3 class="dashboard-title">Machine Monitoring Dashboard</h3>
+
+
+<!-- ================= ACTIVE MACHINES ================= -->
+
+<div class="machine-card">
+
+<div class="section-title">
+Active Machines
+</div>
+
+<table class="table table-hover align-middle">
+
+<thead>
+<tr>
+<th>Machine</th>
+<th>Operator</th>
+<th>Login Time</th>
+<th>Status</th>
+</tr>
+</thead>
+
+<tbody>
+
+{% for s in active_sessions %}
+
+<tr>
+
+<td>
+<strong>{{ s.machine_id }}</strong>
+</td>
+
+<td>
+{{ s.operator.email }}
+</td>
+
+<td>
+{{ s.login_time }}
+</td>
+
+<td>
+<span class="machine-badge badge-running">
+Running
+</span>
+</td>
+
+</tr>
+
+{% empty %}
+
+<tr>
+<td colspan="4" class="text-center text-muted">
+No active machines
+</td>
+</tr>
+
+{% endfor %}
+
+</tbody>
+
+</table>
+
+</div>
+
+
+
+<!-- ================= MACHINE LOGS ================= -->
+
+<div class="machine-card">
+
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:15px;">
+
+<div class="section-title">
+Machine Logs
+</div>
+
+<form method="GET">
+
+<select name="machine"
+        class="form-select"
+        style="width:220px"
+        onchange="this.form.submit()">
+
+<option value="">Select Machine</option>
+
+{% for m in machines %}
+
+<option value="{{ m }}"
+{% if selected_machine == m %}selected{% endif %}>
+{{ m }}
+</option>
+
+{% endfor %}
+
+</select>
+
+</form>
+
+</div>
+
+
+
+<div class="log-box">
+
+<table class="table table-hover mb-0 log-table">
+
+<thead class="sticky-top">
+<tr>
+<th style="width:120px">Machine</th>
+<th style="width:180px">Login Time</th>
+<th style="width:180px">Logout Time</th>
+<th>Operator</th>
+<th>Message</th>
+</tr>
+</thead>
+
+<tbody>
+
+{% if selected_machine %}
+
+{% for log in logs %}
+
+<tr>
+
+<td>
+<strong>{{ log.machine_id }}</strong>
+</td>
+
+<td>
+{{ log.login_time }}
+</td>
+
+<td>
+{% if log.logout_time %}
+{{ log.logout_time }}
+{% else %}
+<span class="badge bg-success">Running</span>
+{% endif %}
+</td>
+
+<td>
+{{ log.operator.email }}
+</td>
+
+<td>
+{{ log.message|default:"-" }}
+</td>
+
+</tr>
+
+{% empty %}
+
+<tr>
+<td colspan="5" class="text-center text-muted">
+No logs for this machine
+</td>
+</tr>
+
+{% endfor %}
+
+{% else %}
+
+<tr>
+<td colspan="5" class="text-center text-muted">
+Select a machine to view logs
+</td>
+</tr>
+
+{% endif %}
+
+</tbody>
+
+</table>
+
+</div>
+</div>
+
+
+</div>
+
+{% endblock %}

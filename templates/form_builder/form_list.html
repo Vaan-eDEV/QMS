@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="container">
+
+    <h3 class="mb-4">Forms</h3>
+
+    <table class="table table-bordered">
+
+        <tr>
+            <th>Name</th>
+            <th>Action</th>
+        </tr>
+
+        {% for form in forms %}
+
+        <tr>
+
+            <td>{{form.name}}</td>
+
+            <td>
+
+                <a href="{% url 'fill_form' form.id %}" class="btn btn-success btn-sm">
+                    Fill
+                </a>
+
+                <a href="{% url 'responses' form.id %}" class="btn btn-info btn-sm">
+                    Responses
+                </a>
+
+                <a href="{% url 'edit_forms' form.id %}" class="btn btn-sm btn-warning">
+                    Edit
+                </a>
+                <form method="POST" action="{% url 'delete_forms' form.id %}" style="display:inline;">
+    {% csrf_token %}
+    <button type="submit"
+            class="btn btn-danger btn-sm"
+            onclick="return confirm('Are you sure to delete this form?')">
+        Delete
+    </button>
+</form>
+            </td>
+
+        </tr>
+
+        {% endfor %}
+
+    </table>
+
+</div>
+
+{% endblock %}

@@ -1,0 +1,843 @@
+{% extends 'base.html' %}
+{% block title %}Forms{% endblock %}
+{% block content %}
+
+<style>
+/* --- YOUR ORIGINAL CSS (UNCHANGED) --- */
+body {
+    background: #f6f8fb;
+    font-family: "Inter", system-ui;
+    color: #1e293b;
+}
+
+/* ================= LAYOUT ================= */
+/* .main-layout {
+    display: flex;
+    gap: 40px;
+} */
+.main-layout {
+    display: flex;
+    align-items: flex-start;
+}
+
+/* ================= LEFT SIDE (NO CARD STYLE) ================= */
+/* .folder-sidebar {
+    width: 220px;
+    padding-top: 10px;
+} */
+.folder-sidebar {
+    width: 260px;
+    /* background: #ffffff; */
+    padding: 20px;
+    border-right: 2px solid #e2e8f0;  /* ← THIS IS THE LINE */
+    margin-right: 30px;
+}
+
+.folder-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: 600;
+    margin-bottom: 12px;
+}
+
+.btn-create-folder {
+    width: 24px;
+    height: 24px;
+    border-radius: 4px;
+    background: #2563eb;
+    color: white;
+    border: none;
+    font-size: 14px;
+}
+
+.folder-tree ul {
+    list-style: none;
+    padding-left: 0;
+}
+
+.folder-tree li {
+    margin: 8px 0;
+}
+
+.folder-tree a {
+    text-decoration: none;
+    font-size: 14px;
+    color: #475569;
+    display: block;
+    padding: 4px 6px;
+    border-radius: 4px;
+}
+
+.folder-tree a:hover {
+    background: #eef2ff;
+    color: #2563eb;
+}
+
+.folder-active {
+    background: #e0f2fe;
+    color: #2563eb !important;
+    font-weight: 600;
+}
+
+/* ================= RIGHT SIDE ================= */
+.content-area {
+    flex: 1;
+}
+
+/* ================= TABS ================= */
+.tab-nav {
+    display: flex;
+    gap: 30px;
+    border-bottom: 2px solid #e2e8f0;
+    margin-bottom: 25px;
+}
+
+.tab-btn {
+    padding-bottom: 10px;
+    font-size: 14px;
+    font-weight: 500;
+    color: #64748b;
+    cursor: pointer;
+}
+
+.tab-btn.active {
+    color: #2563eb;
+    border-bottom: 2px solid #2563eb;
+}
+
+/* ================= FORM CARDS ================= */
+.forms-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 20px;
+}
+
+.form-card {
+    background: #ffffff;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    padding: 20px;
+    position: relative;
+    transition: all .2s ease;
+}
+
+.form-card:hover {
+    box-shadow: 0 12px 28px rgba(0,0,0,.08);
+    transform: translateY(-4px);
+}
+
+.form-title {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.form-title a {
+    text-decoration: none;
+    color: #2563eb;
+}
+
+.stage-badge {
+    display: inline-block;
+    font-size: 11px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: #eef2ff;
+    color: #4338ca;
+    margin-bottom: 14px;
+}
+
+.action-bar {
+    display: flex;
+    gap: 8px;
+}
+
+.btn-kanban {
+    background: #00B0F0;
+    color: white;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    text-decoration: none;
+}
+
+.btn-new {
+    border: 1px solid #00B0F0;
+    color: #00B0F0;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    text-decoration: none;
+}
+
+/* DELETE ICON TOP RIGHT */
+.delete-icon {
+    position: absolute;
+    top: 12px;
+    right: 14px;
+    font-size: 14px;
+    color: #94a3b8;
+    text-decoration: none;
+}
+
+.delete-icon:hover {
+    color: #dc2626;
+}
+
+/* ================= TRACKER ================= */
+.tracker-box {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 20px;
+    max-width: 600px;
+}
+
+.tracker-result {
+    margin-top: 12px;
+    padding: 10px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 13px;
+    background: #f8fafc;
+}
+
+/* ================= MODAL ================= */
+.folder-modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.4);
+    align-items: center;
+    justify-content: center;
+}
+
+.folder-modal-box {
+    background: #fff;
+    padding: 24px;
+    border-radius: 12px;
+    width: 320px;
+}
+.folder-tree ul {
+    list-style: none;
+    padding-left: 18px;
+    margin: 4px 0;
+}
+
+.folder-tree li {
+    margin: 6px 0;
+}
+
+.folder-nested {
+    list-style: none;
+    padding-left: 14px;
+    margin: 0;
+}
+
+.folder-item {
+    display: flex;
+    align-items: center;
+    /* gap: 6px;
+    padding: 4px 6px; */
+    position: relative;
+}
+
+.folder-link {
+    flex: 1;
+    text-decoration: none;
+    color: #334155;
+    font-size: 14px;
+}
+
+.folder-link:hover {
+    color: #2563eb;
+}
+
+.folder-active {
+    background: #e0f2fe;
+    color: #2563eb !important;
+    border-radius: 6px;
+    padding: 2px 6px;
+}
+
+.folder-toggle {
+    cursor: pointer;
+    font-size: 12px;
+    transition: transform .2s ease;
+}
+
+.folder-toggle.rotate {
+    transform: rotate(90deg);
+}
+
+.folder-spacer {
+    width: 12px;
+    display: inline-block;
+}
+
+.folder-delete {
+    font-size: 12px;
+    color: #ef4444;
+    cursor: pointer;
+    opacity: 0;
+    transition: .2s;
+}
+
+.folder-item:hover .folder-delete {
+    opacity: 1;
+}
+
+.folder-delete:hover {
+    color: #dc2626;
+}
+
+/* ================= LAYOUT ================= */
+.main-layout {
+    display: flex;
+    align-items: flex-start;
+}
+
+/* ================= LEFT SIDE ================= */
+.folder-sidebar {
+    width: 260px;
+    padding: 20px;
+    border-right: 2px solid #e2e8f0;
+    margin-right: 30px;
+}
+
+.folder-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: 600;
+    margin-bottom: 12px;
+}
+
+.btn-create-folder {
+    width: 24px;
+    height: 24px;
+    border-radius: 4px;
+    background: #2563eb;
+    color: white;
+    border: none;
+    font-size: 14px;
+}
+
+/* remaining CSS unchanged... */
+</style>
+
+
+<div class="main-layout">
+
+<!-- ================= LEFT SIDE ================= -->
+<div class="folder-sidebar">
+
+<div class="folder-header">
+<span>Folders</span>
+
+{% if request.user.is_superuser %}
+<button onclick="openFolderModal()" class="btn-create-folder">+</button>
+{% endif %}
+
+</div>
+
+<div class="folder-tree">
+<ul>
+<li>
+{% if request.user.is_superuser %}
+<a href="{% url 'form_list' %}"
+   class="{% if not selected_folder %}folder-active{% endif %}">
+All Forms
+</a>
+{% endif %}
+</li>
+</ul>
+
+{% include "qms_app/form/_folder_tree.html" with folders=folders|dictsort:"id" selected_folder=selected_folder folder_path=folder_path %}
+</div>
+
+</div>
+
+
+<!-- ================= RIGHT SIDE ================= -->
+<div class="content-area">
+
+<div style="display:flex; justify-content:flex-end; margin-bottom:10px;">
+<button
+id="machineLogoutBtn"
+onclick="logoutMachine()"
+class="btn btn-danger btn-sm"
+style="display:none;">
+End Machine Session
+</button>
+</div>
+
+
+<div class="tab-nav">
+<div class="tab-btn active" onclick="switchTab('formsTab', this)">
+Available Forms
+</div>
+</div>
+
+
+<div id="formsTab">
+
+{% if folder_path %}
+<div style="margin-bottom:10px; font-size:14px;">
+📁
+{% for f in folder_path %}
+{% if not forloop.first %} / {% endif %}
+<a href="{% url 'form_list' %}?folder={{ f.id }}"
+style="text-decoration:none; color:#2563eb;">
+{{ f.name }}
+</a>
+{% endfor %}
+</div>
+{% endif %}
+
+{% if selected_folder %}
+<div style="margin-bottom:15px;">
+<a href="{% url 'form_create' %}?folder={{ selected_folder.id }}"
+class="btn btn-primary btn-sm">
++ Create Form in {{ selected_folder.name }}
+</a>
+</div>
+{% endif %}
+
+{% if forms %}
+<div class="forms-grid">
+
+{% for form in forms %}
+<div class="form-card">
+
+{% if request.user.is_superuser %}
+<div style="position:absolute; top:12px; right:14px; display:flex; gap:10px;">
+
+<a href="{% url 'add_stage' form.id %}"
+title="Edit Form"
+style="font-size:14px; color:#64748b; text-decoration:none;">
+✎
+</a>
+
+<a href="{% url 'delete_form' form.id %}"
+onclick="return confirm('Delete this form?');"
+title="Delete Form"
+style="font-size:14px; color:#94a3b8; text-decoration:none;">
+✕
+</a>
+
+</div>
+{% endif %}
+
+<div class="form-title">
+<a href="{% url 'kanban_board' form.id %}">
+{{ form.name }}
+</a>
+</div>
+
+<span class="stage-badge">
+{{ form.stages.count }} Stages
+</span>
+
+<div class="action-bar">
+<a href="{% url 'kanban_board' form.id %}" class="btn-kanban">
+Kanban
+</a>
+
+<a href="{% url 'start_form' form.id %}" class="btn-new">
+New Entry
+</a>
+</div>
+
+</div>
+{% endfor %}
+
+</div>
+{% else %}
+<div class="alert alert-info">
+No forms available.
+</div>
+{% endif %}
+
+</div>
+</div>
+</div>
+
+
+<!-- ================= MACHINE OPERATOR MODAL ================= -->
+
+<div class="modal fade"
+     id="machineOperatorModal"
+     data-bs-backdrop="static"
+     data-bs-keyboard="false">
+
+<div class="modal-dialog modal-dialog-centered">
+<div class="modal-content">
+
+<div class="modal-header bg-light">
+<h5 class="modal-title">Machine Operator Verification</h5>
+</div>
+
+<div class="modal-body">
+
+<form id="machineLoginForm">
+
+<!-- STEP 1 PASSWORD AUTH -->
+
+<div id="authSection">
+
+<div class="mb-3">
+<label>User</label>
+<input class="form-control"
+       value="{{ request.user.email }}"
+       readonly>
+</div>
+
+<div class="mb-3">
+<label>Password</label>
+<input type="password"
+       class="form-control"
+       id="machine_password"
+       required>
+</div>
+
+<button type="button"
+        class="btn btn-primary w-100"
+        onclick="verifyPassword()">
+Authenticate
+</button>
+
+</div>
+
+
+<!-- STEP 2 MACHINE SESSION -->
+
+<div id="machineSection" style="display:none;">
+
+<div class="mb-3">
+<label>Machine ID</label>
+<input class="form-control"
+       id="machine_id"
+       placeholder="Example: M01"
+       required>
+</div>
+
+<!-- Previous Operator Info -->
+<div id="machineLogBox"
+     class="alert alert-warning d-none"
+     style="max-height:200px; overflow:auto;">
+</div>
+
+<button class="btn btn-success w-100 mt-3">
+Start Work
+</button>
+
+</div>
+
+</form>
+
+</div>
+
+</div>
+</div>
+</div>
+
+
+
+<!-- ===== MACHINE LOGOUT MODAL ===== -->
+
+<div class="modal fade" id="machineLogoutModal">
+<div class="modal-dialog modal-dialog-centered">
+<div class="modal-content">
+
+<div class="modal-header">
+<h6>End Machine Session</h6>
+</div>
+
+<div class="modal-body">
+
+<label>Message for next operator</label>
+
+<textarea
+id="logout_message"
+class="form-control"
+rows="3"></textarea>
+
+<button
+class="btn btn-danger w-100 mt-3"
+onclick="confirmMachineLogout()">
+
+Logout Machine
+
+</button>
+
+</div>
+
+</div>
+</div>
+</div>
+
+
+
+<script>
+
+const currentFolder = "{{ selected_folder.id|default:'' }}";
+
+
+function switchTab(tabId, btn){
+document.getElementById("formsTab").style.display = "none";
+document.getElementById("trackerTab").style.display = "none";
+document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+document.getElementById(tabId).style.display = "block";
+btn.classList.add("active");
+}
+
+
+function openFolderModal(){
+document.getElementById("folderModal").style.display = "flex";
+}
+
+
+/* PASSWORD VERIFY */
+
+function verifyPassword(){
+
+fetch("/machine/verify/",{
+method:"POST",
+headers:{
+"Content-Type":"application/json",
+"X-CSRFToken":"{{ csrf_token }}"
+},
+body:JSON.stringify({
+password:document.getElementById("machine_password").value
+})
+})
+.then(res=>res.json())
+.then(data=>{
+
+if(data.success){
+
+document.getElementById("authSection").style.display="none"
+document.getElementById("machineSection").style.display="block"
+
+}else{
+
+alert("Incorrect password")
+
+}
+
+})
+
+}
+
+
+/* SHOW PREVIOUS OPERATOR AFTER MACHINE ID */
+
+document.addEventListener("DOMContentLoaded",function(){
+
+const machineInput = document.getElementById("machine_id")
+
+if(machineInput){
+
+machineInput.addEventListener("input",function(){
+
+const machineId=this.value
+
+if(machineId.length < 1) return
+
+fetch(`/machine/log/?machine_id=${machineId}`)
+.then(res=>res.json())
+.then(data=>{
+
+const box=document.getElementById("machineLogBox")
+
+if(data.logs.length === 0){
+
+box.classList.add("d-none")
+return
+
+}
+
+box.classList.remove("d-none")
+
+let html = "<b>Machine Log</b><hr>"
+
+data.logs.forEach(log => {
+
+html += `
+<div style="margin-bottom:10px">
+<b>[${log.time} ${log.operator}]</b><br>
+${log.message}
+</div>
+`
+
+})
+
+box.innerHTML = html
+
+})
+
+})
+
+}
+
+})
+
+
+
+/* PAGE LOAD */
+
+document.addEventListener("DOMContentLoaded", function(){
+
+const currentFolderId = "{{ selected_folder.id|default:'' }}"
+
+if(currentFolderId != "17"){
+return
+}
+
+const modalElement = document.getElementById("machineOperatorModal")
+
+fetch("/machine/check-session/")
+.then(res => res.json())
+.then(data => {
+
+const logoutBtn = document.getElementById("machineLogoutBtn")
+
+if(data.active){
+
+logoutBtn.style.display="inline-block"
+
+}else{
+
+const modal = new bootstrap.Modal(modalElement)
+modal.show()
+
+}
+
+})
+
+})
+
+
+
+/* MACHINE LOGIN */
+
+const loginForm = document.getElementById("machineLoginForm")
+
+if(loginForm){
+
+loginForm.addEventListener("submit", function(e){
+
+e.preventDefault()
+
+fetch("/machine/start/",{
+
+method:"POST",
+
+headers:{
+"Content-Type":"application/json",
+"X-CSRFToken":"{{ csrf_token }}"
+},
+
+body:JSON.stringify({
+
+password:document.getElementById("machine_password").value,
+machine_id:document.getElementById("machine_id").value
+
+})
+
+})
+.then(res=>res.json())
+.then(data=>{
+
+if(data.success){
+
+bootstrap.Modal
+.getInstance(document.getElementById("machineOperatorModal"))
+.hide()
+
+document.getElementById("machineLogoutBtn").style.display="inline-block"
+
+}else{
+
+alert("Authentication failed")
+
+}
+
+})
+
+})
+
+}
+
+
+
+/* MACHINE LOGOUT */
+
+function logoutMachine(){
+
+new bootstrap.Modal(
+document.getElementById("machineLogoutModal")
+).show()
+
+}
+
+
+function confirmMachineLogout(){
+
+fetch("/machine/logout/",{
+
+method:"POST",
+
+headers:{
+"Content-Type":"application/json",
+"X-CSRFToken":"{{ csrf_token }}"
+},
+
+body:JSON.stringify({
+
+message:document.getElementById("logout_message").value
+
+})
+
+})
+.then(res=>res.json())
+.then(data=>{
+
+if(data.success){
+
+alert("Machine session ended")
+window.location.href="/forms/"
+
+}
+
+})
+
+}
+
+
+
+function toggleFolder(el){
+
+const children = el.closest("li").querySelector(".folder-children")
+
+if(!children) return
+
+if(children.style.display === "none"){
+
+children.style.display = "block"
+el.classList.add("rotate")
+
+}else{
+
+children.style.display = "none"
+el.classList.remove("rotate")
+
+}
+
+}
+
+</script>
+
+{% endblock %}

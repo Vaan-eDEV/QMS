@@ -1,0 +1,544 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<style>
+
+.kanban-board {
+
+    display: flex;
+
+    gap: 12px;
+
+    overflow-x: auto;
+
+}
+
+.kanban-col {
+
+    width: 300px;
+
+    min-width: 300px;
+
+    background: #f1f5f9;
+
+    border-radius: 10px;
+
+    padding: 10px;
+
+    border: 1px solid #cbd5e1;
+
+}
+
+.col-head {
+
+    font-weight: 600;
+
+    margin-bottom: 8px;
+
+}
+
+.task {
+
+    background: white;
+
+    border: 1px solid #ccc;
+
+    border-radius: 6px;
+
+    padding: 6px;
+
+    margin-bottom: 6px;
+
+    cursor: grab;
+
+    font-size: 13px;
+
+}
+
+.task:hover {
+
+    background: #f8fafc;
+
+}
+
+#stageModal {
+
+    display:none;
+
+    position:fixed;
+
+    top:10%;
+
+    left:50%;
+
+    transform:translateX(-50%);
+
+    background:white;
+
+    padding:16px;
+
+    border:1px solid #ccc;
+
+    border-radius:10px;
+
+    width:600px;
+
+    max-height:80vh;
+
+    overflow:auto;
+
+    z-index:9999;
+
+}
+
+</style>
+
+<div class="container mt-3">
+
+<h4>🚦 Form Pipeline</h4>
+
+<h5></h5>
+
+<hr>
+
+<div class="row mb-3">
+
+    <div class="col-md-4">
+
+        <select id="formSelect" class="form-select">
+
+            <option value="">Select Form</option>
+
+{% for f in forms %}
+
+<option value="{{f.id}}">{{f.name}}</option>
+
+<option value="{{f.id}}">{{f.form}}</option>
+
+<option value="{{f.id}}">{{f.stage}}</option>
+
+<option value="{{f.class}}">{{f.field}}</option>
+
+{% endfor %}
+
+</select>
+
+</div>
+
+<div class="col-md-2">
+
+    <button class="btn btn-primary" onclick="addColumn()">
+
+        Add Column
+
+    </button>
+
+</div>
+
+</div>
+
+<div class="kanban-board" id="board"></div>
+
+</div>
+
+<div id="stageModal">
+
+    <h6 id="mTitle"></h6>
+
+    <hr>
+
+    <div id="mBody"></div>
+
+<button class="btn btn-sm btn-secondary mt-2"
+
+onclick="stageModal.style.display='none'">
+
+Close
+
+</button>
+
+</div>
+
+<script>
+
+let columns = [];
+
+let dragId = null;
+
+async function addColumn(){
+
+let id = document.getElementById("formSelect").value;
+
+if(!id) return alert("Select form");
+
+let r = await fetch(`/api/form/${id}/stages/`);
+
+if(!r.ok){
+
+    alert("API not working");
+
+    return;
+
+}
+
+let d = await r.json();
+
+columns.push({
+
+    form_id:id,
+
+    name:d.form_name,
+
+    stages:d.stages,
+
+    records:[]
+
+});
+
+render();
+
+}
+
+function render(){
+
+let board = document.getElementById("board");
+
+board.innerHTML="";
+
+columns.forEach((c,i)=>{
+
+let html=`
+
+<div class="kanban-col"
+
+ondragover="allow(event)"
+
+ondrop="drop(event,${i})">
+
+<div class="col-head">
+
+    ${c.name}
+
+    </div>
+
+    `;
+
+if(i === 0){
+
+    html += `
+
+    <button class="btn btn-sm btn-success mb-2"
+
+    onclick="newRecord(${i})">
+
+    + New
+
+    </button>
+
+    `;
+
+}
+
+c.records.forEach(r=>{
+
+html+=`
+
+<div class="task"
+
+draggable="true"
+
+ondragstart="drag(event,'${r.id}')"
+
+onclick="openForm(${i},'${r.id}')">
+
+#${r.id} - ${r.title}
+
+</div>
+
+`;
+
+});
+
+html+="</div>";
+
+board.innerHTML+=html;
+
+});
+
+}
+
+function newRecord(col){
+
+let id = prompt("Enter Manual ID for this entry");
+
+if(!id){
+
+    alert("ID is required");
+
+    return;
+
+}
+
+id = id.trim().toUpperCase();
+
+if(!/^[A-Z0-9\-]+$/.test(id)){
+
+    alert("Only letters, numbers and - allowed");
+
+    return;
+
+}
+
+for(let c of columns){
+
+    for(let r of c.records){
+
+        if(r.id == id){
+
+            alert("This ID already exists!");
+
+            return;
+
+        }
+
+    }
+
+}
+
+columns[col].records.push({
+
+    id:id,
+
+    title:"New Entry"
+
+});
+
+render();
+
+}
+
+function drag(e,id){
+
+    dragId=id;
+
+}
+
+function allow(e){
+
+    e.preventDefault();
+
+}
+
+function drop(e,col){
+
+e.preventDefault();
+
+columns.forEach(c=>{
+
+    c.records=c.records.filter(r=>r.id!=dragId);
+
+});
+
+columns[col].records.push({
+
+    id:dragId,
+
+    title:"Moved Item"
+
+});
+
+render();
+
+}
+
+async function openForm(col,id){
+
+    let f = columns[col];
+
+    let modal = document.getElementById("stageModal");
+
+document.getElementById("mTitle").innerText =
+
+"Form: " + f.name;
+
+let body = "";
+
+for(let stage of f.stages){
+
+    let r = await fetch(`/api/stage/${stage.id}/fields/`);
+
+    if(!r.ok){
+
+        continue;
+
+    }
+
+    let d = await r.json();
+
+body += `
+
+<div class="card mb-3">
+
+    <div class="card-header fw-bold bg-light">
+
+        Stage: ${d.stage}
+
+        </div>
+
+        <div class="card-body">
+
+            `;
+
+d.fields.forEach(field=>{
+
+if(field.type=="text" ||
+
+field.type=="number" ||
+
+field.type=="date"){
+
+    body += `
+
+    <div class="mb-2">
+
+        <label>${field.label}</label>
+
+        <input class="form-control">
+
+        </div>
+
+        `;
+
+    }
+
+if(field.type=="textarea"){
+
+    body += `
+
+    <div class="mb-2">
+
+        <label>${field.label}</label>
+
+        <textarea class="form-control"></textarea>
+
+        </div>
+
+        `;
+
+    }
+
+if(field.type=="select"){
+
+    let opts="";
+
+    if(field.options){
+
+        field.options.split(",").forEach(o=>{
+
+            opts+=`<option>${o}</option>`;
+
+        });
+
+    }
+
+body += `
+
+<div class="mb-2">
+
+    <label>${field.label}</label>
+
+    <select class="form-select">
+
+        ${opts}
+
+        </select>
+
+        </div>
+
+        `;
+
+    }
+
+if(field.type=="table"){
+
+    body += `
+
+    <div class="mb-2">
+
+        <label class="fw-bold">${field.label}</label>
+
+        <table class="table table-bordered">
+
+            <tr>
+
+                `;
+
+field.table_columns.forEach(c=>{
+
+    body+=`<th>${c}</th>`;
+
+});
+
+body+=`</tr>`;
+
+field.table_rows.forEach(()=>{
+
+    body+=`<tr>`;
+
+        field.table_columns.forEach(()=>{
+
+            body+=`<td><input class="form-control"></td>`;
+
+        });
+
+        body+=`</tr>`;
+
+    });
+
+body+=`
+
+</table>
+
+</div>
+
+`;
+
+}
+
+}); 
+
+body += `
+
+</div>
+
+</div>
+
+`;
+
+} 
+
+body += `
+
+<div class="text-end">
+
+    <button class="btn btn-primary">
+
+        Save Stage Data
+
+        </button>
+
+        </div>
+
+        `;
+
+
+        document.getElementById("mBody").innerHTML = body;
+
+        modal.style.display="block";
+
+}
+
+</script>
+
+{% endblock %}

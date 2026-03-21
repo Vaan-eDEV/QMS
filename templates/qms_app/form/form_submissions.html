@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-5">
+
+    <h2>Form: {{ form_obj.name }}</h2>
+
+    {% if submissions %}
+
+    <ul class="list-group">
+
+        {% for submission in submissions %}
+
+        <li class="list-group-item">
+
+            {% for key, value in submission.data.items %}
+
+            <strong>{{ key }}:</strong> {{ value }}<br>
+
+            {% endfor %}
+
+        </li>
+
+        {% endfor %}
+
+    </ul>
+
+    {% else %}
+
+    <p>No submissions yet for this form.</p>
+
+    {% endif %}
+
+    <a href="{% url 'submitted_forms_list' %}" class="btn btn-secondary mt-3">← Back to Forms</a>
+
+</div>
+
+{% endblock %}

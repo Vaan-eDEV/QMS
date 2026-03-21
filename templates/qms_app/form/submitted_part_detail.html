@@ -1,0 +1,361 @@
+{% extends 'base.html' %}
+{% block content %}
+{% load custom_filters %}
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap');
+
+    body {
+        background: #d1d5db;
+    }
+
+    /* ===== A4 PAPER ===== */
+    .a4-sheet {
+        width: 210mm;
+        min-height: 297mm;
+        margin: 40px auto;
+        background: #fff;
+        padding: 30mm 25mm;
+        box-shadow: 0 0 15px rgba(0, 0, 0, 0.15);
+        position: relative;
+        font-family: "Times New Roman", serif;
+    }
+
+    /* ===== HEADER ===== */
+    .doc-title {
+        text-align: center;
+        font-size: 22px;
+        font-weight: bold;
+        margin-bottom: 15px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .doc-meta {
+        text-align: center;
+        font-size: 13px;
+        margin-bottom: 30px;
+        line-height: 1.8;
+    }
+
+    /* ===== FORM SECTION ===== */
+    .form-title {
+        font-size: 16px;
+        font-weight: bold;
+        margin-top: 30px;
+        margin-bottom: 10px;
+        text-transform: uppercase;
+        border-bottom: 1px solid #000;
+        padding-bottom: 4px;
+    }
+
+    .stage-title {
+        font-size: 14px;
+        font-weight: bold;
+        margin: 20px 0 10px;
+        text-transform: uppercase;
+    }
+
+    /* ===== FIELD ROW ===== */
+    .field-row {
+        display: flex;
+        margin-bottom: 12px;
+        font-size: 13px;
+    }
+
+    .field-label {
+        width: 30%;
+        font-weight: bold;
+    }
+
+    .field-value {
+        width: 70%;
+        padding-bottom: 2px;
+        /* Removed underline */
+    }
+
+    /* ===== TABLE ===== */
+    .data-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 15px 0 20px;
+        font-size: 12px;
+    }
+
+    .data-table th,
+    .data-table td {
+        border: 1px solid #000;
+        padding: 6px;
+        text-align: center;
+    }
+
+    .data-table th {
+        background: #f3f4f6;
+    }
+
+    /* ===== SIGNATURE SECTION ===== */
+    .signature-area {
+        margin-top: 80px;
+        display: flex;
+        justify-content: space-between;
+    }
+
+    .sig-box {
+        width: 45%;
+        text-align: center;
+    }
+
+    .sig-name {
+        font-family: 'Great Vibes', cursive;
+        font-size: 22px;
+        margin-bottom: 4px;
+    }
+
+    .sig-meta {
+        font-size: 11px;
+        margin-bottom: 10px;
+    }
+
+    .sig-label {
+        font-size: 12px;
+        font-weight: bold;
+        letter-spacing: 1px;
+        margin-top: 5px;
+    }
+
+    /* Buttons */
+    .sig-btn {
+        margin-top: 15px;
+        padding: 8px 18px;
+        border: none;
+        font-size: 12px;
+        cursor: pointer;
+    }
+
+    .sig-btn.green {
+        background: #16a34a;
+        color: #fff;
+    }
+
+    .sig-btn.yellow {
+        background: #facc15;
+        color: #000;
+    }
+
+    /* ===== MODAL (UNCHANGED) ===== */
+    .modal {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, .4);
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+    }
+
+    .modal-box {
+        background: #fff;
+        padding: 22px;
+        border-radius: 8px;
+        width: 300px;
+    }
+</style>
+
+
+<div class="a4-sheet">
+
+    <a href="javascript:history.back()" style="font-size:12px;">← Back</a>
+
+    <div class="doc-title">Part Submission Details</div>
+
+    <div class="doc-meta">
+        Company: <strong>{{ part.batch.company_name }}</strong><br>
+        Batch: <strong>{{ part.batch.batch_id }}</strong><br>
+        Part ID: <strong>{{ part.part_id }}</strong><br>
+        Created: {{ part.created_at|date:"d M Y, H:i" }}
+    </div>
+
+    {% for form_name, stages in display_forms.items %}
+
+    <div class="form-title">{{ form_name }}</div>
+
+    {% for stage in stages %}
+
+    <div class="stage-title">{{ stage.stage_name }}</div>
+
+    {% for field in stage.fields %}
+    {% if field.type == "field" %}
+    <div class="field-row">
+        <div class="field-label">{{ field.label }}</div>
+        <div class="field-value">
+            {% if field.is_image %}
+            {% if field.value %}
+            <img src="/media/{{ field.value }}" style="max-width:150px;">
+            {% else %}
+            —
+            {% endif %}
+            {% else %}
+            {{ field.value|default:"—" }}
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+    {% endfor %}
+
+    {% for field in stage.fields %}
+    {% if field.type == "table" %}
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>{{ field.row_header|default:"" }}</th>
+                {% for col in field.columns %}
+                <th>{{ col.name }}</th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in field.rows %}
+            <tr>
+                <td><strong>{{ row.name }}</strong></td>
+                {% for cell in row.cells %}
+                <td>
+                    {% if cell.type == "signature" %}
+                    <div class="border rounded p-2 bg-light text-center">
+                        <strong class="signature-name">{{ cell.signed_by }}</strong><br>
+                        <small>{{ cell.signed_at }}</small><br>
+                        <span class="text-primary">
+                            Ref: {{ cell.reference_code }}
+                        </span>
+                    </div>
+                    {% else %}
+                    {{ cell.value }}
+                    {% endif %}
+                </td>
+                {% endfor %}
+            </tr>
+            {% endfor %}
+        </tbody>
+        <tfoot>
+            <tr>
+                <td><strong>Total</strong></td>
+
+                {% for col in field.columns %}
+                <td>
+                    {% if col.is_total %}
+                    {{ field.totals|get_item:col.name }}
+                    {% endif %}
+                </td>
+                {% endfor %}
+            </tr>
+        </tfoot>
+    </table>
+    {% endif %}
+    {% endfor %}
+
+    {% endfor %}
+    {% endfor %}
+
+    <!-- SIGNATURE SECTION -->
+    <!-- <div class="signature-area">
+
+<div id="preparedControl" class="sig-box">
+    {% if prepared_sig %}
+        <div class="sig-name">{{ prepared_sig.display_name }}</div>
+        <div class="sig-meta">
+            {{ prepared_sig.verified_at|date:"d M Y H:i" }}<br>
+            {{ prepared_sig.reference_code }}
+        </div>
+        <div class="sig-label">Prep.</div>
+    {% else %}
+        <button class="sig-btn green" onclick="openSign('prepared')">
+            Prep.
+        </button>
+    {% endif %}
+</div>
+
+<div id="approvedControl" class="sig-box">
+    {% if approved_sig %}
+        <div class="sig-name">{{ approved_sig.display_name }}</div>
+        <div class="sig-meta">
+            {{ approved_sig.verified_at|date:"d M Y H:i" }}<br>
+            {{ approved_sig.reference_code }}
+        </div>
+        <div class="sig-label">Appr.</div>
+    {% else %}
+        <button class="sig-btn yellow" onclick="openSign('approved')">
+            Appr.
+        </button>
+    {% endif %}
+</div>
+
+</div> -->
+
+</div>
+
+
+<!-- SIGNATURE MODAL (UNCHANGED) -->
+<div id="sigModal" class="modal">
+    <div class="modal-box">
+        <h6>Confirm Password</h6>
+        <input id="sigPass" type="password" class="form-control mt-2">
+        <button class="btn btn-primary w-100 mt-3" onclick="submitSignature()">
+            Sign
+        </button>
+    </div>
+</div>
+
+<script>
+    let currentSlot = null;
+
+    function openSign(slot) {
+        currentSlot = slot;
+        document.getElementById("sigModal").style.display = "flex";
+    }
+
+    function submitSignature() {
+
+        const password = document.getElementById("sigPass").value;
+
+        fetch("/verify-signature/", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": "{{ csrf_token }}"
+            },
+            body: JSON.stringify({
+                password: password,
+                slot: currentSlot
+            })
+        })
+            .then(response => response.json())
+            .then(data => {
+
+                if (!data.ok) {
+                    alert("Wrong password");
+                    return;
+                }
+
+                const html = `
+            <div class="sig-name">${data.name}</div>
+            <div class="sig-meta">
+                ${data.time}<br>
+                ${data.code}
+            </div>
+            <div class="sig-label">
+                ${currentSlot === 'prepared' ? 'Prep.' : 'Appr.'}
+            </div>
+        `;
+
+                document.getElementById(currentSlot + "Control").innerHTML = html;
+
+                document.getElementById("sigModal").style.display = "none";
+                document.getElementById("sigPass").value = "";
+            })
+            .catch(error => {
+                console.error("Signature error:", error);
+                alert("Something went wrong");
+            });
+    }
+</script>
+
+
+{% endblock %}

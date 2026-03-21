@@ -1,0 +1,250 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<div class="container mt-5">
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2>Edit Field — {{ field.label }}</h2>
+        <a href="{% url 'add_field' stage.id %}" style="color: rgb(141, 140, 140);">
+            ← Back to Fields
+        </a>
+    </div>
+
+    <form method="post" onsubmit="prepareTableData()">
+        {% csrf_token %}
+
+        <!-- LABEL -->
+        <div class="mb-3">
+            <input type="text" name="label" class="form-control"
+                   value="{{ field.label }}" required>
+        </div>
+
+        <!-- FIELD TYPE -->
+        <div class="mb-3">
+            <select name="field_type" id="fieldType"
+                    class="form-select"
+                    onchange="handleFieldType(this.value)">
+
+                <option value="text" {% if field.field_type == 'text' %}selected{% endif %}>Text</option>
+                <option value="textarea" {% if field.field_type == 'textarea' %}selected{% endif %}>Textarea</option>
+                <option value="number" {% if field.field_type == 'number' %}selected{% endif %}>Number</option>
+                <option value="date" {% if field.field_type == 'date' %}selected{% endif %}>Date</option>
+                <option value="select" {% if field.field_type == 'select' %}selected{% endif %}>Select</option>
+                <option value="checkbox" {% if field.field_type == 'checkbox' %}selected{% endif %}>Checkbox</option>
+                <option value="table" {% if field.field_type == 'table' %}selected{% endif %}>Table</option>
+
+            </select>
+        </div>
+
+        <!-- OPTIONS -->
+        <div class="mb-3" id="optionsBox" style="display:none;">
+            <input type="text" name="options" class="form-control"
+                   value="{{ field.options }}"
+                   placeholder="Comma-separated options">
+        </div>
+
+        <!-- TABLE BUILDER -->
+        <input type="hidden" name="table_columns" id="tableColumnsHidden">
+        <input type="hidden" name="table_rows" id="tableRowsHidden">
+
+        <div id="tableBuilder" style="display:none;">
+            <div class="border p-3 mb-3">
+
+                <table class="table table-bordered" id="editTable">
+
+                    <!-- HEADER -->
+                    <thead>
+                        <tr id="headerRow">
+                            <th style="width:200px;">Row Detail</th>
+
+                            {% for col in field.table_columns %}
+                            <th>
+
+                                <!-- COLUMN NAME -->
+                                <input type="text" class="form-control column-name mb-1"
+                                       value="{{ col.name }}">
+
+                                <!-- COLUMN TYPE -->
+                                <select class="form-select column-type mb-1"
+                                        onchange="toggleOptions(this)">
+                                    <option value="text" {% if col.type == "text" %}selected{% endif %}>Text</option>
+                                    <option value="number" {% if col.type == "number" %}selected{% endif %}>Number</option>
+                                    <option value="percentage" {% if col.type == "percentage" %}selected{% endif %}>Percentage</option>
+                                    <option value="formula" {% if col.type == "formula" %}selected{% endif %}>Formula</option>
+                                    <option value="select" {% if col.type == "select" %}selected{% endif %}>Select</option>
+                                    <option value="checkbox" {% if col.type == "checkbox" %}selected{% endif %}>Checkbox</option>
+                                </select>
+
+                                <!-- COLUMN OPTIONS -->
+                                <input type="text"
+                                       class="form-control column-options mb-1"
+                                       placeholder="Options (comma separated)"
+                                       value="{% if col.options %}{{ col.options|join:',' }}{% endif %}"
+                                       style="display:none;">
+
+                                <!-- FORMULA -->
+                                <input type="text"
+                                       class="form-control formula-input mb-1"
+                                       placeholder="Formula (e.g: qty*price)"
+                                       value="{{ col.formula|default:'' }}">
+
+                                <!-- TOTAL -->
+                                <div class="form-check">
+                                    <input class="form-check-input is-total"
+                                           type="checkbox"
+                                           {% if col.is_total %}checked{% endif %}>
+                                    <label class="form-check-label">Total</label>
+                                </div>
+
+                            </th>
+                            {% endfor %}
+                        </tr>
+                    </thead>
+
+                    <!-- BODY -->
+                    <tbody id="tableBody">
+
+                        {% for row in field.table_rows %}
+                        <tr>
+
+                            <td>
+                                <input type="text"
+                                       class="form-control row-name"
+                                       value="{{ row.name }}">
+                            </td>
+
+                            {% for cell in row.cells %}
+                            <td>
+
+                                <!-- CELL TYPE -->
+                                <select class="form-select cell-type mb-1"
+                                        onchange="toggleCellOptions(this)">
+                                    <option value="text" {% if cell.type == "text" %}selected{% endif %}>Text</option>
+                                    <option value="number" {% if cell.type == "number" %}selected{% endif %}>Number</option>
+                                    <option value="date" {% if cell.type == "date" %}selected{% endif %}>Date</option>
+                                    <option value="textarea" {% if cell.type == "textarea" %}selected{% endif %}>Textarea</option>
+                                    <option value="select" {% if cell.type == "select" %}selected{% endif %}>Select</option>
+                                    <option value="checkbox" {% if cell.type == "checkbox" %}selected{% endif %}>Checkbox</option>
+                                    <option value="signature" {% if cell.type == "signature" %}selected{% endif %}>Signature</option>
+                                </select>
+
+                                <!-- CELL OPTIONS -->
+                                <input type="text"
+                                       class="form-control cell-options"
+                                       placeholder="Options (comma separated)"
+                                       value="{% if cell.options %}{{ cell.options|join:',' }}{% endif %}"
+                                       style="display:none;">
+
+                            </td>
+                            {% endfor %}
+
+                        </tr>
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+        </div>
+
+        <button class="btn btn-primary">Save Changes</button>
+
+    </form>
+</div>
+
+<script>
+
+function handleFieldType(type){
+    document.getElementById("optionsBox").style.display =
+        (type === "select" || type === "checkbox") ? "block" : "none";
+
+    document.getElementById("tableBuilder").style.display =
+        (type === "table") ? "block" : "none";
+}
+
+function toggleOptions(select){
+    const input = select.closest("th").querySelector(".column-options");
+    if(!input) return;
+
+    input.style.display =
+        (select.value === "select" || select.value === "checkbox") ? "block" : "none";
+}
+
+function toggleCellOptions(select){
+    const input = select.closest("td").querySelector(".cell-options");
+    if(!input) return;
+
+    input.style.display =
+        (select.value === "select" || select.value === "checkbox") ? "block" : "none";
+}
+
+function prepareTableData(){
+
+    if(document.getElementById("fieldType").value !== "table") return;
+
+    const columns = [];
+    const rows = [];
+
+    document.querySelectorAll("#headerRow th").forEach((th,i)=>{
+        if(i===0) return;
+
+        const optionsInput = th.querySelector(".column-options");
+
+        columns.push({
+            name: th.querySelector(".column-name").value,
+            type: th.querySelector(".column-type").value,
+            formula: th.querySelector(".formula-input").value,
+            is_total: th.querySelector(".is-total").checked,
+            options: optionsInput ? optionsInput.value.split(",").map(x=>x.trim()) : [],
+            editable: true
+        });
+    });
+
+    document.querySelectorAll("#tableBody tr").forEach(tr=>{
+
+        const rowName = tr.querySelector(".row-name").value;
+
+        const cells = [];
+
+        tr.querySelectorAll("td").forEach((td,i)=>{
+            if(i===0) return;
+
+            const select = td.querySelector(".cell-type");
+            const optionsInput = td.querySelector(".cell-options");
+
+            cells.push({
+                type: select.value,
+                value: "",
+                options: optionsInput
+                    ? optionsInput.value.split(",").map(x=>x.trim())
+                    : []
+            });
+        });
+
+        rows.push({ name: rowName, cells: cells });
+    });
+
+    document.getElementById("tableColumnsHidden").value = JSON.stringify(columns);
+    document.getElementById("tableRowsHidden").value = JSON.stringify(rows);
+}
+
+document.addEventListener("DOMContentLoaded", function(){
+
+    handleFieldType(document.getElementById("fieldType").value);
+
+    document.querySelectorAll(".column-type").forEach(el=>{
+        toggleOptions(el);
+        el.addEventListener("change", ()=>toggleOptions(el));
+    });
+
+    document.querySelectorAll(".cell-type").forEach(el=>{
+        toggleCellOptions(el);
+        el.addEventListener("change", ()=>toggleCellOptions(el));
+    });
+
+});
+
+</script>
+
+{% endblock %}

@@ -1,0 +1,560 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<style>
+    body {
+        background: #f4f6f9;
+        font-family: "Inter", system-ui;
+    }
+
+    .card {
+        border-radius: 12px;
+        border: 1px solid #e5e7eb;
+    }
+
+    .substage-title {
+        font-size: 15px;
+        font-weight: 600;
+        color: #2563eb;
+        margin-top: 20px;
+    }
+
+    .field-type {
+        font-size: 12px;
+        color: #6b7280;
+    }
+
+    .excel-wrapper {
+        overflow-x: auto;
+        border: 2px solid #111;
+        border-radius: 6px;
+        background: white;
+    }
+
+    .excel-table {
+        border-collapse: collapse;
+        width: 100%;
+    }
+
+    .excel-table th,
+    .excel-table td {
+        border: 1px solid #d1d5db;
+        padding: 6px;
+        text-align: center;
+        position: relative;
+        min-width: 140px;
+    }
+
+    .excel-table th {
+        background: #f1f5f9;
+        font-weight: 600;
+    }
+
+    .cell-input {
+        width: 100%;
+        border: none;
+        text-align: center;
+        background: transparent;
+    }
+
+    .cell-input:focus {
+        outline: none;
+        background: #e0f2fe;
+    }
+
+    .delete-btn {
+        position: absolute;
+        top: 3px;
+        right: 5px;
+        border: none;
+        background: none;
+        color: #ef4444;
+        font-size: 14px;
+        cursor: pointer;
+    }
+
+    .delete-btn:hover {
+        color: #b91c1c;
+    }
+
+    .option-input {
+        width: 100%;
+        margin-top: 4px;
+        font-size: 12px;
+        border: 1px solid #e5e7eb;
+        padding: 2px;
+    }
+
+    .builder-toolbar {
+        margin-top: 10px;
+        display: flex;
+        gap: 10px;
+    }
+</style>
+
+<div class="container mt-5">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4>{{ stage.form.name }} — {{ stage.name }}</h4>
+        <a href="{% url 'add_stage' stage.form.id %}">← Back to Stages</a>
+    </div>
+
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-white"><strong>Add New Field / Table</strong></div>
+
+        <div class="card-body">
+
+            <form method="post" onsubmit="prepareTableData()">
+                {% csrf_token %}
+
+                <input type="hidden" name="field_type" id="fieldType" value="text">
+                <input type="hidden" name="table_columns" id="tableColumnsHidden">
+                <input type="hidden" name="table_rows" id="tableRowsHidden">
+                <input type="hidden" name="table_row_header" id="tableRowHeaderHidden">
+
+
+                <div class="row g-3">
+
+                    <div class="col-md-4">
+                        <label>Subheading</label>
+                        <select name="sub_stage" class="form-select">
+                            <option value="">— No Subheading —</option>
+                            {% for sub in sub_stages %}
+                            <option value="{{ sub.id }}">{{ sub.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label>New Subheading</label>
+                        <input type="text" name="new_sub_stage" class="form-control">
+                    </div>
+
+                    <div class="col-md-4">
+                        <label>Field Label</label>
+                        <input type="text" name="label" class="form-control" required>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label>Field Type</label>
+                        <select class="form-select" onchange="handleFieldType(this.value)">
+                            <option value="text">Text</option>
+                            <option value="textarea">Textarea</option>
+                            <option value="number">Number</option>
+                            <option value="date">Date</option>
+                            <option value="select">Select</option>
+                            <option value="checkbox">Checkbox</option>
+                            <option value="image_upload">Image Upload</option>
+
+                        </select>
+                    </div>
+
+                    <div class="col-md-4" id="optionsBox" style="display:none;">
+                        <label>Options</label>
+                        <input type="text" name="options" class="form-control">
+                    </div>
+
+                    <div class="col-md-4 d-flex align-items-end">
+                        <button type="button" class="btn btn-outline-primary w-100" onclick="enableTableMode()">➕ Create
+                            Table</button>
+                    </div>
+
+                </div>
+
+
+                <!-- ================= TABLE BUILDER ================= -->
+
+                <div id="excelBuilder" style="display:none;" class="mt-4">
+
+                    <div class="excel-wrapper">
+
+                        <table class="excel-table" id="dynamicTable">
+
+                            <thead>
+
+                                <tr id="headerRow">
+
+                                    <th>
+                                        <input type="text" id="topLeftHeader" class="cell-input"
+                                            placeholder="Row Header">
+                                    </th>
+
+                                </tr>
+
+                            </thead>
+
+                            <tbody id="tableBody"></tbody>
+
+                        </table>
+
+                    </div>
+
+
+                    <div class="builder-toolbar">
+
+                        <button type="button" class="btn btn-outline-primary btn-sm" onclick="addColumn()">➕
+                            Column</button>
+
+                        <button type="button" class="btn btn-outline-success btn-sm" onclick="addRow()">➕ Row</button>
+
+                    </div>
+
+                </div>
+
+
+                <div class="mt-4">
+                    <button type="submit" class="btn btn-primary">Save</button>
+                </div>
+
+            </form>
+        </div>
+    </div>
+
+
+    <!-- ================= EXISTING FIELDS ================= -->
+
+    <div class="card shadow-sm">
+        <div class="card-header bg-white"><strong>Existing Fields</strong></div>
+
+        <div class="card-body">
+
+            {% if main_fields %}
+            <h6 class="substage-title">Main Fields</h6>
+
+            {% for field in main_fields %}
+            <div class="mb-2">
+                <strong>{{ field.label }}</strong>
+                <span class="field-type">({{ field.field_type|title }})</span>
+
+                <a href="{% url 'edit_field' field.id %}" class="btn btn-sm btn-warning">Edit</a>
+
+               <form method="POST" action="{% url 'delete_field' field.id %}" style="display:inline;">
+    {% csrf_token %}
+    <button type="submit"
+            class="btn btn-sm btn-danger"
+            onclick="return confirm('Are you sure you want to delete this field?')">
+        Delete
+    </button>
+</form>
+            </div>
+            {% endfor %}
+
+            {% endif %}
+
+
+            {% for sub in sub_stages %}
+
+            <h6 class="substage-title">{{ sub.name }}</h6>
+
+            {% for field in sub.fields.all %}
+            <div class="mb-2">
+
+                <strong>{{ field.label }}</strong>
+                <span class="field-type">({{ field.field_type|title }})</span>
+
+                <a href="{% url 'edit_field' field.id %}" class="btn btn-sm btn-warning">Edit</a>
+
+                <a href="{% url 'delete_field' field.id %}" class="btn btn-sm btn-danger">Delete</a>
+
+            </div>
+            {% endfor %}
+
+            {% endfor %}
+
+        </div>
+    </div>
+
+</div>
+
+
+<script>
+
+    let columnCount = 0;
+
+
+    function handleFieldType(type) {
+        document.getElementById("fieldType").value = type;
+
+        document.getElementById("excelBuilder").style.display = "none";
+
+        document.getElementById("optionsBox").style.display =
+            (type === "select" || type === "checkbox") ? "block" : "none";
+    }
+
+
+    function enableTableMode() {
+
+        document.getElementById("fieldType").value = "table";
+
+        document.getElementById("optionsBox").style.display = "none";
+
+        document.getElementById("excelBuilder").style.display = "block";
+
+    }
+
+
+    function addColumn() {
+
+        columnCount++;
+
+        const th = document.createElement("th");
+
+        th.innerHTML = `
+<input type="text" class="column-name cell-input" placeholder="Column Name">
+
+<select class="column-type cell-input" style="margin-top:4px;">
+    <option value="text">Text</option>
+    <option value="number">Number</option>
+    <option value="percentage">Percentage</option>
+    <option value="formula">Formula</option>
+</select>
+
+<input type="text"
+class="column-formula"
+placeholder="Formula (a+b)"
+style="display:none; margin-top:4px;">
+
+<label style="font-size:12px;">
+<input type="checkbox" class="column-total"> Total
+</label>
+
+<button class="delete-btn" onclick="deleteColumn(this)">✖</button>
+`;
+
+        document.getElementById("headerRow").appendChild(th);
+
+
+        document.querySelectorAll("#tableBody tr").forEach(tr => {
+            tr.appendChild(createDropdownCell());
+        });
+
+    }
+
+
+    function addRow() {
+
+        if (columnCount === 0) {
+            alert("Add at least one column first.");
+            return;
+        }
+
+        const tr = document.createElement("tr");
+
+
+        const firstCell = document.createElement("td");
+
+        firstCell.innerHTML = `
+<input type="text" class="row-name cell-input" placeholder="Row Name">
+<button class="delete-btn" onclick="deleteRow(this)">✖</button>
+`;
+
+        tr.appendChild(firstCell);
+
+
+        for (let i = 0; i < columnCount; i++) {
+            tr.appendChild(createDropdownCell());
+        }
+
+        document.getElementById("tableBody").appendChild(tr);
+
+    }
+
+
+    function deleteRow(btn) {
+        btn.closest("tr").remove();
+    }
+
+
+    function deleteColumn(btn) {
+
+        const th = btn.closest("th");
+
+        const index =
+            Array.from(th.parentNode.children).indexOf(th);
+
+        th.remove();
+
+        document.querySelectorAll("#tableBody tr").forEach(tr => {
+            tr.children[index].remove();
+        });
+
+        columnCount--;
+
+    }
+
+
+    function createDropdownCell() {
+
+        const td = document.createElement("td");
+
+        td.innerHTML = `
+<select class="cell-type cell-input" onchange="toggleOptions(this)">
+<option value="text">Text</option>
+<option value="number">Number</option>
+<option value="percentage">Percentage</option>
+<option value="formula">Formula</option>
+<option value="date">Date</option>
+<option value="select">Select</option>
+<option value="checkbox">Checkbox</option>
+<option value="signature">Signature</option>
+</select>
+
+<input type="text"
+class="option-input"
+placeholder="Options (comma separated)"
+style="display:none;">
+
+<input type="text"
+class="formula-input"
+placeholder="Formula (e.g. a+b)"
+style="display:none; margin-top:4px;">
+
+<label style="font-size:12px;">
+<input type="checkbox" class="is-total"> Total
+</label>
+`;
+
+        return td;
+    }
+
+
+    function toggleOptions(select) {
+
+        const td = select.parentElement;
+
+        const optionInput = td.querySelector(".option-input");
+        const formulaInput = td.querySelector(".formula-input");
+
+        optionInput.style.display =
+            (select.value === "select" || select.value === "checkbox")
+                ? "block"
+                : "none";
+
+        formulaInput.style.display =
+            (select.value === "formula")
+                ? "block"
+                : "none";
+    }
+
+
+    function prepareTableData() {
+
+        const columns = [];
+        const rows = [];
+
+        const topLeftHeader =
+            document.getElementById("topLeftHeader").value || "";
+
+        document.getElementById("tableRowHeaderHidden").value =
+            topLeftHeader;
+
+
+        /* ===========================
+           ✅ FIXED: BUILD COLUMNS FROM HEADER
+        =========================== */
+
+        const headerCells = document.querySelectorAll("#headerRow th");
+
+        headerCells.forEach((th, index) => {
+
+            if (index === 0) return;
+
+            const name =
+                th.querySelector(".column-name")?.value.trim() || "";
+
+            if (!name) return;
+
+            const type =
+                th.querySelector(".column-type")?.value || "text";
+
+            const formula =
+                th.querySelector(".column-formula")?.value.trim() || "";
+
+            const is_total =
+                th.querySelector(".column-total")?.checked || false;
+
+            columns.push({
+                name: name,
+                type: type,
+                formula: formula,
+                is_total: is_total
+            });
+
+        });
+
+
+        /* ===========================
+           BUILD ROWS (UNCHANGED)
+        =========================== */
+
+        document.querySelectorAll("#tableBody tr").forEach((tr) => {
+
+            const rowName =
+                tr.querySelector(".row-name")?.value.trim() || "";
+
+            if (!rowName) return;
+
+            const cells = [];
+
+            tr.querySelectorAll("td").forEach((td, i) => {
+
+                if (i === 0) return;
+
+                const select = td.querySelector(".cell-type");
+                const optionInput = td.querySelector(".option-input");
+
+                const type = select ? select.value : "text";
+
+                const options = optionInput && optionInput.value
+                    ? optionInput.value.split(",").map(x => x.trim()).filter(x => x)
+                    : [];
+                
+                const formulaInput = td.querySelector(".formula-input");
+                cells.push({
+                    type: type,
+                    options: options,
+                    value: "",
+                    formula: formulaInput ? formulaInput.value.trim() : ""
+                });
+
+            });
+
+            rows.push({
+                name: rowName,
+                cells: cells
+            });
+
+        });
+
+
+        /* ===========================
+           SAVE
+        =========================== */
+
+        document.getElementById("tableColumnsHidden").value =
+            JSON.stringify(columns);
+
+        document.getElementById("tableRowsHidden").value =
+            JSON.stringify(rows);
+
+    }
+
+
+    /* ===========================
+       HEADER FORMULA TOGGLE
+    =========================== */
+
+    document.addEventListener("change", function(e){
+        if(e.target.classList.contains("column-type")){
+            const th = e.target.closest("th");
+            const formulaInput = th.querySelector(".column-formula");
+
+            formulaInput.style.display =
+                (e.target.value === "formula") ? "block" : "none";
+        }
+    });
+
+</script>
+
+{% endblock %}

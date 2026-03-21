@@ -1,0 +1,42 @@
+<ul class="folder-nested">
+    {% for folder in folders %}
+        <li>
+
+            <div class="folder-item">
+
+                <!-- Toggle Arrow -->
+                {% if folder.children.exists %}
+                    <span class="folder-toggle"
+                          onclick="toggleFolder(this)">
+                        ▸
+                    </span>
+                {% else %}
+                    <span class="folder-spacer"></span>
+                {% endif %}
+
+                <!-- Folder Name -->
+                <a href="?folder={{ folder.id }}"
+                   class="folder-link {% if selected_folder and selected_folder.id == folder.id %}folder-active{% endif %}">
+                    📁 {{ folder.name }}
+                </a>
+
+                <!-- Delete Button (hover visible) -->
+                {% if request.user.is_superuser %}
+                <span class="folder-delete"
+                      onclick="deleteFolder({{ folder.id }}, '{{ folder.name }}')">
+                    ✕
+                </span>
+                {% endif %}
+
+            </div>
+
+            <!-- Children -->
+            {% if folder.children.exists %}
+                <div class="folder-children" style="display:none;">
+                    {% include "qms_app/form/_folder_tree.html" with folders=folder.children.all selected_folder=selected_folder %}
+                </div>
+            {% endif %}
+
+        </li>
+    {% endfor %}
+</ul>

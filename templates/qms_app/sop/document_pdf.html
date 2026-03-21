@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>{{ doc.title }} - PDF</title>
+
+<style>
+body {
+    font-family: "Inter", Arial, sans-serif;
+    background: #fff;
+}
+
+.view-doc-page {
+    width: 210mm;
+    min-height: 297mm;
+    margin: 0 auto;
+    padding: 25mm 20mm;
+    box-sizing: border-box;
+    page-break-after: always;
+}
+
+.view-doc-page table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.view-doc-page th,
+.view-doc-page td {
+    border: 1px solid #ccc;
+    padding: 6px;
+}
+
+@page {
+    size: A4;
+    margin: 0;
+}
+</style>
+</head>
+
+<body>
+
+<div style="text-align:center; margin-bottom:12px;">
+    <h2>{{ doc.title }}</h2>
+    <p style="font-size:13px; color:#555;">Generated on {{ now|date:"d-m-Y H:i" }}</p>
+
+    <button onclick="window.print()">Download PDF</button>
+</div>
+
+{% for page in html_pages %}
+    <div class="view-doc-page">
+        {{ page|safe }}
+    </div>
+{% endfor %}
+
+</body>
+</html>

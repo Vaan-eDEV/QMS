@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h3>Workflows</h3>
+<!-- List of Batches -->
+<ul class="list-group mt-3">
+{% for b in batches %}
+    <li class="list-group-item d-flex justify-content-between align-items-center">
+
+        <div>
+            <strong>{{ b.form__name }}</strong><br>
+            <small class="text-muted">Batch: {{ b.submission_batch }}</small>
+        </div>
+
+        <a href="{% url 'view_form_batch' b.form_id b.submission_batch %}"
+           class="btn btn-sm btn-primary">
+            Open Workflow
+        </a>
+
+    </li>
+{% empty %}
+    <li class="list-group-item text-muted">
+        No workflows found
+    </li>
+{% endfor %}
+</ul>
+
+{% endblock %}
+<!-- Batch Details -->
+{% for b in batches %}
+    <li class="list-group-item d-flex justify-content-between align-items-center">
+        <div>
+            <strong>{{ b.form__name }}</strong><br>
+            <small class="text-muted">Batch: {{ b.submission_batch }}</small>
+        </div>
+
+        <a href="{% url 'view_form_batch' b.form_id b.submission_batch %}"
+           class="btn btn-sm btn-primary">
+            Open Workflow
+        </a>
+    </li>
+{% empty %}
+    <li class="list-group-item text-muted">
+        No workflow found
+    </li>
+{% endfor %}
+

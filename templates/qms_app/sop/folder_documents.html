@@ -1,0 +1,277 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<style>
+
+/* ===== GLOBAL TEXT SIZE ===== */
+body {
+    font-size: 14px;
+}
+
+h4 {
+    font-size: 17px;
+}
+
+/* ===== ROW STYLE ===== */
+.file-row {
+    border-bottom: 1px solid #e5e7eb;
+    transition: background .12s;
+    font-size: 13px;
+    cursor: pointer;
+}
+
+.file-row:hover {
+    background: #f1f5f9;
+}
+
+/* ===== FILE ICONS ===== */
+.file-icon {
+    font-size: 18px;
+}
+
+/* ===== FILE BADGE ===== */
+.file-badge {
+    font-size: 11px;
+    padding: 2px 6px;
+    border-radius: 6px;
+    margin-left: 6px;
+}
+
+.badge-pdf {
+    background: #dc2626;
+    color: white;
+}
+
+.badge-docx {
+    background: #2563eb;
+    color: white;
+}
+
+.badge-other {
+    background: #6b7280;
+    color: white;
+}
+
+/* ===== ACTION ICONS ===== */
+.action-icon {
+    border: none;
+    background: none;
+    font-size: 14px;
+    margin-left: 6px;
+    cursor: pointer;
+    position: relative;
+    z-index: 5;
+}
+
+.action-icon.edit { color: #d97706; }
+.action-icon.delete { color: #dc2626; }
+
+/* ===== TOOLBAR ===== */
+.toolbar {
+    background: #f8fafc;
+    padding: 6px 10px;
+    border-radius: 8px;
+    border: 1px solid #e5e7eb;
+    font-size: 13px;
+}
+
+/* ===== HEADER TEXT ===== */
+.header-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #4b5563;
+}
+
+/* ===== SEARCH ===== */
+.search-box {
+    border-radius: 8px;
+    font-size: 13px;
+    padding: 6px 10px;
+    border: 1px solid #e5e7eb;
+    width: 240px;
+}
+
+</style>
+
+
+<div class="container mt-4">
+
+<!-- HEADER -->
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h4 class="mb-0">📁 {{ folder.name }}</h4>
+        <small class="text-muted">Folder contents</small>
+    </div>
+
+    <a href="{% url 'document_home' %}" class="btn btn-light btn-sm">
+        ← Back to Folders
+    </a>
+</div>
+
+<!-- TOOLBAR -->
+<div class="toolbar mb-2 d-flex justify-content-between align-items-center">
+
+    <div class="text-muted">
+        Total: <span id="docCount">{{ documents|length }}</span> documents
+    </div>
+
+    <div class="d-flex gap-2">
+        <input type="text"
+               id="searchInput"
+               class="search-box"
+               placeholder="⌕ Search">
+
+        {% if request.user.is_superuser or request.user.role == "admin"  %}
+        <a href="{% url 'upload_document' %}" class="btn btn-sm btn-primary">
+            + Upload Here
+        </a>
+        {% endif %}
+    </div>
+
+</div>
+
+<!-- TABLE HEADER -->
+<div class="row header-label px-2 py-2">
+    <div class="col-md-5">Name</div>
+    <div class="col-md-3">Uploaded By - (Role)</div>
+    <div class="col-md-2">Date & Time</div>
+    <div class="col-md-2 text-end">Actions</div>
+</div>
+
+<!-- FILE LIST -->
+<div id="docContainer">
+
+{% for doc in documents %}
+
+{% with doc.original_file.name|lower as filename %}
+
+<div class="row file-row px-2 py-2 align-items-center"
+     onclick="openDoc('{{ doc.id }}')">
+
+    <!-- NAME -->
+    <div class="col-md-5 d-flex align-items-center gap-2">
+
+        {% if ".pdf" in filename %}
+            <span class="file-icon">📕</span>
+        {% elif ".docx" in filename %}
+            <span class="file-icon">📘</span>
+        {% else %}
+            <span class="file-icon">📄</span>
+        {% endif %}
+
+        <span class="text-truncate fw-semibold doc-title">
+            {{ doc.title|default:"Untitled Document" }}
+        </span>
+
+        {% if ".pdf" in filename %}
+            <span class="file-badge badge-pdf">PDF</span>
+        {% elif ".docx" in filename %}
+            <span class="file-badge badge-docx">DOCX</span>
+        {% else %}
+            <span class="file-badge badge-other">FILE</span>
+        {% endif %}
+
+    </div>
+
+    <!-- USER -->
+    <div class="col-md-3 doc-user">
+        {% if doc.created_by %}
+            {{ doc.created_by.get_display_name }} - {{ doc.created_by.get_role_display }}
+        {% else %}
+            <span class="text-muted">System</span>
+        {% endif %}
+    </div>
+
+    <!-- TIME -->
+    <div class="col-md-2 text-muted">
+        <span class="doc-date">{{ doc.created_at|date:"d M Y" }}</span>
+        <small class="doc-time">{{ doc.created_at|date:"h:i A" }}</small>
+    </div>
+
+    <!-- ACTIONS -->
+    <div class="col-md-2 text-end" onclick="event.stopPropagation()">
+
+    {% if request.user.is_superuser or request.user.role == "admin"  %}
+
+        <a href="{% url 'edit_document' doc.id %}"
+           class="action-icon edit"
+           title="Edit">
+           ✏
+        </a>
+
+        <form method="POST"
+              action="{% url 'delete_document' doc.id %}"
+              style="display:inline"
+              onsubmit="return confirm('Delete this document?')">
+
+            {% csrf_token %}
+
+            <button class="action-icon delete" title="Delete">
+                🗑
+            </button>
+
+        </form>
+
+    {% else %}
+        <span class="text-muted">-</span>
+    {% endif %}
+
+    </div>
+
+</div>
+
+{% endwith %}
+{% empty %}
+
+<div class="text-center p-5 text-muted">
+    <div style="font-size:40px;">📂</div>
+    <h6 class="mt-3">This folder is empty</h6>
+    <p>Upload documents to see them here</p>
+</div>
+
+{% endfor %}
+
+</div>
+
+</div>
+
+
+<script>
+
+// OPEN DOCUMENT WHEN ROW CLICKED
+function openDoc(id) {
+    window.location.href = `/documents/${id}/view/`;
+}
+
+// SMART SEARCH
+document.getElementById("searchInput").addEventListener("keyup", function() {
+
+    let value = this.value.toLowerCase();
+    let rows = document.querySelectorAll(".file-row");
+    let count = 0;
+
+    rows.forEach(row => {
+
+        let title = row.querySelector(".doc-title")?.innerText.toLowerCase() || "";
+        let user  = row.querySelector(".doc-user")?.innerText.toLowerCase() || "";
+        let date  = row.querySelector(".doc-date")?.innerText.toLowerCase() || "";
+        let time  = row.querySelector(".doc-time")?.innerText.toLowerCase() || "";
+
+        let combined = title + " " + user + " " + date + " " + time;
+
+        if (combined.includes(value)) {
+            row.style.display = "";
+            count++;
+        } else {
+            row.style.display = "none";
+        }
+
+    });
+
+    document.getElementById("docCount").innerText = count;
+
+});
+
+</script>
+
+{% endblock %}

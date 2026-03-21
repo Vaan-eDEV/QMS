@@ -1,0 +1,590 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+
+<style>
+    .board {
+        display: flex;
+        gap: 24px;
+        overflow-x: auto;
+        padding-bottom: 20px;
+    }
+
+    .kanban-column {
+        background: #f8fafc;
+        width: 380px;
+        border-radius: 12px;
+        padding: 14px;
+        flex-shrink: 0;
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+    }
+
+    .kanban-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 12px;
+        color: #f1f5f9;
+    }
+
+    .stage-title {
+        font-weight: 600;
+        font-size: 15px;
+        color: #334155;
+    }
+
+    .add-task-icon {
+        border: none;
+        background: #2563eb;
+        color: white;
+        width: 26px;
+        height: 26px;
+        border-radius: 50%;
+        cursor: pointer;
+        font-size: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .add-task-icon:hover {
+        background: #1d4ed8;
+    }
+
+    .task-list {
+        min-height: 200px;
+    }
+
+    .task-card {
+        background: white;
+        border-radius: 10px;
+        padding: 12px;
+        margin-bottom: 12px;
+        cursor: grab;
+        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.06);
+        transition: all .2s ease;
+    }
+
+    .task-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+    }
+
+    .task-title {
+        font-weight: 600;
+        font-size: 14px;
+        margin-bottom: 8px;
+    }
+
+    .task-meta {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 12px;
+        color: #64748b;
+    }
+
+    .user-avatars {
+        display: flex;
+        gap: 4px;
+    }
+
+    .avatar {
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        background: #6366f1;
+        color: white;
+        font-size: 11px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .user-item {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .user-email {
+        font-size: 12px;
+        color: #334155;
+    }
+
+    .user-avatars {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .deadline {
+        font-size: 11px;
+        background: #f1f5f9;
+        padding: 2px 6px;
+        border-radius: 6px;
+    }
+
+    .priority-high {
+        border-left: 4px solid #ef4444;
+    }
+
+    .priority-medium {
+        border-left: 4px solid #f59e0b;
+    }
+
+    .priority-low {
+        border-left: 4px solid #22c55e;
+    }
+
+    .project-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 25px;
+    }
+</style>
+
+
+<div class="container-fluid">
+
+    <div class="project-header">
+
+        <h4 class="mb-0">{{ project.name }}</h4>
+
+        <div class="d-flex gap-2">
+
+            <a href="{% url 'project_list' %}" class="btn btn-outline-secondary btn-sm">
+                ← Back
+            </a>
+
+            <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#addStageModal">
+                + Add Stage
+            </button>
+
+        </div>
+
+    </div>
+
+
+    <div class="board">
+
+        {% for stage in stages %}
+
+        <div class="kanban-column">
+
+            <div class="kanban-header bg-info rounded p-2 mb-3">
+
+                <div style="display:flex; align-items:center; gap:8px;">
+
+                    <div class="stage-title">{{ stage.name }}</div>
+
+                    <button class="btn btn-sm" onclick="deleteStage('{% url 'delete_stage' stage.id %}')">
+                        ✕
+                    </button>
+
+                </div>
+
+                {% if forloop.first %}
+                <button class="add-task-icon" onclick="openTaskModal({{ stage.id }})">
+                    +
+                </button>
+                {% endif %}
+
+            </div>
+            <hr>
+
+            <div class="task-list" data-stage="{{ stage.id }}">
+
+                {% for task in tasks %}
+                {% if task.stage.id == stage.id %}
+
+                <div class="task-card priority-{{ task.priority }}" data-id="{{ task.id }}"
+                    onclick="window.location.href='{% url 'task_detail' task.id %}'">
+
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+
+                        <div class="task-title">
+                            {{ task.title }}
+                        </div>
+
+                        <button class="btn btn-sm" onclick="deleteTask('{% url 'delete_task' task.id %}')">
+                            ✕
+                        </button>
+
+                    </div>
+
+                    <div class="task-meta">
+
+                        <div class="user-avatars">
+
+                            {% for user in task.assigned_to.all %}
+
+                            <div class="user-item">
+
+                                <div class="avatar">
+                                    {{ user.email|slice:":1"|upper }}
+                                </div>
+
+                                <span class="user-email">
+                                    {{ user.email }}
+                                </span>
+
+                            </div>
+
+                            {% empty %}
+
+                            <span class="text-muted">Unassigned</span>
+
+                            {% endfor %}
+
+                        </div>
+
+                        {% if task.deadline %}
+                        <div class="deadline">
+                            📅 {{ task.deadline }}
+                        </div>
+                        {% endif %}
+
+                    </div>
+
+                </div>
+
+                {% endif %}
+                {% endfor %}
+
+            </div>
+
+        </div>
+
+        {% endfor %}
+
+    </div>
+
+</div>
+
+
+
+<!-- ADD STAGE MODAL -->
+
+<div class="modal fade" id="addStageModal">
+
+    <div class="modal-dialog">
+
+        <div class="modal-content">
+
+            <div class="modal-header">
+
+                <h5 class="modal-title">Create Stage</h5>
+
+                <button class="btn-close" data-bs-dismiss="modal"></button>
+
+            </div>
+
+            <div class="modal-body">
+
+                <form id="stageForm">
+
+                    {% csrf_token %}
+
+                    <div class="mb-3">
+
+                        <label>Stage Name</label>
+
+                        <input type="text" name="name" class="form-control" required>
+
+                    </div>
+
+                </form>
+
+            </div>
+
+            <div class="modal-footer">
+
+                <button class="btn btn-secondary" data-bs-dismiss="modal">
+                    Cancel
+                </button>
+
+                <button class="btn btn-success" onclick="createStage()">
+                    Create Stage
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+
+<!-- ADD TASK MODAL -->
+
+<div class="modal fade" id="taskModal">
+
+    <div class="modal-dialog">
+
+        <div class="modal-content">
+
+            <div class="modal-header">
+
+                <h5>Create Task</h5>
+
+                <button class="btn-close" data-bs-dismiss="modal"></button>
+
+            </div>
+
+            <div class="modal-body">
+
+                <form id="taskForm">
+
+                    {% csrf_token %}
+
+                    <input type="hidden" name="stage_id" id="stage_id">
+                    <input type="hidden" name="project_id" value="{{ project.id }}">
+
+                    <div class="mb-3">
+
+                        <label>Task Title</label>
+
+                        <input type="text" name="title" class="form-control" required>
+
+                    </div>
+
+
+                    <div class="mb-3">
+
+                        <label>Assign Users</label>
+
+                        <select name="assigned_to" class="form-control" multiple>
+
+                            {% for user in users %}
+
+                            <option value="{{ user.id }}">
+                                {{ user.email }}
+                            </option>
+
+                            {% endfor %}
+
+                        </select>
+
+                        <small class="text-muted">
+                            Hold Ctrl / Cmd to select multiple users
+                        </small>
+
+                    </div>
+
+
+                    <div class="mb-3">
+
+                        <label>Priority</label>
+
+                        <select name="priority" class="form-control">
+
+                            <option value="low">Low</option>
+                            <option value="medium">Medium</option>
+                            <option value="high">High</option>
+
+                        </select>
+
+                    </div>
+
+                    <div class="mb-3">
+
+                        <label>Deadline</label>
+
+                        <input type="date" name="deadline" class="form-control">
+
+                    </div>
+
+                </form>
+
+            </div>
+
+            <div class="modal-footer">
+
+                <button class="btn btn-success" onclick="createTask()">
+                    Create Task
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+
+<script>
+
+    function openTaskModal(stage_id) {
+
+        document.getElementById("stage_id").value = stage_id;
+
+        let modal = new bootstrap.Modal(document.getElementById("taskModal"));
+        modal.show();
+
+    }
+
+
+    function createTask() {
+
+        let form = document.getElementById("taskForm");
+        let data = new FormData(form);
+
+        fetch("{% url 'create_task' %}", {
+
+            method: "POST",
+
+            headers: {
+                "X-CSRFToken": "{{ csrf_token }}"
+            },
+
+            body: data
+
+        })
+            .then(res => res.json())
+            .then(data => {
+
+                if (data.status === "success") {
+                    location.reload();
+                } else {
+                    console.log("Task create failed");
+                }
+
+            });
+
+    }
+
+    function deleteTask(url) {
+
+        if (!confirm("Delete this task?")) {
+            return
+        }
+
+        fetch(url, {
+            method: "POST",
+            headers: {
+                "X-CSRFToken": "{{ csrf_token }}"
+            }
+        })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === "success") {
+                    location.reload()
+                }
+            })
+
+    }
+
+    function createStage() {
+
+        let form = document.getElementById("stageForm");
+        let data = new FormData(form);
+
+        fetch("{% url 'create_stage' %}", {
+
+            method: "POST",
+
+            headers: {
+                "X-CSRFToken": "{{ csrf_token }}"
+            },
+
+            body: data
+
+        })
+            .then(res => res.json())
+            .then(data => {
+
+                if (data.status === "success") {
+                    location.reload();
+                } else {
+                    console.log("Stage create failed");
+                }
+
+            });
+
+    }
+
+    function deleteStage(url) {
+
+        if (!confirm("Delete this stage?")) {
+            return
+        }
+
+        fetch(url, {
+            method: "POST",
+            headers: {
+                "X-CSRFToken": "{{ csrf_token }}"
+            }
+        })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === "success") {
+                    location.reload()
+                }
+            })
+
+    }
+    /* ===========================
+       DRAG & DROP KANBAN
+    =========================== */
+
+    document.querySelectorAll(".task-list").forEach(column => {
+
+        new Sortable(column, {
+
+            group: "tasks",
+            animation: 150,
+
+            onEnd: function (evt) {
+
+                let task_id = evt.item.getAttribute("data-id");
+                let new_stage = evt.to.getAttribute("data-stage");
+
+                fetch("{% url 'update_task_stage' %}", {
+
+                    method: "POST",
+
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-CSRFToken": "{{ csrf_token }}"
+                    },
+
+                    body: JSON.stringify({
+                        task_id: task_id,
+                        stage_id: new_stage
+                    })
+
+                })
+                    .then(res => res.json())
+                    .then(data => {
+
+                        if (data.status !== "success") {
+                            alert("Failed to update task stage");
+                            location.reload();
+                        }
+
+                    })
+                    .catch(error => {
+
+                        console.error("Error:", error);
+                        location.reload();
+
+                    });
+
+            }
+
+        });
+
+    });
+
+</script>
+
+{% endblock %}

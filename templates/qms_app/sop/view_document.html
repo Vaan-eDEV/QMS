@@ -1,0 +1,289 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+<style>
+    
+/* Left side panal */
+.left-side {
+    width: 73%;
+    min-width: 300px;
+}
+
+.header-line {
+    flex-wrap: nowrap;
+}
+
+.back-link {
+    font-size: 14px;
+    font-weight: 500;
+    color: #676868;
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+.back-link:hover {
+    color: #7d7d7e;
+    text-decoration: underline;
+}
+
+.doc-title {
+    font-size: 22px;
+    font-weight: 600;
+    color: #222;
+}
+
+.doc-meta {
+    font-size: 14px;
+    color: #555;
+    margin-bottom: 24px;
+}
+
+.view-doc-page {
+    width: 100%;
+    min-height: 297mm;
+    margin: 0 auto 20px auto;
+    padding: 25mm 20mm;
+    background: #fff;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+    box-sizing: border-box;
+    page-break-after: always;
+}
+
+.view-doc-page table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.view-doc-page th,
+.view-doc-page td {
+    border: 1px solid #ccc;
+    padding: 6px;
+    vertical-align: top;
+    word-break: break-word;
+}
+
+.view-doc-page img {
+    max-width: 100%;
+    height: auto;
+}
+
+/* ------ RIGHT SIDE: Revision Panel ------ */
+.revision-panel {
+    width: 27%;
+    min-width: 250px;
+    margin-left: 20px;
+    position: sticky;
+    top: 20px;
+    height: calc(100vh - 40px);
+    padding: 15px;
+    background: #f9f9f9;
+    border-left: 2px solid #ddd;
+    border-radius: 5px;
+    overflow-y: auto;
+}
+
+.revision-box {
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    padding: 10px 12px;
+    margin-bottom: 12px;
+}
+
+.rev-main-text {
+    font-size: 14px;
+    font-weight: 500;
+    color: #222;
+    margin-bottom: 3px;
+    line-height: 1.4;
+}
+
+.rev-meta-small {
+    font-size: 12px;
+    color: #555;
+    margin: 0;
+}
+
+/* ------ MOBILE RESPONSIVE ------ */
+@media (max-width: 992px) {
+    .container-fluid.d-flex {
+        flex-direction: column;
+    }
+
+    .left-side, .revision-panel {
+        width: 100% !important;
+        margin-left: 0 !important;
+    }
+
+    .revision-panel {
+        margin-top: 20px;
+        position: relative;
+        height: auto;
+    }
+
+    .header-line {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .back-link {
+        margin-top: 8px;
+    }
+    /* ===== FIX PDF EXTRA SPACE ===== */
+    .pdf-viewer-container {
+        padding: 0 !important;
+        min-height: auto !important;
+        box-shadow: none !important;
+    }
+
+}
+
+/* ===== PRINT MODE ===== */
+@media print {
+
+    body {
+        background: #fff !important;
+    }
+
+    .revision-panel,
+    .back-link,
+    button {
+        display: none !important;
+    }
+
+    .container-fluid {
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    .left-side {
+        width: 100% !important;
+    }
+
+    .view-doc-page {
+        box-shadow: none !important;
+        margin: 0 !important;
+        page-break-after: always;
+    }
+
+}
+</style>
+
+<div class="container-fluid mt-4 d-flex">
+
+    <!-- LEFT SIDE: Main Document -->
+    <div class="left-side">
+
+        
+        <div class="header-line d-flex justify-content-between align-items-center mb-2">
+            <h2 class="doc-title mb-0">Document - {{ doc.title }}</h2>
+
+            <div>
+                <a href="{% url 'document_home' %}" class="back-link">← Back to List</a>
+            </div>
+        </div>
+
+        <hr>
+
+        <p class="doc-meta text-muted mb-4">
+            Last Updated: {{ doc.created_at|date:"d-m-Y"}}
+        </p>
+
+        
+        {% if is_pdf %}
+            <div class=" pdf-viewer-container text-center">
+
+                
+                <div class="mb-3">
+                    <a href="{{ doc.original_file.url }}"
+                        target="_blank"
+                        class="btn btn-primary">
+                        Open PDF in New Tab
+                    </a>
+                </div>
+
+                
+                <object data="{{ doc.original_file.url }}"
+                    type="application/pdf"
+                    width="100%"
+                    height="900px">
+
+                    
+                    <iframe src="{% static 'pdfjs/web/viewer.html' %}?file={{ doc.original_file.url|urlencode }}"
+                        width="100%"
+                        height="100px"
+                        style="border:none;">
+                    </iframe>
+
+                    
+                    <p class="mt-3">
+                        Your browser cannot display this PDF.
+                        <a href="{{ doc.original_file.url }}" target="_blank">
+                            Click here to download.
+                        </a>
+                    </p>
+
+                </object>
+
+            </div>
+
+        {% elif unsupported %}
+            <div class="alert alert-danger">
+                Unsupported file format.
+            </div>
+
+        {% else %}
+
+            
+            {% for page in html_pages %}
+                <div class="view-doc-page mb-4">
+                    {{ page|safe }}
+                </div>
+            {% endfor %}
+        {% endif %}
+
+    </div>
+
+    <!-- RIGHT SIDE: Revision Panel -->
+    <div class="revision-panel">
+        <h5 class="mb-3 fw-bold">Revision History</h5>
+        <hr>
+
+        {% if revisions %}
+            {% for rev in revisions %}
+                <div class="revision-box">
+
+                    {% if rev.change_summary %}
+                        {% with stripped=rev.change_summary|striptags %}
+                            {% with first_line=stripped.splitlines|first %}
+                                <p class="rev-main-text">
+                                    {{ first_line|truncatechars:120 }}
+                                </p>
+                            {% endwith %}
+                        {% endwith %}
+                    {% else %}
+                        <p class="rev-main-text text-muted">No summary available</p>
+                    {% endif %}
+
+                    <p class="rev-meta-small">
+                        Edited by <strong>{{ rev.edited_by }}</strong> •
+                        {{ rev.edited_at|date:"d-m-Y H:i" }}
+                    </p>
+
+                </div>
+            {% endfor %}
+        {% else %}
+            <p class="text-muted">No revisions available.</p>
+        {% endif %}
+    </div>
+
+</div>
+
+<script>
+function printDocument() {
+    window.print();
+}
+</script>
+
+{% endblock %}
