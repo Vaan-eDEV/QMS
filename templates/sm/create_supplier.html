@@ -1,0 +1,476 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+
+<div class="container-fluid py-4">
+
+    <!-- ===================================== -->
+    <!-- PAGE HEADER -->
+    <!-- ===================================== -->
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+
+        <div>
+
+            <h2 class="fw-bold mb-1">
+                Create Supplier
+            </h2>
+
+            <p class="text-muted mb-0">
+                Register a new supplier into the QMS system
+            </p>
+
+        </div>
+
+        <div>
+
+            <a
+                href="{% url 'sm_dashboard' %}"
+                class="btn btn-outline-secondary"
+            >
+
+                <i class="bi bi-arrow-left"></i>
+
+                Back
+
+            </a>
+
+        </div>
+
+    </div>
+
+    <!-- ===================================== -->
+    <!-- FORM CARD -->
+    <!-- ===================================== -->
+
+    <div class="card border-0 shadow-sm">
+
+        <div class="card-body p-4">
+
+            <form method="POST">
+
+                {% csrf_token %}
+
+                <!-- ===================================== -->
+                <!-- BASIC DETAILS -->
+                <!-- ===================================== -->
+
+                <h5 class="fw-bold mb-3">
+
+                    Basic Details
+
+                </h5>
+
+                <div class="row g-3 mb-4">
+
+                    <div class="col-md-4">
+
+                        <label class="form-label">
+
+                            Supplier Code
+
+                        </label>
+
+                        <input
+                            type="text"
+                            name="supplier_code"
+                            class="form-control"
+                            required
+                        >
+
+                    </div>
+
+                    <div class="col-md-4">
+
+                        <label class="form-label">
+
+                            Supplier Name
+
+                        </label>
+
+                        <input
+                            type="text"
+                            name="supplier_name"
+                            class="form-control"
+                            required
+                        >
+
+                    </div>
+
+                    <div class="col-md-4">
+
+                        <label class="form-label">
+
+                            Supplier Type
+
+                        </label>
+
+                        <select
+                            name="supplier_type"
+                            class="form-select"
+                            required
+                        >
+
+                            <option value="">
+
+                                Select Type
+
+                            </option>
+
+                            <option value="manufacturer">
+
+                                Manufacturer
+
+                            </option>
+
+                            <option value="service_provider">
+
+                                Service Provider
+
+                            </option>
+
+                            <option value="trader">
+
+                                Trader
+
+                            </option>
+
+                            <option value="contractor">
+
+                                Contractor
+
+                            </option>
+
+                        </select>
+
+                    </div>
+
+                    <div class="col-md-6">
+
+                        <label class="form-label">
+
+                            Category
+
+                        </label>
+
+                        <input
+                            type="text"
+                            name="category"
+                            class="form-control"
+                            placeholder="Raw Material / Calibration / Service"
+                            required
+                        >
+
+                    </div>
+
+                </div>
+
+                <!-- ===================================== -->
+                <!-- CONTACT DETAILS -->
+                <!-- ===================================== -->
+
+                <h5 class="fw-bold mb-3">
+
+                    Contact Details
+
+                </h5>
+
+                <div class="row g-3 mb-4">
+
+                    <div class="col-md-6">
+
+                        <label class="form-label">
+
+                            Contact Person
+
+                        </label>
+
+                        <input
+                            type="text"
+                            name="contact_person"
+                            class="form-control"
+                        >
+
+                    </div>
+
+                    <div class="col-md-6">
+
+                        <label class="form-label">
+
+                            Email Address
+
+                        </label>
+
+                        <input
+                            type="email"
+                            name="email"
+                            class="form-control"
+                        >
+
+                    </div>
+
+                    <div class="col-md-6">
+
+                        <label class="form-label">
+
+                            Phone Number
+
+                        </label>
+
+                        <input
+                            type="text"
+                            name="phone"
+                            class="form-control"
+                        >
+
+                    </div>
+
+                    <div class="col-md-6">
+
+                        <label class="form-label">
+
+                            Website
+
+                        </label>
+
+                        <input
+                            type="url"
+                            name="website"
+                            class="form-control"
+                        >
+
+                    </div>
+
+                </div>
+
+                <!-- ===================================== -->
+                <!-- ADDRESS -->
+                <!-- ===================================== -->
+
+                <h5 class="fw-bold mb-3">
+
+                    Address
+
+                </h5>
+
+                <div class="row g-3 mb-4">
+
+                    <div class="col-12">
+
+                        <label class="form-label">
+
+                            Address
+
+                        </label>
+
+                        <textarea
+                            name="address"
+                            rows="3"
+                            class="form-control"
+                        ></textarea>
+
+                    </div>
+
+                    <div class="col-md-3">
+
+                        <label class="form-label">
+
+                            City
+
+                        </label>
+
+                        <input
+                            type="text"
+                            name="city"
+                            class="form-control"
+                        >
+
+                    </div>
+
+                    <div class="col-md-3">
+
+                        <label class="form-label">
+
+                            State
+
+                        </label>
+
+                        <input
+                            type="text"
+                            name="state"
+                            class="form-control"
+                        >
+
+                    </div>
+
+                    <div class="col-md-3">
+
+                        <label class="form-label">
+
+                            Country
+
+                        </label>
+
+                        <input
+                            type="text"
+                            name="country"
+                            class="form-control"
+                        >
+
+                    </div>
+
+                    <div class="col-md-3">
+
+                        <label class="form-label">
+
+                            Postal Code
+
+                        </label>
+
+                        <input
+                            type="text"
+                            name="postal_code"
+                            class="form-control"
+                        >
+
+                    </div>
+
+                </div>
+
+                <!-- ===================================== -->
+                <!-- BUSINESS DETAILS -->
+                <!-- ===================================== -->
+
+                <h5 class="fw-bold mb-3">
+
+                    Business Details
+
+                </h5>
+
+                <div class="row g-3 mb-4">
+
+                    <div class="col-md-4">
+
+                        <label class="form-label">
+
+                            GST Number
+
+                        </label>
+
+                        <input
+                            type="text"
+                            name="gst_number"
+                            class="form-control"
+                        >
+
+                    </div>
+
+                    <div class="col-md-4">
+
+                        <label class="form-label">
+
+                            PAN Number
+
+                        </label>
+
+                        <input
+                            type="text"
+                            name="pan_number"
+                            class="form-control"
+                        >
+
+                    </div>
+
+                    <div class="col-md-4">
+
+                        <label class="form-label">
+
+                            Registration Number
+
+                        </label>
+
+                        <input
+                            type="text"
+                            name="registration_number"
+                            class="form-control"
+                        >
+
+                    </div>
+
+                </div>
+
+                <!-- ===================================== -->
+                <!-- SUBMIT -->
+                <!-- ===================================== -->
+
+                <div class="d-flex justify-content-end gap-2">
+
+                    <a
+                        href="{% url 'sm_dashboard' %}"
+                        class="btn btn-light"
+                    >
+
+                        Cancel
+
+                    </a>
+
+                    <button
+                        type="submit"
+                        class="btn btn-primary"
+                    >
+
+                        <i class="bi bi-check-circle"></i>
+
+                        Create Supplier
+
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- ===================================== -->
+<!-- CUSTOM CSS -->
+<!-- ===================================== -->
+
+<style>
+
+.card{
+
+    border-radius:18px;
+
+}
+
+.form-control,
+.form-select{
+
+    border-radius:10px;
+
+    min-height:48px;
+
+}
+
+textarea.form-control{
+
+    min-height:auto;
+
+}
+
+.form-label{
+
+    font-weight:600;
+
+    margin-bottom:8px;
+
+}
+
+</style>
+
+{% endblock %}

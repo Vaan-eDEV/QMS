@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+.tab-btn {
+    border: none;
+    padding: 6px 15px;
+    margin-right: 5px;
+    border-radius: 6px;
+    background: #e9ecef;
+    cursor: pointer;
+}
+.tab-btn.active {
+    background: #0d6efd;
+    color: white;
+}
+
+.card-box {
+    border-radius: 10px;
+    padding: 12px;
+    background: white;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    cursor: pointer;
+    margin-bottom: 10px;
+    transition: 0.2s;
+}
+.card-box:hover {
+    transform: translateY(-3px);
+}
+</style>
+
+<div class="container mt-4">
+
+<h3 class="mb-3">📊 Data Overview</h3>
+
+<!-- ================= TABS ================= -->
+<div class="mb-3">
+    <button class="tab-btn active" onclick="showTab('rfqTab', this)">RFQ</button>
+    <button class="tab-btn" onclick="showTab('registerTab', this)">REGISTER</button>
+</div>
+
+<!-- ================= RFQ TAB ================= -->
+<div id="rfqTab">
+
+<div class="row">
+
+{% for company, data in company_data.items %}
+<div class="col-md-3">
+
+    <div class="card-box"
+         onclick="openCompany('{{ company|escapejs }}')">
+
+        <h5>{{ company }}</h5>
+        <small>Click to view RFQs</small>
+
+    </div>
+
+</div>
+{% empty %}
+<p>No Companies Found</p>
+{% endfor %}
+
+</div>
+
+</div>
+
+<!-- ================= REGISTER TAB ================= -->
+<div id="registerTab" style="display:none;">
+
+<div class="row">
+
+{% for reg in register_data %}
+<div class="col-md-3">
+
+    <div class="card-box"
+         onclick="openRegister('{{ reg.ref_id }}')">
+
+        <b>{{ reg.doc_name }}</b><br>
+        <small>{{ reg.ref_id }}</small>
+
+    </div>
+
+</div>
+{% empty %}
+<p>No Documents Found</p>
+{% endfor %}
+
+</div>
+
+</div>
+
+</div>
+
+<script>
+function showTab(id, btn){
+
+    document.getElementById("rfqTab").style.display = "none";
+    document.getElementById("registerTab").style.display = "none";
+
+    document.getElementById(id).style.display = "block";
+
+    document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+}
+
+function openCompany(company){
+    window.location.href = `/form-builder/company/${encodeURIComponent(company)}/`;
+}
+
+function openRegister(ref){
+    window.location.href = `/form-builder/register/?ref_id=${ref}`;
+}
+</script>
+
+{% endblock %}

@@ -1,0 +1,1543 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="container-fluid py-4">
+
+    <!-- HEADER -->
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+
+        <div>
+
+            <h2 class="fw-bold mb-1 text-dark">
+                {{ wo.wo_number }}
+            </h2>
+
+            <p class="text-muted mb-0">
+
+                RFQ:
+                {{ wo.rfq_ref }}
+
+                •
+
+                {{ wo.customer_name }}
+
+            </p>
+
+        </div>
+
+        <a href="{% url 'workorder_list' %}"
+           class="btn btn-dark btn-sm rounded-4 px-4 shadow-sm">
+
+            ← Back
+
+        </a>
+
+    </div>
+
+    <!-- ======================================================= -->
+    <!-- KANBAN -->
+    <!-- ======================================================= -->
+
+    <div class="kanban-wrapper">
+
+        <div class="row flex-nowrap overflow-auto gx-4 pb-4">
+
+            {% for stage_name, stage_items in stages.items %}
+
+            <!-- COLUMN -->
+            <div class="col-xl-3 col-lg-4 col-md-5 col-sm-10">
+
+                <div class="kanban-stage">
+
+                    <!-- HEADER -->
+                    <div class="stage-header">
+
+                        <h6 class="mb-0 fw-bold text-uppercase">
+
+                            {{ stage_name|title }}
+
+                        </h6>
+
+                        <span class="stage-count">
+
+                            {{ stage_items|length }}
+
+                        </span>
+
+                    </div>
+
+                    <!-- BODY -->
+                    <div class="stage-body sortable-stage"
+                        data-stage="{{ stage_name }}">
+
+                        {% for item in stage_items %}
+
+                        <!-- CARD -->
+                        <div class="kanban-card"
+                            data-item-id="{{ item.id }}">
+
+                            <!-- PRODUCT -->
+                            <div class="mb-2">
+
+                                <div class="product-code">
+
+                                    {{ item.product_code }}
+
+                                </div>
+
+                                <div class="product-name">
+
+                                    {{ item.product_name }}
+
+                                </div>
+
+                            </div>
+
+                            <!-- DETAILS -->
+                            <div class="card-details">
+
+                                <div class="detail-row">
+
+                                    <span>Qty</span>
+
+                                    <strong>
+
+                                        {{ item.quantity }}
+                                        {{ item.unit }}
+
+                                    </strong>
+
+                                </div>
+
+                                <div class="detail-row">
+
+                                    <span>Material</span>
+
+                                    <strong>
+
+                                        {{ item.material|default:"-" }}
+
+                                    </strong>
+
+                                </div>
+
+                                <div class="detail-row flex-column align-items-start">
+
+                                    <span class="mb-1 fw-semibold">
+
+                                        Assigned Operator
+
+                                    </span>
+
+                                    <select
+                                        class="form-select form-select-sm assign-user"
+                                        data-item-id="{{ item.id }}">
+
+                                        <option value="">
+
+                                            Select User
+
+                                        </option>
+
+                                            {% for user in users %}
+
+                                                <option
+
+                                                    value="{{ user.id }}"
+
+                                                    {% if item.assigned_to == user %}
+                                                    selected
+                                                    {% endif %}>
+
+                                                    {{ user.get_full_name|default:user.email }}
+
+                                                </option>
+
+                                            {% endfor %}
+
+                                    </select>
+
+                                </div>
+                            </div>
+
+                            <!-- PROGRESS -->
+                            <div class="mt-3">
+
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+
+                                    <small class="fw-semibold text-muted">
+
+                                        Forms
+
+                                    </small>
+
+                                    <small class="fw-bold">
+
+                                        {{ item.completed_forms }}/{{ item.required_forms }}
+
+                                    </small>
+
+                                </div>
+
+                                <div class="progress progress-modern">
+
+                                    <div class="progress-bar bg-success"
+
+                                         style="width:
+                                         {% widthratio item.completed_forms item.required_forms 100 %}%">
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+                            <!-- STATUS -->
+                            <div class="mt-3 text-center">
+
+                                {% if item.completed_forms == item.required_forms and item.required_forms > 0 %}
+
+                                    <span class="status-ready">
+
+                                        ✓ Completed
+
+                                    </span>
+
+                                {% else %}
+
+                                    <span class="status-progress">
+
+                                        In Progress
+
+                                    </span>
+
+                                {% endif %}
+
+                            </div>
+
+                            <!-- ACTION -->
+<div class="mt-3 d-grid gap-2">
+
+    <!-- RFQ PREP BUTTON -->
+
+    {% if item.status == "RFQ_PREP" %}
+
+        {% if item.rfq_id %}
+
+    <button
+        class="btn btn-success btn-sm rounded-3"
+        data-bs-toggle="modal"
+        data-bs-target="#rfqModal{{ item.id }}">
+
+        RFQ:
+        {{ item.rfq_id }}
+
+    </button>
+
+{% else %}
+
+    <a href="{% url 'po_qu:create_rfq' %}?item_id={{ item.id }}"
+       class="btn btn-warning btn-sm rounded-3">
+
+        Create RFQ
+
+    </a>
+
+{% endif %}
+
+    {% endif %}
+
+    <!-- FORM BUTTON -->
+
+    <button
+        class="btn btn-primary btn-sm rounded-3"
+        data-bs-toggle="modal"
+        data-bs-target="#formsModal{{ item.id }}">
+
+        Fill Forms
+
+    </button>
+
+</div>
+
+                        </div>
+
+                        <!-- ================================================= -->
+                        <!-- MODAL -->
+                        <!-- ================================================= -->
+
+                        <div class="modal fade"
+                             id="formsModal{{ item.id }}"
+                             tabindex="-1">
+
+                            <div class="modal-dialog modal-lg modal-dialog-centered">
+
+                                <div class="modal-content border-0 rounded-5">
+
+                                    <!-- HEADER -->
+                                    <div class="modal-header border-0 pb-0">
+
+                                        <div>
+
+                                            <h4 class="fw-bold mb-1">
+
+                                                {{ item.product_code }}
+
+                                            </h4>
+
+                                            <small class="text-muted">
+
+                                                Stage Forms
+
+                                            </small>
+
+                                        </div>
+
+                                        <button type="button"
+                                                class="btn-close"
+                                                data-bs-dismiss="modal">
+
+                                        </button>
+
+                                    </div>
+
+                                    <!-- BODY -->
+                                    <div class="modal-body p-4">
+
+                                        {% for form in item.forms_list %}
+
+                                        <div class="form-card">
+
+                                            <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+
+                                                <div>
+
+                                                    <h6 class="fw-bold mb-1">
+
+                                                        {{ form.name }}
+
+                                                    </h6>
+
+                                                    <small class="text-muted">
+
+                                                        {{ form.folder.name }}
+
+                                                    </small>
+                                                    <div class="mt-1 small">
+
+                                                        <span class="badge bg-light text-dark border">
+
+                                                            Stages:
+                                                            {{ form.completed_stages }}
+                                                            /
+                                                            {{ form.total_stages }}
+
+                                                        </span>
+
+                                                    </div>
+
+                                                </div>
+
+                                                <div>
+
+                                                    {% if form.id in item.completed_form_ids %}
+
+                                                        <div class="d-flex align-items-center gap-2">
+
+                                                            <span class="badge bg-success px-3 py-2 rounded-pill">
+
+                                                                ✓ Completed
+
+                                                            </span>
+
+                                                            <a href="{% url 'start_workorder_form' form.id item.id %}"
+                                                                class="btn btn-success btn-sm rounded-4 px-3">
+
+                                                                Edit Form
+
+                                                            </a>
+
+                                                        </div>
+
+                                                    {% else %}
+
+                                                        <a href="{% url 'start_workorder_form' form.id item.id %}"
+                                                            class="btn btn-primary btn-sm rounded-4 px-4">
+
+                                                            Fill Form
+
+                                                        </a>
+
+                                                    {% endif %}
+
+                                                </div>
+
+                                            </div>
+
+                                        </div>
+
+                                        {% empty %}
+
+                                        <div class="text-center py-5 text-muted">
+
+                                            No Forms Available
+
+                                        </div>
+
+                                        {% endfor %}
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+                        <!-- RFQ MODAL -->
+
+                        <div class="modal fade"
+                            id="rfqModal{{ item.id }}"
+                            tabindex="-1"
+                            aria-hidden="true">
+
+
+<div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+
+    <div class="modal-content border-0 shadow-lg rounded-4">
+
+        <!-- HEADER -->
+
+        <div class="modal-header bg-dark text-white">
+
+            <div>
+
+                <h4 class="fw-bold mb-1">
+
+                    RFQ Details
+
+                </h4>
+
+                <small class="text-light">
+
+                    Complete RFQ Information & Approval
+
+                </small>
+
+            </div>
+
+            <button type="button"
+                    class="btn-close btn-close-white"
+                    data-bs-dismiss="modal">
+
+            </button>
+
+        </div>
+
+        <!-- BODY -->
+
+        <div class="modal-body p-4">
+
+            {% if item.rfq %}
+
+            <div class="row g-4">
+
+                <!-- ================================================= -->
+                <!-- LEFT SIDE -->
+                <!-- ================================================= -->
+
+                <div class="col-lg-8">
+
+                    <div class="border rounded-4 p-4 bg-light h-100">
+
+                        <!-- TITLE -->
+
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+
+                            <h5 class="fw-bold mb-0">
+
+                                RFQ Information
+
+                            </h5>
+
+                            <span class="badge bg-success px-3 py-2">
+
+                                {{ item.rfq.rfq_number }}
+
+                            </span>
+
+                        </div>
+
+                        <!-- BASIC -->
+
+                        <div class="row g-3">
+
+                            <div class="col-md-6">
+
+                                <label class="fw-semibold text-muted small">
+
+                                    Company Name
+
+                                </label>
+
+                                <div class="fw-bold">
+
+                                    {{ item.rfq.company_name }}
+
+                                </div>
+
+                            </div>
+
+                            <div class="col-md-6">
+
+                                <label class="fw-semibold text-muted small">
+
+                                    Contact Person
+
+                                </label>
+
+                                <div class="fw-bold">
+
+                                    {{ item.rfq.contact_person }}
+
+                                </div>
+
+                            </div>
+
+                            <div class="col-md-6">
+
+                                <label class="fw-semibold text-muted small">
+
+                                    Email
+
+                                </label>
+
+                                <div>
+
+                                    {{ item.rfq.email }}
+
+                                </div>
+
+                            </div>
+
+                            <div class="col-md-6">
+
+                                <label class="fw-semibold text-muted small">
+
+                                    Phone
+
+                                </label>
+
+                                <div>
+
+                                    {{ item.rfq.phone }}
+
+                                </div>
+
+                            </div>
+
+                            <div class="col-md-6">
+
+                                <label class="fw-semibold text-muted small">
+
+                                    RFQ Date
+
+                                </label>
+
+                                <div>
+
+                                    {{ item.rfq.rfq_date }}
+
+                                </div>
+
+                            </div>
+
+                            <div class="col-md-6">
+
+                                <label class="fw-semibold text-muted small">
+
+                                    Delivery Date
+
+                                </label>
+
+                                <div>
+
+                                    {{ item.rfq.required_delivery_date }}
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                        <hr class="my-4">
+
+                        <!-- TECHNICAL -->
+
+                        <h6 class="fw-bold mb-3">
+
+                            Technical Details
+
+                        </h6>
+
+                        <div class="row g-3">
+
+                            <div class="col-md-6">
+
+                                <label class="fw-semibold text-muted small">
+
+                                    Material Grade
+
+                                </label>
+
+                                <div>
+
+                                    {{ item.rfq.material_grade|default:"-" }}
+
+                                </div>
+
+                            </div>
+
+                            <div class="col-md-6">
+
+                                <label class="fw-semibold text-muted small">
+
+                                    Applicable Standard
+
+                                </label>
+
+                                <div>
+
+                                    {{ item.rfq.applicable_standard|default:"-" }}
+
+                                </div>
+
+                            </div>
+
+                            <div class="col-md-6">
+
+                                <label class="fw-semibold text-muted small">
+
+                                    Heat Treatment
+
+                                </label>
+
+                                <div>
+
+                                    {{ item.rfq.heat_treatment|default:"-" }}
+
+                                </div>
+
+                            </div>
+
+                            <div class="col-md-6">
+
+                                <label class="fw-semibold text-muted small">
+
+                                    Surface Condition
+
+                                </label>
+
+                                <div>
+
+                                    {{ item.rfq.surface_condition|default:"-" }}
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                        <hr class="my-4">
+
+                        <!-- COMMERCIAL -->
+
+                        <h6 class="fw-bold mb-3">
+
+                            Commercial Details
+
+                        </h6>
+
+                        <div class="row g-3">
+
+                            <div class="col-md-6">
+
+                                <label class="fw-semibold text-muted small">
+
+                                    Payment Terms
+
+                                </label>
+
+                                <div>
+
+                                    {{ item.rfq.payment_terms|default:"-" }}
+
+                                </div>
+
+                            </div>
+
+                            <div class="col-md-6">
+
+                                <label class="fw-semibold text-muted small">
+
+                                    Freight Terms
+
+                                </label>
+
+                                <div>
+
+                                    {{ item.rfq.freight_terms|default:"-" }}
+
+                                </div>
+
+                            </div>
+
+                            <div class="col-md-6">
+
+                                <label class="fw-semibold text-muted small">
+
+                                    Quotation Validity
+
+                                </label>
+
+                                <div>
+
+                                    {{ item.rfq.quotation_validity|default:"-" }}
+
+                                </div>
+
+                            </div>
+
+                            <div class="col-md-6">
+
+                                <label class="fw-semibold text-muted small">
+
+                                    Delivery Location
+
+                                </label>
+
+                                <div>
+
+                                    {{ item.rfq.delivery_location|default:"-" }}
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                        <hr class="my-4">
+
+                        <!-- NOTES -->
+
+                        <h6 class="fw-bold mb-3">
+
+                            Notes & Compliance
+
+                        </h6>
+
+                        <div class="mb-3">
+
+                            <label class="fw-semibold text-muted small">
+
+                                Notes
+
+                            </label>
+
+                            <div class="border rounded-3 p-3 bg-white">
+
+                                {{ item.rfq.note|default:"No Notes" }}
+
+                            </div>
+
+                        </div>
+
+                        <div>
+
+                            <label class="fw-semibold text-muted small">
+
+                                Compliance Statement
+
+                            </label>
+
+                            <div class="border rounded-3 p-3 bg-white">
+
+                                {{ item.rfq.compliance_statement|default:"No Compliance Statement" }}
+
+                            </div>
+
+                        </div>
+
+                        <!-- ================================================= -->
+                        <!-- ATTACHMENTS -->
+                        <!-- ================================================= -->
+
+                        <hr class="my-4">
+
+                        <h6 class="fw-bold mb-3">
+
+                            Quotation Attachments
+
+                        </h6>
+                        <!-- UPLOAD -->
+                        <form method="POST"
+                              enctype="multipart/form-data"
+                              action="{% url 'upload_rfq_attachment' item.rfq.id %}">
+
+                            {% csrf_token %}
+
+                            <div class="input-group mb-3">
+
+                                <input type="file"
+                                       name="attachment"
+                                       class="form-control"
+                                       required>
+
+                                <button class="btn btn-primary">
+
+                                    Upload
+
+                                </button>
+
+                            </div>
+
+                        </form>
+
+                        <!-- FILE LIST -->
+
+                        <div class="border rounded-3 bg-white">
+
+                            {% for attachment in item.rfq.attachments.all %}
+
+                                <div class="d-flex justify-content-between align-items-center p-3 border-bottom">
+
+                                    <div class="text-break">
+
+                                        📎
+
+                                        {{ attachment.file.name|cut:"rfq_attachments/" }}
+
+                                    </div>
+
+                                    <a href="{{ attachment.file.url }}"
+                                       target="_blank"
+                                       class="btn btn-sm btn-outline-primary rounded-3">
+
+                                        View
+
+                                    </a>
+
+                                </div>
+
+                            {% empty %}
+
+                                <div class="p-3 text-muted">
+
+                                    No Attachments Uploaded
+
+                                </div>
+
+                            {% endfor %}
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <!-- ================================================= -->
+                <!-- RIGHT SIDE -->
+                <!-- ================================================= -->
+
+                <div class="col-lg-4">
+
+                    <div class="border rounded-4 p-4 bg-light h-100">
+
+                        <h5 class="fw-bold mb-4">
+
+                            Approval & Signatures
+
+                        </h5>
+
+                        <!-- CREATED -->
+
+                        <div class="mb-4">
+
+                            <label class="fw-semibold text-muted small">
+
+                                Prepared By
+
+                            </label>
+
+                            <div class="fw-bold">
+
+                                {{ item.rfq.created_by.get_full_name|default:item.rfq.created_by.email }}
+
+                            </div>
+
+                        </div>
+
+                        <!-- DATE -->
+
+                        <div class="mb-4">
+
+                            <label class="fw-semibold text-muted small">
+
+                                Created Date
+
+                            </label>
+
+                            <div>
+
+                                {{ item.rfq.created_at }}
+
+                            </div>
+
+                        </div>
+
+                        <!-- STATUS -->
+
+                        <div class="mb-4">
+
+                            <label class="fw-semibold text-muted small">
+
+                                RFQ Status
+
+                            </label>
+
+                            <div>
+
+                                <span class="badge bg-success px-3 py-2">
+
+                                    {{ item.rfq.status|title }}
+
+                                </span>
+
+                            </div>
+
+                        </div>
+
+                        <!-- APPROVAL -->
+
+                        <div class="mb-4">
+
+                            <label class="fw-semibold text-muted small">
+
+                                Approval
+
+                            </label>
+
+                            <div class="mt-2">
+
+                                {% if item.rfq.status == "approved" %}
+
+                                    <div class="alert alert-success py-2 mb-3">
+
+                                        RFQ Approved Successfully
+
+                                    </div>
+
+                                    <!-- WATERMARK SIGNATURE -->
+
+                                    <div class="position-relative border rounded-4 p-4 bg-white overflow-hidden">
+
+                                        <div style="
+                                            position:absolute;
+                                            top:50%;
+                                            left:50%;
+                                            transform:translate(-50%,-50%);
+                                            font-size:64px;
+                                            font-weight:800;
+                                            color:rgba(13,110,253,0.08);
+                                            letter-spacing:8px;
+                                            pointer-events:none;
+                                            user-select:none;
+                                            white-space:nowrap;
+                                        ">
+
+                                            VAAN
+
+                                        </div>
+
+                                        <div class="position-relative">
+
+                                            <div class="fw-semibold mb-2">
+
+                                                Approved By
+
+                                            </div>
+
+                                            <div>
+
+                                                {{ item.rfq.approved_by.get_full_name|default:item.rfq.approved_by.email }}
+
+                                            </div>
+
+                                            <div class="text-muted small mt-1">
+
+                                                {{ item.rfq.approved_at }}
+
+                                            </div>
+
+                                            <div class="mt-2">
+
+                                                Signature ID:
+                                                <strong>
+
+                                                    {{ item.rfq.approved_signature_id }}
+
+                                                </strong>
+
+                                            </div>
+
+                                        </div>
+
+                                    </div>
+
+                                {% elif item.rfq.status == "prepared" %}
+
+                                    <div class="alert alert-info py-2 mb-0">
+
+                                        RFQ Prepared Waiting For Approval
+
+                                    </div>
+
+                                {% else %}
+
+                                    <div class="alert alert-warning py-2 mb-0">
+
+                                        Pending Approval
+
+                                    </div>
+
+                                {% endif %}
+
+                            </div>
+
+                        </div>
+
+                        <!-- LINKED ITEM -->
+
+                        <div class="border-top pt-4 mt-4">
+
+                            <h6 class="fw-bold mb-3">
+
+                                Linked Workorder Item
+
+                            </h6>
+
+                            <div class="mb-2">
+
+                                <strong>Product:</strong>
+
+                                {{ item.product_name }}
+
+                            </div>
+
+                            <div class="mb-2">
+
+                                <strong>Code:</strong>
+
+                                {{ item.product_code }}
+
+                            </div>
+
+                            <div class="mb-2">
+
+                                <strong>Quantity:</strong>
+
+                                {{ item.quantity }}
+
+                            </div>
+
+                            <div>
+
+                                <strong>Material:</strong>
+
+                                {{ item.material }}
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            {% else %}
+
+            <div class="alert alert-warning mb-0">
+
+                RFQ details not found.
+
+            </div>
+
+            {% endif %}
+
+        </div>
+
+        <!-- FOOTER -->
+
+        <div class="modal-footer">
+
+            <button type="button"
+                    class="btn btn-secondary rounded-3"
+                    data-bs-dismiss="modal">
+
+                Close
+
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+</div>
+
+
+                        {% empty %}
+
+                        <div class="empty-stage">
+
+                            No Parts
+
+                        </div>
+
+                        {% endfor %}
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            {% endfor %}
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- ======================================================= -->
+<!-- SORTABLE JS -->
+<!-- ======================================================= -->
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+
+<script>
+
+document.addEventListener(
+    "DOMContentLoaded",
+    function(){
+
+        document.querySelectorAll(
+            ".sortable-stage"
+        ).forEach(stage => {
+
+            new Sortable(stage, {
+
+                group: "shared",
+
+                animation: 200,
+
+                ghostClass: "drag-ghost",
+
+                onEnd: function(evt){
+
+                    const itemId =
+                        evt.item.dataset.itemId
+
+                    const newStage =
+                        evt.to.dataset.stage
+
+                    fetch(
+                        "/workorder/update-stage/",
+                        {
+
+                            method: "POST",
+
+                            headers: {
+
+                                "Content-Type":
+                                    "application/json",
+
+                                "X-CSRFToken":
+                                    getCookie("csrftoken")
+
+                            },
+
+                            body: JSON.stringify({
+
+                                item_id: itemId,
+
+                                stage: newStage
+
+                            })
+
+                        }
+
+                    )
+                    .then(res => res.json())
+                    .then(data => {
+
+                        console.log(data)
+                        location.reload()
+                    })
+
+                }
+
+            })
+
+        })
+
+    }
+)
+
+function getCookie(name) {
+
+    let cookieValue = null;
+
+    if (document.cookie && document.cookie !== '') {
+
+        const cookies =
+            document.cookie.split(';');
+
+        for (let i = 0; i < cookies.length; i++) {
+
+            const cookie =
+                cookies[i].trim();
+
+            if (
+                cookie.substring(
+                    0,
+                    name.length + 1
+                ) === (name + '=')
+            ) {
+
+                cookieValue =
+                    decodeURIComponent(
+                        cookie.substring(
+                            name.length + 1
+                        )
+                    );
+
+                break;
+
+            }
+
+        }
+
+    }
+
+    return cookieValue;
+
+}
+
+document.querySelectorAll(
+    ".assign-user"
+).forEach(select => {
+
+    select.addEventListener(
+        "change",
+        function(){
+
+            fetch(
+                "/workorder/assign-user/",
+                {
+
+                    method: "POST",
+
+                    headers: {
+
+                        "Content-Type":
+                            "application/json",
+
+                        "X-CSRFToken":
+                            getCookie("csrftoken")
+
+                    },
+
+                    body: JSON.stringify({
+
+                        item_id:
+                            this.dataset.itemId,
+
+                        user_id:
+                            this.value
+
+                    })
+
+                }
+            )
+
+            .then(res => res.json())
+
+            .then(data => {
+
+                console.log(data)
+
+            })
+
+        }
+    )
+
+})
+
+
+</script>
+
+<!-- ======================================================= -->
+<!-- STYLES -->
+<!-- ======================================================= -->
+
+<style>
+
+body {
+
+    background: #f1f5f9;
+
+}
+
+.kanban-wrapper {
+
+    overflow-x: auto;
+
+}
+
+.kanban-stage {
+
+    background: #e2e8f0;
+
+    border-radius: 24px;
+
+    min-height: 80vh;
+
+    padding: 12px;
+
+}
+
+.stage-header {
+
+    background: linear-gradient(
+        135deg,
+        #0f172a,
+        #1e293b
+    );
+
+    color: white;
+
+    padding: 14px;
+
+    border-radius: 18px;
+
+    display: flex;
+
+    justify-content: space-between;
+
+    align-items: center;
+
+    margin-bottom: 14px;
+
+}
+
+.stage-count {
+
+    background: white;
+
+    color: black;
+
+    width: 28px;
+
+    height: 28px;
+
+    border-radius: 50%;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    font-size: 12px;
+
+    font-weight: 700;
+
+}
+
+.stage-body {
+
+    min-height: 70vh;
+
+}
+
+.kanban-card {
+
+    background: white;
+
+    border-radius: 18px;
+
+    padding: 12px;
+
+    margin-bottom: 12px;
+
+    box-shadow:
+        0 4px 12px rgba(0,0,0,0.05);
+
+    transition: 0.2s ease;
+
+    border-left: 4px solid #2563eb;
+
+    cursor: grab;
+
+}
+
+.kanban-card:hover {
+
+    transform: translateY(-2px);
+
+    box-shadow:
+        0 8px 18px rgba(0,0,0,0.08);
+
+}
+
+.product-code {
+
+    color: #2563eb;
+
+    font-weight: 700;
+
+    font-size: 15px;
+
+}
+
+.product-name {
+
+    font-size: 12px;
+
+    font-weight: 600;
+
+    color: #0f172a;
+
+}
+
+.card-details {
+
+    margin-top: 10px;
+
+}
+
+.detail-row {
+
+    display: flex;
+
+    justify-content: space-between;
+
+    font-size: 11px;
+
+    padding: 4px 0;
+
+    border-bottom: 1px dashed #e2e8f0;
+
+}
+
+.progress-modern {
+
+    height: 6px;
+
+    border-radius: 20px;
+
+    overflow: hidden;
+
+}
+
+.status-ready {
+
+    background: #dcfce7;
+
+    color: #166534;
+
+    padding: 5px 10px;
+
+    border-radius: 30px;
+
+    font-size: 10px;
+
+    font-weight: 700;
+
+}
+
+.status-progress {
+
+    background: #dbeafe;
+
+    color: #1d4ed8;
+
+    padding: 5px 10px;
+
+    border-radius: 30px;
+
+    font-size: 10px;
+
+    font-weight: 700;
+
+}
+
+.form-card {
+
+    border: 1px solid #e2e8f0;
+
+    border-radius: 18px;
+
+    padding: 14px;
+
+    margin-bottom: 12px;
+
+    background: #f8fafc;
+
+}
+
+.drag-ghost {
+
+    opacity: 0.4;
+
+    background: #dbeafe;
+
+    border: 2px dashed #2563eb;
+
+}
+
+.empty-stage {
+
+    text-align: center;
+
+    padding: 50px 20px;
+
+    color: #64748b;
+
+}
+
+.modal-content {
+
+    background: white;
+
+}
+
+@media(max-width:768px){
+
+    .kanban-stage {
+
+        min-height: auto;
+
+    }
+
+}
+
+</style>
+
+{% endblock %}
+

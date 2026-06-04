@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="container mt-4">
+
+    <h3 class="mb-4">
+        Edit Test : {{ test.title }}
+    </h3>
+
+    <div class="card shadow-sm">
+
+        <div class="card-body">
+
+            <table class="table table-bordered">
+
+                <thead>
+                    <tr>
+                        <th>Question</th>
+                        <th width="250">Actions</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+
+                    {% for q in questions %}
+
+                    <tr>
+
+                        <td>
+                            {{ q.question_text }}
+                        </td>
+
+                        <td>
+
+                            <a href="{% url 'edit_question' q.id %}"
+                               class="btn btn-sm btn-primary">
+                                Edit
+                            </a>
+
+                            <a href="{% url 'delete_question' q.id %}"
+                               class="btn btn-sm btn-danger"
+                               onclick="return confirm('Delete Question?')">
+                                Delete
+                            </a>
+
+                        </td>
+
+                    </tr>
+
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+
+            <a href="{% url 'add_question' test.id %}"
+               class="btn btn-success">
+                Add New Question
+            </a>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

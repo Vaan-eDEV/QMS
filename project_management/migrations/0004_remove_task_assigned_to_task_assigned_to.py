@@ -12,13 +12,5 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RemoveField(
-            model_name='task',
-            name='assigned_to',
-        ),
-        migrations.AddField(
-            model_name='task',
-            name='assigned_to',
-            field=models.ManyToManyField(blank=True, related_name='assigned_tasks', to=settings.AUTH_USER_MODEL),
-        ),
+       
     ]

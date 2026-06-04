@@ -120,7 +120,7 @@ body {
     </div>
 
     <!-- ===== ADD STAGE ===== -->
-    {% if request.user.role == "admin" %}
+    
     <div class="card shadow-sm mb-4">
 
         <div class="card-header">
@@ -182,15 +182,7 @@ body {
             </form>
         </div>
     </div>
-    {% else %}
-    <div class="alert alert-warning d-flex align-items-start">
-        <div class="me-2">⚠️</div>
-        <div>
-            <strong>Restricted Access</strong><br>
-            Only administrators can add or modify stages.
-        </div>
-    </div>
-    {% endif %}
+
 
     <!-- ===== STAGE LIST ===== -->
     <div class="card shadow-sm">
@@ -227,25 +219,25 @@ body {
                     <!-- Actions -->
                     <div class="btn-group btn-group-sm">
 
-                        {% if request.user.is_superuser %}
+                      
                         <a href="{% url 'edit_stage' stage.id %}"
                            class="btn btn-outline-secondary action-btn">
                             Edit
                         </a>
-                        {% endif %}
+                       
 
                         <a href="{% url 'add_field' stage.id %}"
                            class="btn btn-outline-primary action-btn">
                             Fields
                         </a>
 
-                        {% if request.user.is_superuser %}
-                        <a href="{% url 'delete_stage' stage.id %}"
-                           class="btn btn-outline-danger action-btn"
-                           onclick="return confirm('Are you sure you want to delete this stage?');">
-                            Delete
-                        </a>
-                        {% endif %}
+                       
+                        <button type="button"
+        class="btn btn-outline-danger action-btn"
+        onclick="deleteStage({{ stage.id }})">
+    Delete
+</button>
+                    
 
                     </div>
                 </div>
@@ -261,5 +253,28 @@ body {
     </div>
 
 </div>
+<script>
+    function deleteStage(id) {
+    if (!confirm("Are you sure?")) return;
 
+    fetch(`/projects/stage/${id}/delete/`, {
+        method: "POST",
+        headers: {
+            "X-CSRFToken": getCSRFToken()
+        }
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.status === "success") {
+            location.reload(); // or remove row dynamically
+        } else {
+            alert(data.message || "Delete failed");
+        }
+    });
+}
+
+function getCSRFToken() {
+    return document.querySelector('[name=csrfmiddlewaretoken]').value;
+}
+</script>
 {% endblock %}

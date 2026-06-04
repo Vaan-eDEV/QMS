@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-5">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold">📁 Obsolete Documents</h2>
+        <a href="{% url 'document_home' %}" class="btn btn-secondary">
+            ← Back to Documents
+        </a>
+    </div>
+
+    <hr>
+
+    {% if files %}
+    <div class="row g-4">
+        {% for file in files %}
+        <div class="col-12 col-md-6 col-lg-4">
+            <div class="card shadow-sm h-100">
+
+                <div class="card-body">
+
+                    <h5 class="card-title">
+                        {{ file.title }}
+                    </h5>
+
+                    <p class="text-muted small mb-2">
+                        📄 Doc ID: {{ file.doc_id }} <br>
+                        🔢 Version: {{ file.version }} <br>
+                        🕒 Time: {{ file.timestamp }}
+                    </p>
+
+                    <div class="d-flex gap-2">
+                        <a href="{{ file.view_url }}" class="btn btn-primary w-50">
+                            View
+                        </a>
+
+                        <a href="{{ file.url }}" download class="btn btn-success w-50">
+                            Download
+                        </a>
+                    </div>
+
+                </div>
+
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    {% else %}
+    <div class="text-center py-5">
+        <h4 class="text-muted">No archived documents found</h4>
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}

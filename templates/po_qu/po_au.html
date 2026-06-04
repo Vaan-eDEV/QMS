@@ -1,0 +1,944 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<style>
+
+body{
+    background:#f4f7fb;
+}
+
+.doc-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:25px;
+    flex-wrap:wrap;
+    gap:15px;
+}
+
+.doc-title h2{
+    font-weight:800;
+    margin-bottom:4px;
+    font-size:30px;
+    color:#111827;
+}
+
+.doc-title p{
+    color:#6b7280;
+    margin:0;
+}
+
+.top-stats{
+    display:flex;
+    gap:15px;
+    flex-wrap:wrap;
+}
+
+.stat-card{
+    background:white;
+    border-radius:16px;
+    padding:18px 22px;
+    min-width:140px;
+    box-shadow:0 4px 16px rgba(0,0,0,0.05);
+}
+
+.stat-card h3{
+    font-size:26px;
+    font-weight:800;
+    margin:0;
+}
+
+.stat-card p{
+    margin:0;
+    color:#6b7280;
+    font-size:13px;
+}
+
+.doc-tabs{
+    display:flex;
+    gap:12px;
+    flex-wrap:wrap;
+    margin-bottom:25px;
+}
+
+.doc-tab{
+    border:none;
+    background:white;
+    padding:12px 18px;
+    border-radius:12px;
+    font-weight:700;
+    box-shadow:0 3px 10px rgba(0,0,0,0.05);
+    transition:0.2s;
+}
+
+.doc-tab.active{
+    background:#111827;
+    color:white;
+}
+
+.section-card{
+    background:white;
+    border-radius:18px;
+    box-shadow:0 4px 18px rgba(0,0,0,0.05);
+    overflow:hidden;
+    border:1px solid #eef2f7;
+}
+
+.section-header{
+    padding:20px;
+    border-bottom:1px solid #edf2f7;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    flex-wrap:wrap;
+    gap:10px;
+}
+
+.section-header h5{
+    margin:0;
+    font-weight:700;
+}
+
+.action-btn{
+    border:none;
+    padding:10px 16px;
+    border-radius:10px;
+    font-weight:700;
+    text-decoration:none;
+    font-size:14px;
+    transition:0.2s;
+}
+
+.btn-po{
+    background:#2563eb;
+    color:white;
+}
+
+.btn-qt{
+    background:#059669;
+    color:white;
+}
+
+.btn-dc{
+    background:#d97706;
+    color:white;
+}
+
+.btn-wo{
+    background:#111827;
+    color:white;
+}
+
+.action-btn:hover{
+    transform:translateY(-1px);
+    opacity:0.94;
+    color:white;
+}
+
+.table-modern{
+    margin:0;
+}
+
+.table-modern thead{
+    background:#f9fafb;
+}
+
+.table-modern th{
+    border:none;
+    padding:16px;
+    font-size:13px;
+    color:#6b7280;
+    font-weight:700;
+}
+
+.table-modern td{
+    padding:16px;
+    vertical-align:middle;
+    border-top:1px solid #f1f5f9;
+}
+
+.doc-number{
+    font-weight:700;
+    color:#111827;
+}
+
+.view-btn{
+    border:1px solid #d1d5db;
+    background:white;
+    border-radius:10px;
+    padding:7px 14px;
+    text-decoration:none;
+    font-size:13px;
+    font-weight:700;
+    color:#111827;
+    transition:0.2s;
+}
+
+.view-btn:hover{
+    background:#111827;
+    color:white;
+}
+
+.status-badge{
+    display:inline-block;
+    padding:7px 14px;
+    border-radius:30px;
+    font-size:12px;
+    font-weight:700;
+}
+
+.status-approved{
+    background:#d1fae5;
+    color:#065f46;
+}
+
+.status-prepared{
+    background:#dbeafe;
+    color:#1d4ed8;
+}
+
+.status-draft{
+    background:#fef3c7;
+    color:#92400e;
+}
+
+.empty-box{
+    text-align:center;
+    padding:40px;
+    color:#9ca3af;
+}
+
+@media(max-width:768px){
+
+    .doc-header{
+        flex-direction:column;
+        align-items:flex-start;
+    }
+
+    .doc-title h2{
+        font-size:24px;
+    }
+
+}
+
+</style>
+
+<div class="container-fluid py-4">
+
+    <!-- HEADER -->
+    <div class="doc-header">
+
+        <div class="doc-title">
+
+            <h2>
+                Documents Dashboard
+            </h2>
+
+            <p>
+                Manage all business documents in one place
+            </p>
+
+        </div>
+
+        <div class="top-stats">
+
+            <div class="stat-card">
+                <h3>{{ pos|length }}</h3>
+                <p>Purchase Orders</p>
+            </div>
+
+            <div class="stat-card">
+                <h3>{{ quotations|length }}</h3>
+                <p>Quotations</p>
+            </div>
+
+            <div class="stat-card">
+                <h3>{{ rfqs|length }}</h3>
+                <p>RFQs</p>
+            </div>
+
+            <div class="stat-card">
+                <h3>{{ dcs|length }}</h3>
+                <p>Delivery Challans</p>
+            </div>
+
+            <div class="stat-card">
+                <h3>{{ workorders|length }}</h3>
+                <p>Work Orders</p>
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- TABS -->
+    <div class="doc-tabs">
+
+        <button class="doc-tab active"
+                onclick="showTab('poTab', this)">
+
+            Purchase Orders
+
+        </button>
+
+        <button class="doc-tab"
+            onclick="showTab('rfqTab', this)">
+
+            RFQs
+
+        </button>
+
+        <button class="doc-tab"
+                onclick="showTab('qtTab', this)">
+
+            Quotations
+
+        </button>
+
+        <button class="doc-tab"
+                onclick="showTab('dcTab', this)">
+
+            Delivery Challans
+
+        </button>
+
+        <button class="doc-tab"
+                onclick="showTab('woTab', this)">
+
+            Work Orders
+
+        </button>
+
+    </div>
+
+    <!-- ===================== PO ===================== -->
+    <div id="poTab">
+
+        <div class="section-card">
+
+            <div class="section-header">
+
+                <h5>
+                    Purchase Orders
+                </h5>
+
+                <a href="{% url 'po_qu:create_po' %}"
+                   class="action-btn btn-po">
+
+                    ➕ Create PO
+
+                </a>
+
+            </div>
+
+            <div class="table-responsive">
+
+                <table class="table table-modern">
+
+                    <thead>
+
+                        <tr>
+
+                            <th>PO Number</th>
+
+                            <th>Supplier</th>
+
+                            <th>Date</th>
+
+                            <th>Total</th>
+
+                            <th>Action</th>
+
+                        </tr>
+
+                    </thead>
+
+                    <tbody>
+
+                        {% for po in pos %}
+
+                        <tr>
+
+                            <td class="doc-number">
+                                {{ po.po_number }}
+                            </td>
+
+                            <td>
+                                {{ po.supplier_name }}
+                            </td>
+
+                            <td>
+                                {{ po.date }}
+                            </td>
+
+                            <td>
+                                ₹ {{ po.grand_total }}
+                            </td>
+
+                            <td>
+
+                                <a href="{% url 'po_qu:po_detail' po.id %}"
+                                   class="view-btn">
+
+                                    View
+
+                                </a>
+
+                            </td>
+
+                        </tr>
+
+                        {% empty %}
+
+                        <tr>
+
+                            <td colspan="5">
+
+                                <div class="empty-box">
+
+                                    No Purchase Orders Found
+
+                                </div>
+
+                            </td>
+
+                        </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+    </div>
+    <!-- ===================== RFQ ===================== -->
+
+<div id="rfqTab" style="display:none;">
+
+    <div class="section-card">
+
+        <div class="section-header">
+
+            <h5>
+                Request For Quotations
+            </h5>
+
+            <a href="{% url 'po_qu:create_rfq' %}"
+               class="action-btn btn-qt">
+
+                ➕ Create RFQ
+
+            </a>
+
+        </div>
+
+        <div class="table-responsive">
+
+            <table class="table table-modern">
+
+                <thead>
+
+                    <tr>
+
+                        <th>RFQ Number</th>
+
+                        <th>Company</th>
+
+                        <th>Contact Person</th>
+
+                        <th>RFQ Date</th>
+
+                        <th>Delivery Date</th>
+
+                        <th>Status</th>
+
+                        <th>Action</th>
+
+                    </tr>
+
+                </thead>
+
+                <tbody>
+
+                    {% for rfq in rfqs %}
+
+                    <tr>
+
+                        <td class="doc-number">
+
+                            {{ rfq.rfq_number }}
+
+                        </td>
+
+                        <td>
+
+                            {{ rfq.company_name }}
+
+                        </td>
+
+                        <td>
+
+                            {{ rfq.contact_person }}
+
+                        </td>
+
+                        <td>
+
+                            {{ rfq.rfq_date }}
+
+                        </td>
+
+                        <td>
+
+                            {{ rfq.required_delivery_date }}
+
+                        </td>
+
+                        <td>
+
+                            {% if rfq.status == "approved" %}
+
+                            <span class="status-badge status-approved">
+
+                                Approved
+
+                            </span>
+
+                            {% elif rfq.status == "prepared" %}
+
+                            <span class="status-badge status-prepared">
+
+                                Prepared
+
+                            </span>
+
+                            {% else %}
+
+                            <span class="status-badge status-draft">
+
+                                Draft
+
+                            </span>
+
+                            {% endif %}
+
+                        </td>
+
+                        <td>
+
+                            <a href="{% url 'po_qu:rfq_detail' rfq.id %}"
+                               class="view-btn">
+
+                                View
+
+                            </a>
+
+                        </td>
+
+                    </tr>
+
+                    {% empty %}
+
+                    <tr>
+
+                        <td colspan="7">
+
+                            <div class="empty-box">
+
+                                No RFQs Found
+
+                            </div>
+
+                        </td>
+
+                    </tr>
+
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+</div>
+    <!-- ===================== QT ===================== -->
+    <div id="qtTab" style="display:none;">
+
+        <div class="section-card">
+
+            <div class="section-header">
+
+                <h5>
+                    Quotations
+                </h5>
+
+                <a href="{% url 'po_qu:create_quotation' %}"
+                   class="action-btn btn-qt">
+
+                    ➕ Create Quotation
+
+                </a>
+
+            </div>
+
+            <div class="table-responsive">
+
+                <table class="table table-modern">
+
+                    <thead>
+
+                        <tr>
+
+                            <th>Quotation</th>
+
+                            <th>Company</th>
+
+                            <th>RFQ</th>
+
+                            <th>Date</th>
+
+                            <th>Total</th>
+
+                            <th>Action</th>
+
+                        </tr>
+
+                    </thead>
+
+                    <tbody>
+
+                        {% for q in quotations %}
+
+                        <tr>
+
+                            <td class="doc-number">
+                                {{ q.quotation_number }}
+                            </td>
+
+                            <td>
+                                {{ q.company|default:q.customer_name }}
+                            </td>
+
+                            <td>
+                                {{ q.rfq_id|default:q.reference }}
+                            </td>
+
+                            <td>
+                                {{ q.date }}
+                            </td>
+
+                            <td>
+                                ₹ {{ q.grand_total }}
+                            </td>
+
+                            <td>
+
+                                <a href="{% url 'po_qu:quotation_detail' q.id %}"
+                                   class="view-btn">
+
+                                    View
+
+                                </a>
+
+                            </td>
+
+                        </tr>
+
+                        {% empty %}
+
+                        <tr>
+
+                            <td colspan="6">
+
+                                <div class="empty-box">
+
+                                    No Quotations Found
+
+                                </div>
+
+                            </td>
+
+                        </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- ===================== DC ===================== -->
+    <div id="dcTab" style="display:none;">
+
+        <div class="section-card">
+
+            <div class="section-header">
+
+                <h5>
+                    Delivery Challans
+                </h5>
+
+                <a href="{% url 'po_qu:create_dc' %}"
+                   class="action-btn btn-dc">
+
+                    ➕ Create DC
+
+                </a>
+
+            </div>
+
+            <div class="table-responsive">
+
+                <table class="table table-modern">
+
+                    <thead>
+
+                        <tr>
+
+                            <th>DC Number</th>
+
+                            <th>Date</th>
+
+                            <th>City</th>
+
+                            <th>Action</th>
+
+                        </tr>
+
+                    </thead>
+
+                    <tbody>
+
+                        {% for dc in dcs %}
+
+                        <tr>
+
+                            <td class="doc-number">
+                                {{ dc.dc_number }}
+                            </td>
+
+                            <td>
+                                {{ dc.date }}
+                            </td>
+
+                            <td>
+                                {{ dc.city }}
+                            </td>
+
+                            <td>
+
+                                <a href="{% url 'po_qu:dc_detail' dc.id %}"
+                                   class="view-btn">
+
+                                    View
+
+                                </a>
+
+                            </td>
+
+                        </tr>
+
+                        {% empty %}
+
+                        <tr>
+
+                            <td colspan="4">
+
+                                <div class="empty-box">
+
+                                    No Delivery Challans Found
+
+                                </div>
+
+                            </td>
+
+                        </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- ===================== WO ===================== -->
+    <div id="woTab" style="display:none;">
+
+        <div class="section-card">
+
+            <div class="section-header">
+
+                <h5>
+                    Work Orders
+                </h5>
+
+                <a href="{% url 'po_qu:create_workorder' %}"
+                   class="action-btn btn-wo">
+
+                    ➕ Create Work Order
+
+                </a>
+
+            </div>
+
+            <div class="table-responsive">
+
+                <table class="table table-modern">
+
+                    <thead>
+
+                        <tr>
+
+                            <th>WO Number</th>
+
+                            <th>Customer</th>
+
+                            <th>RFQ / PO</th>
+
+                            <th>Date</th>
+
+                            <th>Status</th>
+
+                            <th>Action</th>
+
+                        </tr>
+
+                    </thead>
+
+                    <tbody>
+
+                        {% for wo in workorders %}
+
+                        <tr>
+
+                            <td class="doc-number">
+                                {{ wo.wo_number }}
+                            </td>
+
+                            <td>
+                                {{ wo.customer_name }}
+                            </td>
+
+                            <td>
+                                {{ wo.po_number }}
+                            </td>
+
+                            <td>
+                                {{ wo.date }}
+                            </td>
+
+                            <td>
+
+                                {% if wo.status == "approved" %}
+
+                                <span class="status-badge status-approved">
+
+                                    Approved
+
+                                </span>
+
+                                {% elif wo.status == "prepared" %}
+
+                                <span class="status-badge status-prepared">
+
+                                    Prepared
+
+                                </span>
+
+                                {% else %}
+
+                                <span class="status-badge status-draft">
+
+                                    Draft
+
+                                </span>
+
+                                {% endif %}
+
+                            </td>
+
+                            <td>
+
+                                <a href="{% url 'po_qu:workorder_detail' wo.id %}"
+                                   class="view-btn">
+
+                                    View
+
+                                </a>
+
+                            </td>
+
+                        </tr>
+
+                        {% empty %}
+
+                        <tr>
+
+                            <td colspan="6">
+
+                                <div class="empty-box">
+
+                                    No Work Orders Found
+
+                                </div>
+
+                            </td>
+
+                        </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+
+function showTab(tabId, btn){
+
+    ["poTab", "rfqTab", "qtTab", "dcTab", "woTab"].forEach(id => {
+
+        document.getElementById(id).style.display = "none";
+
+    });
+
+    document.getElementById(tabId).style.display = "block";
+
+    document.querySelectorAll(".doc-tab").forEach(el => {
+
+        el.classList.remove("active");
+
+    });
+
+    btn.classList.add("active");
+
+}
+
+</script>
+
+{% endblock %}

@@ -1,0 +1,898 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<style>
+
+:root{
+
+    --bg:#f5f7fb;
+    --card:#ffffff;
+    --border:#e8edf5;
+    --text:#111827;
+    --muted:#6b7280;
+    --primary:#0ea5e9;
+    --primary-dark:#0284c7;
+
+}
+
+body{
+
+    background:var(--bg);
+
+}
+
+/* ===================================================== */
+/* PAGE */
+/* ===================================================== */
+
+.page-wrapper{
+
+    padding:24px 10px 40px;
+
+}
+
+.top-bar{
+
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:26px;
+    flex-wrap:wrap;
+    gap:16px;
+
+}
+
+.page-title{
+
+    font-size:28px;
+    font-weight:800;
+    color:var(--text);
+    margin-bottom:4px;
+
+}
+
+.page-subtitle{
+
+    color:var(--muted);
+    font-size:14px;
+
+}
+
+.create-btn{
+
+    background:var(--primary);
+    color:#fff;
+    padding:12px 20px;
+    border-radius:12px;
+    text-decoration:none;
+    font-weight:600;
+    transition:.2s ease;
+
+}
+
+.create-btn:hover{
+
+    background:var(--primary-dark);
+    color:#fff;
+    transform:translateY(-2px);
+
+}
+
+/* ===================================================== */
+/* STATS */
+/* ===================================================== */
+
+.stats-row{
+
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+    gap:16px;
+    margin-bottom:28px;
+
+}
+
+.stat-card{
+
+    background:#fff;
+    border-radius:18px;
+    border:1px solid var(--border);
+    padding:20px;
+    box-shadow:0 2px 10px rgba(15,23,42,.04);
+
+}
+
+.stat-label{
+
+    font-size:13px;
+    color:var(--muted);
+    margin-bottom:8px;
+
+}
+
+.stat-value{
+
+    font-size:28px;
+    font-weight:800;
+    color:var(--text);
+
+}
+
+/* ===================================================== */
+/* CARD GRID */
+/* ===================================================== */
+
+.workorder-grid{
+
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(320px,1fr));
+    gap:18px;
+
+}
+
+/* ===================================================== */
+/* CARD */
+/* ===================================================== */
+
+.work-card{
+
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:18px;
+    padding:18px;
+    transition:.2s ease;
+    position:relative;
+    overflow:hidden;
+
+}
+
+.work-card:hover{
+
+    transform:translateY(-3px);
+    box-shadow:0 10px 24px rgba(15,23,42,.08);
+
+}
+
+/* ===================================================== */
+/* HEADER */
+/* ===================================================== */
+
+.card-header-row{
+
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    margin-bottom:16px;
+
+}
+
+.work-number{
+
+    font-size:20px;
+    font-weight:800;
+    color:var(--text);
+    line-height:1.2;
+
+}
+
+.parts-badge{
+
+    background:#eff6ff;
+    color:#0284c7;
+    padding:6px 12px;
+    border-radius:999px;
+    font-size:12px;
+    font-weight:700;
+
+}
+
+/* ===================================================== */
+/* INFO */
+/* ===================================================== */
+
+.info-block{
+
+    margin-bottom:14px;
+
+}
+
+.info-label{
+
+    font-size:11px;
+    text-transform:uppercase;
+    font-weight:700;
+    color:#9ca3af;
+    margin-bottom:4px;
+    letter-spacing:.5px;
+
+}
+
+.info-value{
+
+    font-size:14px;
+    font-weight:600;
+    color:#111827;
+    word-break:break-word;
+
+}
+
+.notes-box{
+
+    background:#f9fafb;
+    border:1px solid #eef2f7;
+    border-radius:12px;
+    padding:12px;
+    font-size:13px;
+    color:#4b5563;
+    min-height:58px;
+
+}
+
+/* ===================================================== */
+/* FOOTER */
+/* ===================================================== */
+
+.card-footer-row{
+
+    display:flex;
+    gap:10px;
+    margin-top:18px;
+
+}
+
+.open-btn{
+
+    flex:1;
+    background:var(--primary);
+    color:#fff;
+    text-decoration:none;
+    text-align:center;
+    padding:11px;
+    border-radius:10px;
+    font-size:14px;
+    font-weight:700;
+    transition:.2s ease;
+
+}
+
+.open-btn:hover{
+
+    background:var(--primary-dark);
+    color:#fff;
+
+}
+
+.view-btn{
+
+    border:1px solid var(--primary);
+    color:var(--primary);
+    text-decoration:none;
+    text-align:center;
+    padding:11px 16px;
+    border-radius:10px;
+    font-size:14px;
+    font-weight:600;
+    transition:.2s ease;
+
+}
+
+.view-btn:hover{
+
+    background:#eff6ff;
+
+}
+
+/* ===================================================== */
+/* EMPTY */
+/* ===================================================== */
+
+.empty-state{
+
+    background:#fff;
+    border:1px solid var(--border);
+    border-radius:22px;
+    padding:80px 20px;
+    text-align:center;
+
+}
+
+.empty-icon{
+
+    font-size:60px;
+    margin-bottom:16px;
+
+}
+
+.empty-title{
+
+    font-size:24px;
+    font-weight:800;
+    color:#111827;
+    margin-bottom:10px;
+
+}
+
+.empty-text{
+
+    color:#6b7280;
+    margin-bottom:24px;
+
+}
+
+/* ===================================================== */
+/* MOBILE */
+/* ===================================================== */
+
+@media(max-width:768px){
+
+    .page-title{
+
+        font-size:22px;
+
+    }
+
+    .workorder-grid{
+
+        grid-template-columns:1fr;
+
+    }
+
+}
+
+</style>
+
+<div class="container-fluid page-wrapper">
+
+    <!-- ===================================================== -->
+    <!-- HEADER -->
+    <!-- ===================================================== -->
+
+    <div class="top-bar">
+
+        <div>
+
+            <div class="page-title">
+
+                Manufacturing Work Orders
+
+            </div>
+
+            <div class="page-subtitle">
+
+                Production tracking and workflow management
+
+            </div>
+
+        </div>
+
+        <a href="{% url 'rfq_to_workorder_list' %}"
+           class="create-btn">
+
+            + Create Work Order
+
+        </a>
+
+    </div>
+
+    <!-- ===================================================== -->
+    <!-- STATS -->
+    <!-- ===================================================== -->
+
+    <div class="stats-row">
+
+        <div class="stat-card">
+
+            <div class="stat-label">
+
+                Total Work Orders
+
+            </div>
+
+            <div class="stat-value">
+
+                {{ total_workorders }}
+
+            </div>
+
+        </div>
+
+        <div class="stat-card">
+
+            <div class="stat-label">
+
+                Active Production
+
+            </div>
+
+            <div class="stat-value">
+
+                {{ total_workorders }}
+
+            </div>
+
+        </div>
+
+        <div class="stat-card">
+
+            <div class="stat-label">
+
+                Dispatch Ready
+
+            </div>
+
+            <div class="stat-value">
+
+                {{ total_parts }}
+
+            </div>
+
+        </div>
+
+        <div class="stat-card">
+
+            <div class="stat-label">
+
+                Total Customers
+
+            </div>
+
+            <div class="stat-value">
+
+                {{ total_customers }}
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- ===================================================== -->
+    <!-- WORKORDER GRID -->
+    <!-- ===================================================== -->
+
+    {% if workorders %}
+
+    <div class="workorder-grid">
+
+        {% for wo in workorders %}
+
+        <div class="work-card">
+
+            <!-- HEADER -->
+
+            <div class="card-header-row">
+
+    <div>
+
+        <div class="work-number">
+
+            {{ wo.wo_number }}
+
+        </div>
+
+        {% if wo.status == "approved" %}
+
+        <div class="mt-2">
+
+            <span class="badge bg-success rounded-pill px-3 py-2">
+
+                Approved
+
+            </span>
+
+        </div>
+
+        {% endif %}
+
+    </div>
+
+    <div class="text-end">
+
+        <div class="parts-badge mb-2">
+
+            {{ wo.items.count }} Parts
+
+        </div>
+
+        <!-- VIEW BUTTON -->
+
+        <button
+
+            class="view-btn"
+
+            data-bs-toggle="modal"
+
+            data-bs-target="#woModal{{ wo.id }}">
+
+            View
+
+        </button>
+
+    </div>
+
+</div>
+
+            <!-- CUSTOMER -->
+
+            <div class="info-block">
+
+                <div class="info-label">
+
+                    Customer
+
+                </div>
+
+                <div class="info-value">
+
+                    {{ wo.customer_name }}
+
+                </div>
+
+            </div>
+
+            <!-- RFQ -->
+
+            <div class="info-block">
+
+                <div class="info-label">
+
+                    RFQ Reference
+
+                </div>
+
+                <div class="info-value">
+
+                    {{ wo.rfq_ref|default:"-" }}
+
+                </div>
+
+            </div>
+
+            <!-- DATE -->
+
+            <div class="info-block">
+
+                <div class="info-label">
+
+                    Created Date
+
+                </div>
+
+                <div class="info-value">
+
+                    {{ wo.created_at|date:"d M Y" }}
+
+                </div>
+
+            </div>
+
+            <!-- NOTES -->
+
+            <div class="info-block">
+
+                <div class="info-label">
+
+                    Notes
+
+                </div>
+
+                <div class="notes-box">
+
+                    {{ wo.product_notes|truncatechars:100|default:"No notes available." }}
+
+                </div>
+
+            </div>
+
+            <!-- FOOTER -->
+
+            <div class="card-footer-row">
+
+                <a href="{% url 'workorder_kanban' wo.id %}"
+                   class="open-btn">
+
+                    Open Kanban
+
+                </a>
+
+   
+
+            </div>
+
+        </div>
+        <!-- ===================================================== -->
+<!-- WORKORDER MODAL -->
+<!-- ===================================================== -->
+
+<div class="modal fade"
+
+     id="woModal{{ wo.id }}"
+
+     tabindex="-1"
+
+     aria-hidden="true">
+
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+
+        <div class="modal-content border-0 rounded-5">
+
+            <!-- HEADER -->
+
+            <div class="modal-header border-0 p-4">
+
+                <div>
+
+                    <h3 class="fw-bold mb-1">
+
+                        {{ wo.wo_number }}
+
+                    </h3>
+
+                    <div class="text-muted">
+
+                        {{ wo.customer_name }}
+
+                    </div>
+
+                </div>
+
+                <button type="button"
+
+                        class="btn-close"
+
+                        data-bs-dismiss="modal">
+
+                </button>
+
+            </div>
+
+            <!-- BODY -->
+
+            <div class="modal-body px-4 pb-4">
+
+                <!-- INFO ROW -->
+
+                <div class="row g-3 mb-4">
+
+                    <div class="col-md-3">
+
+                        <div class="card border-0 bg-light rounded-4 p-3">
+
+                            <small class="text-muted">
+
+                                RFQ Reference
+
+                            </small>
+
+                            <div class="fw-bold">
+
+                                {{ wo.rfq_ref|default:"-" }}
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    <div class="col-md-3">
+
+                        <div class="card border-0 bg-light rounded-4 p-3">
+
+                            <small class="text-muted">
+
+                                Status
+
+                            </small>
+
+                            <div class="fw-bold text-success">
+
+                                {{ wo.status }}
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    <div class="col-md-3">
+
+                        <div class="card border-0 bg-light rounded-4 p-3">
+
+                            <small class="text-muted">
+
+                                Created Date
+
+                            </small>
+
+                            <div class="fw-bold">
+
+                                {{ wo.created_at|date:"d M Y" }}
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    <div class="col-md-3">
+
+                        <div class="card border-0 bg-light rounded-4 p-3">
+
+                            <small class="text-muted">
+
+                                Total Parts
+
+                            </small>
+
+                            <div class="fw-bold">
+
+                                {{ wo.items.count }}
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <!-- ITEMS TABLE -->
+
+                <div class="card border-0 shadow-sm rounded-5">
+
+                    <div class="card-body">
+
+                        <h5 class="fw-bold mb-3">
+
+                            Workorder Items
+
+                        </h5>
+
+                        <div class="table-responsive">
+
+                            <table class="table align-middle">
+
+                                <thead>
+
+                                    <tr>
+
+                                        <th>Code</th>
+
+                                        <th>Name</th>
+
+                                        <th>Material</th>
+
+                                        <th>Qty</th>
+
+                                        <th>Status</th>
+
+                                    </tr>
+
+                                </thead>
+
+                                <tbody>
+
+                                    {% for item in wo.items.all %}
+
+                                    <tr>
+
+                                        <td>
+
+                                            {{ item.product_code }}
+
+                                        </td>
+
+                                        <td>
+
+                                            {{ item.product_name }}
+
+                                        </td>
+
+                                        <td>
+
+                                            {{ item.material }}
+
+                                        </td>
+
+                                        <td>
+
+                                            {{ item.quantity }}
+
+                                        </td>
+
+                                        <td>
+
+                                            <span class="badge bg-primary">
+
+                                                {{ item.status }}
+
+                                            </span>
+
+                                        </td>
+
+                                    </tr>
+
+                                    {% endfor %}
+
+                                </tbody>
+
+                            </table>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            <!-- FOOTER -->
+
+            <div class="modal-footer border-0 px-4 pb-4">
+
+                <a href="{% url 'workorder_kanban' wo_id=wo.id %}"
+
+                   class="btn btn-primary rounded-4 px-4">
+
+                    Open Kanban
+
+                </a>
+
+                <a href="{% url 'po_qu:workorder_detail' wo_id=wo.id %}"
+
+                   class="btn btn-dark rounded-4 px-4">
+
+                    Full Page
+
+                </a>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+        {% endfor %}
+        
+
+    </div>
+
+    {% else %}
+
+    <!-- EMPTY -->
+
+    <div class="empty-state">
+
+        <div class="empty-icon">
+
+            📦
+
+        </div>
+
+        <div class="empty-title">
+
+            No Work Orders Found
+
+        </div>
+
+        <div class="empty-text">
+
+            No manufacturing work orders available.
+
+        </div>
+
+        <a href="{% url 'rfq_to_workorder_list' %}"
+           class="create-btn">
+
+            Create Work Order
+
+        </a>
+
+    </div>
+
+    {% endif %}
+
+</div>
+
+{% endblock %}

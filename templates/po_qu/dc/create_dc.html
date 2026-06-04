@@ -1,0 +1,113 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<div class="container-fluid">
+
+<h3>Create Delivery Challan</h3>
+
+<form method="POST">
+{% csrf_token %}
+
+<!-- BASIC -->
+<div class="card p-3 mb-3">
+<div class="row">
+<div class="col-md-4">
+<label>Date</label>
+<input type="date" name="date" class="form-control">
+</div>
+
+<div class="col-md-4">
+<label>Transporter</label>
+<input name="transporter" class="form-control">
+</div>
+
+<div class="col-md-4">
+<label>City</label>
+<input name="city" class="form-control">
+</div>
+</div>
+</div>
+
+<!-- FROM / TO -->
+<div class="row mb-3">
+
+<div class="col-md-6">
+<div class="card p-3">
+<h5>From</h5>
+<input name="from_name" class="form-control mb-2" placeholder="Name">
+<textarea name="from_address" class="form-control mb-2" placeholder="Address"></textarea>
+<input name="from_city" class="form-control mb-2" placeholder="City">
+<input name="from_state" class="form-control mb-2" placeholder="State">
+<input name="from_pincode" class="form-control mb-2" placeholder="Pincode">
+<input name="from_country" class="form-control mb-2" placeholder="Country">
+<input name="from_phone" class="form-control mb-2" placeholder="Phone">
+<input name="from_email" class="form-control" placeholder="Email">
+</div>
+</div>
+
+<div class="col-md-6">
+<div class="card p-3">
+<h5>To</h5>
+<input name="to_name" class="form-control mb-2" placeholder="Name">
+<textarea name="to_address" class="form-control mb-2" placeholder="Address"></textarea>
+<input name="to_city" class="form-control mb-2" placeholder="City">
+<input name="to_state" class="form-control mb-2" placeholder="State">
+<input name="to_pincode" class="form-control mb-2" placeholder="Pincode">
+<input name="to_country" class="form-control mb-2" placeholder="Country">
+<input name="to_phone" class="form-control mb-2" placeholder="Phone">
+<input name="to_email" class="form-control" placeholder="Email">
+</div>
+</div>
+
+</div>
+
+<!-- ITEMS -->
+<div class="card p-3 mb-3">
+<h5>Items</h5>
+
+<table class="table table-bordered" id="itemsTable">
+<thead>
+<tr>
+<th>Product</th>
+<th>Unit</th>
+<th>Quantity</th>
+<th></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td><input name="product_name[]" class="form-control"></td>
+<td><input name="unit[]" class="form-control"></td>
+<td><input name="quantity[]" class="form-control"></td>
+<td><button type="button" onclick="removeRow(this)">X</button></td>
+</tr>
+</tbody>
+</table>
+
+<button type="button" class="btn btn-primary btn-sm" onclick="addRow()">+ Add Item</button>
+</div>
+
+<!-- NOTE -->
+<div class="card p-3 mb-3">
+<label>Note</label>
+<textarea name="note" class="form-control"></textarea>
+</div>
+
+<button class="btn btn-success">Save</button>
+
+</form>
+
+</div>
+
+<script>
+function addRow(){
+let row=document.querySelector("#itemsTable tbody").insertRow();
+row.innerHTML=document.querySelector("#itemsTable tbody tr").innerHTML;
+}
+function removeRow(btn){
+btn.closest("tr").remove();
+}
+</script>
+
+{% endblock %}

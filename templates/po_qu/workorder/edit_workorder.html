@@ -1,0 +1,239 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+.card-box {
+    border-radius: 12px;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.06);
+    padding: 15px;
+    margin-bottom: 20px;
+    background: white;
+}
+
+.section-title {
+    font-weight: 600;
+    font-size: 15px;
+    color: #4e73df;
+    margin-bottom: 10px;
+}
+
+.table th {
+    background: #f8f9fc;
+    font-size: 13px;
+}
+</style>
+
+<div class="container-fluid mt-4">
+
+<form method="POST">
+{% csrf_token %}
+
+<!-- HEADER -->
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h4 class="fw-bold">✏ Edit Work Order - {{ wo.wo_number }}</h4>
+
+    <div>
+        <button class="btn btn-success btn-sm">💾 Update</button>
+        <a href="{% url 'po_qu:workorder_detail' wo.id %}" class="btn btn-secondary btn-sm">Cancel</a>
+    </div>
+</div>
+
+<!-- BASIC INFO -->
+<div class="card-box">
+    <div class="section-title">Basic Information</div>
+
+    <div class="row g-3">
+
+        <div class="col-md-3">
+            <label>Date</label>
+            <input type="date" name="date"
+                   value="{{ wo.date|date:'Y-m-d' }}"
+                   class="form-control">
+        </div>
+
+        <div class="col-md-3">
+            <label>PO No</label>
+            <input type="text" name="po_number"
+                   value="{{ wo.po_number }}"
+                   class="form-control">
+        </div>
+
+        <div class="col-md-3">
+            <label>PO Date</label>
+            <input type="date" name="po_date"
+                   value="{{ wo.po_date|date:'Y-m-d' }}"
+                   class="form-control">
+        </div>
+
+        <div class="col-md-3">
+            <label>Customer</label>
+            <input type="text" name="customer_name"
+                   value="{{ wo.customer_name }}"
+                   class="form-control">
+        </div>
+
+        <div class="col-md-12">
+            <label>Address</label>
+            <input type="text" name="customer_address"
+                   value="{{ wo.customer_address }}"
+                   class="form-control">
+        </div>
+
+    </div>
+</div>
+
+<!-- ITEMS -->
+<div class="card-box">
+    <div class="d-flex justify-content-between mb-2">
+        <div class="section-title">Items</div>
+        <button type="button" id="addRow" class="btn btn-primary btn-sm">+ Add Item</button>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>Code</th>
+                    <th>Name</th>
+                    <th>Material</th>
+                    <th>Qty</th>
+                    <th>Unit</th>
+                    <th>Deliveries</th>
+                    <th></th>
+                </tr>
+            </thead>
+
+            <tbody id="itemsBody">
+
+                {% for item in wo.items.all %}
+                <tr>
+                    <td><input name="product_code[]" value="{{ item.product_code }}" class="form-control"></td>
+                    <td><input name="product_name[]" value="{{ item.product_name }}" class="form-control"></td>
+                    <td><input name="material[]" value="{{ item.material }}" class="form-control"></td>
+                    <td><input name="quantity[]" value="{{ item.quantity }}" class="form-control"></td>
+                    <td><input name="unit[]" value="{{ item.unit }}" class="form-control"></td>
+
+                    <td>
+                        <div class="delivery-box">
+
+                            {% for d in item.deliveries.all %}
+                            <div class="d-flex gap-1 mt-1">
+                                <input type="date"
+                                       name="delivery_date_{{ forloop.parentloop.counter0 }}[]"
+                                       value="{{ d.delivery_date|date:'Y-m-d' }}"
+                                       class="form-control">
+
+                                <input type="number"
+                                       name="delivery_qty_{{ forloop.parentloop.counter0 }}[]"
+                                       value="{{ d.quantity }}"
+                                       class="form-control">
+                            </div>
+                            {% endfor %}
+
+                        </div>
+
+                        <button type="button" class="btn btn-sm btn-outline-secondary add-delivery">
+                            + Delivery
+                        </button>
+                    </td>
+
+                    <td>
+                        <button type="button" class="btn btn-danger btn-sm remove-row">X</button>
+                    </td>
+                </tr>
+                {% endfor %}
+
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- NOTES -->
+<div class="card-box">
+    <div class="section-title">Instructions / Notes</div>
+
+    <div class="row g-3">
+
+        <div class="col-md-6">
+            <label>Product Notes</label>
+            <textarea name="product_notes" class="form-control">{{ wo.product_notes }}</textarea>
+        </div>
+
+        <div class="col-md-6">
+            <label>Process Notes</label>
+            <textarea name="process_notes" class="form-control">{{ wo.process_notes }}</textarea>
+        </div>
+
+        <div class="col-md-6">
+            <label>Packing Notes</label>
+            <textarea name="packing_notes" class="form-control">{{ wo.packing_notes }}</textarea>
+        </div>
+
+        <div class="col-md-6">
+            <label>Delivery Notes</label>
+            <textarea name="delivery_notes" class="form-control">{{ wo.delivery_notes }}</textarea>
+        </div>
+
+        <div class="col-md-12">
+            <label>Documentation</label>
+            <textarea name="documentation_notes" class="form-control">{{ wo.documentation_notes }}</textarea>
+        </div>
+
+        <div class="col-md-12">
+            <label>Other Notes</label>
+            <textarea name="other_notes" class="form-control">{{ wo.other_notes|default:'' }}</textarea>
+        </div>
+
+    </div>
+</div>
+
+</form>
+</div>
+
+<!-- SCRIPT -->
+<script>
+
+// ADD ITEM
+document.getElementById("addRow").onclick = function(){
+    let row = `
+    <tr>
+        <td><input name="product_code[]" class="form-control"></td>
+        <td><input name="product_name[]" class="form-control"></td>
+        <td><input name="material[]" class="form-control"></td>
+        <td><input name="quantity[]" class="form-control"></td>
+        <td><input name="unit[]" class="form-control"></td>
+        <td>
+            <div class="delivery-box"></div>
+            <button type="button" class="btn btn-sm btn-outline-secondary add-delivery">+ Delivery</button>
+        </td>
+        <td><button type="button" class="btn btn-danger btn-sm remove-row">X</button></td>
+    </tr>`;
+    document.getElementById("itemsBody").insertAdjacentHTML("beforeend", row);
+};
+
+// REMOVE
+document.addEventListener("click", function(e){
+    if(e.target.classList.contains("remove-row")){
+        e.target.closest("tr").remove();
+    }
+});
+
+// ADD DELIVERY
+document.addEventListener("click", function(e){
+    if(e.target.classList.contains("add-delivery")){
+        let box = e.target.previousElementSibling;
+        let index = Array.from(document.querySelectorAll("#itemsBody tr"))
+                        .indexOf(e.target.closest("tr"));
+
+        box.insertAdjacentHTML("beforeend", `
+        <div class="d-flex gap-1 mt-1">
+            <input type="date" name="delivery_date_${index}[]" class="form-control">
+            <input type="number" name="delivery_qty_${index}[]" class="form-control">
+        </div>
+        `);
+    }
+});
+
+</script>
+
+{% endblock %}

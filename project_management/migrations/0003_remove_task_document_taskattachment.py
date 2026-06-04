@@ -14,18 +14,5 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RemoveField(
-            model_name='task',
-            name='document',
-        ),
-        migrations.CreateModel(
-            name='TaskAttachment',
-            fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('file', models.FileField(upload_to=project_management.models.task_document_upload_path)),
-                ('uploaded_at', models.DateTimeField(auto_now_add=True)),
-                ('task', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='attachments', to='project_management.task')),
-                ('uploaded_by', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, to=settings.AUTH_USER_MODEL)),
-            ],
-        ),
+        
     ]

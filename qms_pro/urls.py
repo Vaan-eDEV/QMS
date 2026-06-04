@@ -27,7 +27,10 @@ urlpatterns = [
     path("audit-log/", include("audit_log.urls")),
     path("projects/", include("project_management.urls")),
     path('form-builder/', include('form_builder.urls')),
-
+    path('po/', include(('po_qu.urls', 'po_qu'), namespace='po_qu')),
+    path('visitors/', include('visitors.urls')),
+    path('feedback/',include('feedback.urls')),
+    path('sm/',include('sm.urls')),
 
 
 ]

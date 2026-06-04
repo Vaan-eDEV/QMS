@@ -7,8 +7,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap" rel="stylesheet">
   <!-- Bootstrap -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+<link rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0/dist/css/select2.min.css" rel="stylesheet" />
   <style>
     
     body {
@@ -96,7 +99,38 @@
     .main-content.collapsed {
       margin-left: 0;
     }
+    .notif-box {
+    position: fixed;   /* 🔥 IMPORTANT FIX */
+    left: 250px;       /* align after sidebar */
+    top: 140px;
+    width: 320px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    padding: 10px;
+    z-index: 9999;
+}
 
+.notif-item {
+    padding: 8px;
+    border-bottom: 1px solid #eee;
+    cursor: pointer;
+}
+
+.notif-item:hover {
+    background: #f3f4f6;
+}
+
+.toast {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: #111;
+    color: #fff;
+    padding: 12px;
+    border-radius: 6px;
+    z-index: 9999;
+}
     /* ================= SIDEBAR ARROW ================= */
     .sidebar-arrow {
       position: fixed;
@@ -214,19 +248,39 @@
 
   {% if request.user.is_superuser or access and access.can_dashboard %}
     <hr class="text-secondary mx-2">
-    <a href="{% url 'dashboard' %}">Dashboard</a>
+    <a href="{% url 'main_dashboard' %}">Dashboard</a>
   {% endif %}
 
   {% if request.user.is_superuser or access and access.can_documents %}
     <hr class="text-secondary mx-2">
-    <div class="submenu-toggle">Wiki ▾</div>
-    <div class="submenu">
-        <a href="{% url 'document_home' %}">All Documents</a>
-    </div>
+    <div class="submenu-toggle" style="display:flex; justify-content:space-between; align-items:center;">
+
+    <span>Wiki ▾</span>
+
+    <!-- 🔔 Bell -->
+    <span onclick="event.stopPropagation(); toggleNotif();" style="position:relative; cursor:pointer;">
+        🔔
+        <span id="notifBadge"
+              style="position:absolute; top:-6px; right:-6px; background:red; color:white; font-size:10px; padding:2px 6px; border-radius:50%; display:none;">
+        </span>
+    </span>
+
+</div>
+
+<div class="submenu">
+    <a href="{% url 'document_home' %}">All Documents</a>
+    {% if request.user.is_superuser or access and access.can_workflow_access %}
+    <a href="{% url 'document_workflow' %}">Workflow</a>
+    {% endif %}
+    <a href="{% url 'archive_list' %}" class="btn btn-dark">Obsolete</a>
+</div>
+
+<!-- Notification dropdown -->
+<div id="notifBox" class="notif-box d-none"></div>
   {% endif %}
   <hr class="text-secondary mx-2">
 
-<div class="submenu-toggle">RFQ ▾</div>
+<div class="submenu-toggle">Flow ▾</div>
 
 <div class="submenu">
     {% if request.user.is_superuser or access and access.can_form_build %}
@@ -238,22 +292,59 @@
         All Forms
     </a>
     <a href="{% url 'kanban_view' %}">
-      Kanban
+      CRM
+    </a>
+    <a href="{% url 'register_list' %}">
+        📋 Register
+    </a>
+    <a href="/form-builder/data/">Data List</a>
+    <hr class="text-secondary mx-2">
+
+      <!-- 🔥 NEW: Combined PO + Quotation -->
+    <a href="{% url 'po_qu:po_au' %}">
+        📊 PO & Quotations
     </a>
     {% if request.user.is_superuser or access and access.can_costing_dashboard %}
-      <a href="{% url 'dashboard' %}">Dashboard</a>
+      <a href="{% url 'dashboard_view' %}">Dashboard</a>
     {% endif %}
 </div>
+
+
   {% if request.user.is_superuser or access and access.can_forms %}
     <hr class="text-secondary mx-2">
-    <div class="submenu-toggle">Forms ▾</div>
+    <div class="submenu-toggle">Production ▾</div>
     <div class="submenu px-2">
-        {% if request.user.is_superuser %}
+        {% if request.user.is_superuser or access and access.can_fm %}
             <a href="{% url 'form_create' %}"
                class="btn btn-success btn-sm w-100 text-start mb-2">
                + Create Form
             </a>
         {% endif %}
+
+
+
+        <hr class="text-secondary mx-2">
+
+<div class="text-uppercase text-white-50 small px-3 mt-2 mb-2">
+
+    Work Orders
+
+</div>
+
+<a href="{% url 'rfq_to_workorder_list' %}">
+
+    RFQ → Work Order
+
+</a>
+
+<a href="{% url 'workorder_list' %}">
+
+    Work Order List
+
+</a>
+
+
+
 
         <a href="{% url 'form_list' %}">Forms</a>
 
@@ -290,14 +381,14 @@
   {% endif %}
 
 
-  {% if request.user.is_superuser %}
+
   <hr class="text-secondary mx-2">
   <div class="submenu-toggle">Projects ▾</div>
 
   <div class="submenu">
     <a href="{% url 'project_list' %}">Project List</a>
   </div>
-  {% endif %}
+
   {% if request.user.is_superuser or access and access.can_tests %}
     <hr class="text-secondary mx-2">
     <div class="submenu-toggle">Tests ▾</div>
@@ -309,14 +400,77 @@
             <a href="{% url 'result_list' %}">View Results</a>
         {% endif %}
     </div>
+    <hr class="text-secondary mx-2">
+    <div class="submenu-toggle">Employees ▾</div>
+      <div class="submenu">
+        <a href="{% url 'my_profile' %}">👤 My Profile</a>
+        <a href="{% url 'employee_list' %}">👥 Employee List</a>
+        <a href="{% url 'employee_approval_list' %}">⏳ Pending Approval</a>
+      </div>
   {% endif %}
 
   {% endwith %}
   {% endif %}
-  {% if request.user.is_superuser or access and access.can_forms %}
+ 
     <hr class="text-secondary mx-2">
     <a href="{% url 'capa_list' %}">CAPA Management</a>
-  {% endif %}
+
+<hr class="text-secondary mx-2">
+
+<div class="submenu-toggle">
+
+    Visitors ▾
+
+</div>
+
+<div class="submenu">
+
+    <a href="{% url 'visitors:visitor_dashboard' %}">
+
+        Visitor Dashboard
+
+    </a>
+
+    <a href="{% url 'visitors:create_visitor' %}">
+
+        New Visitor Entry
+
+    </a>
+
+</div>
+
+
+<hr class="text-secondary mx-2">
+
+<div class="submenu-toggle">
+
+    Feedback ▾
+
+</div>
+
+<div class="submenu">
+
+    <a href="{% url 'feedback_list' %}">
+
+        Feedback List
+
+    </a>
+
+    <a href="{% url 'feedback_dashboard' %}">
+
+        Feedback Dashboard
+
+    </a>
+
+    <a href="{% url 'sm_dashboard' %}">
+
+        SM Dashboard
+
+    </a>
+
+</div>
+
+
 
   {% if request.user.is_superuser %}
     <hr class="text-secondary mx-2">
@@ -360,7 +514,11 @@
     © {{ now|date:"Y" }} VAAN QMS | All Rights Reserved
   </div> -->
   <!-- ================= FOOTER ================= -->
+<!-- jQuery -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
+<!-- Select2 JS -->
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0/dist/js/select2.min.js"></script>
 <!-- Bootstrap -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
@@ -423,10 +581,133 @@
   // Submenu Toggle
   // ===============================
   document.querySelectorAll('.submenu-toggle').forEach(toggle => {
-    toggle.addEventListener('click', () => {
-      toggle.nextElementSibling.classList.toggle('show');
+
+    toggle.addEventListener('click', (e) => {
+
+        // ✅ STOP event affecting other scripts (IMPORTANT)
+        e.stopPropagation();
+
+        // 🔔 Ignore bell click
+        if (e.target.closest("[onclick='toggleNotif()']")) {
+            return;
+        }
+
+        // ✅ Close other menus
+        document.querySelectorAll('.submenu').forEach(menu => {
+            if (menu !== toggle.nextElementSibling) {
+                menu.classList.remove('show');
+            }
+        });
+
+        // ✅ Toggle current
+        toggle.nextElementSibling.classList.toggle('show');
     });
-  });
+
+});
+
+let shownNotifications = new Set();
+
+// Toggle dropdown
+function toggleNotif(){
+    document.getElementById("notifBox")?.classList.toggle("d-none");
+}
+
+// Open doc
+function openDocument(id){
+    fetch(`/mark-as-read/${id}/`)
+    .then(() => {
+        window.location.href = `/document/${id}/edit/`;
+    });
+}
+
+// Toast popup
+function showToast(message){
+    let toast = document.createElement("div");
+    toast.className = "toast";
+    toast.innerText = message;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 3000);
+}
+
+// Load notifications
+function loadGlobalNotifications(){
+
+    fetch("/workflow-notifications/")
+    .then(res => res.json())
+    .then(data => {
+
+        let badge = document.getElementById("notifBadge");
+        let box = document.getElementById("notifBox");
+
+        if (!badge || !box) return;
+        if (data.notifications.length === 0) {
+          badge.style.display = "none";
+          box.innerHTML = `
+            <div style="padding:10px; text-align:center; color:#6b7280;">
+              No notifications
+            </div>
+          `;
+          return;
+        }
+        if (data.notifications.length > 0) {
+
+            badge.innerText = data.notifications.length;
+            badge.style.display = "flex";
+            badge.style.alignItems = "center";
+            badge.style.justifyContent = "center";
+
+            let html = `
+              <div style="font-weight:600; padding:8px; border-bottom:1px solid #eee;">
+                Notifications
+              </div>
+            `;
+
+            data.notifications.forEach(n => {
+
+                if(!shownNotifications.has(n.id)){
+                    showToast(`📄 ${n.title}`);
+                    shownNotifications.add(n.id);
+                }
+
+                html += `
+                    <div class="notif-item" onclick="openDocument(${n.id})">
+                        <div style="font-weight:600;">${n.title}</div>
+                        <div style="font-size:12px; color:#6b7280;">
+                            👤 ${n.sender || "Unknown"} • 🕒 ${n.time || ""}
+                        </div>
+                        <div style="font-size:13px;">
+                            💬 ${n.last_message || "Updated"}
+                        </div>
+                    </div>
+                `;
+            });
+
+            box.innerHTML = html;
+
+        } else {
+            badge.style.display = "none";
+        }
+
+    });
+}
+document.addEventListener("click", function(e){
+    let box = document.getElementById("notifBox");
+    let bell = document.querySelector("[onclick='toggleNotif()']");
+
+    if (!box || !bell) return;
+
+    if (!box.contains(e.target) && !bell.contains(e.target)) {
+        box.classList.add("d-none");
+    }
+});
+
+// Polling
+setInterval(loadGlobalNotifications, 5000);
+
+// First load
+document.addEventListener("DOMContentLoaded", loadGlobalNotifications);
+
+
 </script>
 
 

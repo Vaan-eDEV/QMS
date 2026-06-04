@@ -1,0 +1,707 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<style>
+
+body{
+    background:#eef2f7;
+}
+
+/* =========================================
+HEADER
+========================================= */
+
+.dashboard-top{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:25px;
+    flex-wrap:wrap;
+    gap:15px;
+}
+
+.dashboard-title h1{
+    font-size:28px;
+    font-weight:800;
+    margin-bottom:4px;
+    color:#111827;
+}
+
+.dashboard-title p{
+    color:#6b7280;
+    margin:0;
+    font-size:14px;
+}
+
+.new-btn{
+    background:linear-gradient(
+        135deg,
+        #2563eb,
+        #1d4ed8
+    );
+
+    color:white;
+    padding:12px 20px;
+    border-radius:14px;
+    text-decoration:none;
+    font-weight:700;
+    font-size:14px;
+
+    box-shadow:0 8px 20px rgba(37,99,235,0.25);
+}
+
+/* =========================================
+STATS
+========================================= */
+
+.stats-grid{
+
+    display:grid;
+
+    grid-template-columns:
+        repeat(auto-fit,minmax(200px,1fr));
+
+    gap:18px;
+
+    margin-bottom:28px;
+}
+
+.stat-card{
+
+    background:white;
+
+    border-radius:20px;
+
+    padding:22px;
+
+    box-shadow:0 6px 20px rgba(0,0,0,0.05);
+}
+
+.stat-top{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+}
+
+.stat-number{
+    font-size:30px;
+    font-weight:900;
+    color:#111827;
+}
+
+.stat-label{
+    margin-top:4px;
+    color:#6b7280;
+    font-size:13px;
+}
+
+.stat-icon{
+    width:50px;
+    height:50px;
+    border-radius:14px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:22px;
+    background:#eff6ff;
+}
+
+/* =========================================
+VISITOR GRID
+========================================= */
+
+.visitor-grid{
+
+    display:grid;
+
+    grid-template-columns:
+        repeat(auto-fit,minmax(300px,340px));
+
+    gap:22px;
+
+    align-items:start;
+}
+
+/* =========================================
+CARD
+========================================= */
+
+.visitor-card{
+
+    background:white;
+
+    border-radius:22px;
+
+    overflow:hidden;
+
+    box-shadow:0 8px 25px rgba(0,0,0,0.06);
+
+    transition:0.3s;
+}
+
+.visitor-card:hover{
+    transform:translateY(-4px);
+}
+
+/* =========================================
+PHOTO
+========================================= */
+
+.visitor-photo{
+
+    height:180px;
+
+    position:relative;
+
+    overflow:hidden;
+
+    background:#dbeafe;
+}
+
+.visitor-photo img{
+
+    width:100%;
+
+    height:100%;
+
+    object-fit:cover;
+}
+
+/* =========================================
+STATUS
+========================================= */
+
+.status-chip{
+
+    position:absolute;
+
+    top:12px;
+
+    right:12px;
+
+    padding:6px 12px;
+
+    border-radius:30px;
+
+    font-size:11px;
+
+    font-weight:700;
+}
+
+.status-in{
+    background:#d1fae5;
+    color:#065f46;
+}
+
+.status-out{
+    background:#e5e7eb;
+    color:#374151;
+}
+
+.status-pending{
+    background:#fef3c7;
+    color:#92400e;
+}
+
+/* =========================================
+BODY
+========================================= */
+
+.visitor-body{
+    padding:18px;
+}
+
+.visitor-header{
+
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:start;
+
+    margin-bottom:14px;
+
+    gap:10px;
+}
+
+.visitor-name{
+
+    font-size:18px;
+
+    font-weight:800;
+
+    color:#111827;
+
+    margin-bottom:2px;
+}
+
+.visitor-company{
+    color:#6b7280;
+    font-size:13px;
+}
+
+.badge-id{
+
+    background:#eff6ff;
+
+    color:#1d4ed8;
+
+    padding:6px 12px;
+
+    border-radius:12px;
+
+    font-size:11px;
+
+    font-weight:800;
+}
+
+/* =========================================
+INFO GRID
+========================================= */
+
+.info-grid{
+
+    display:grid;
+
+    grid-template-columns:1fr 1fr;
+
+    gap:10px;
+
+    margin-bottom:16px;
+}
+
+.info-box{
+
+    background:#f9fafb;
+
+    border-radius:12px;
+
+    padding:10px;
+}
+
+.info-label{
+
+    font-size:11px;
+
+    color:#9ca3af;
+
+    margin-bottom:4px;
+}
+
+.info-value{
+
+    font-size:12px;
+
+    font-weight:700;
+
+    color:#111827;
+
+    word-break:break-word;
+}
+
+/* =========================================
+BUTTONS
+========================================= */
+
+.action-row{
+    display:flex;
+    gap:8px;
+}
+
+.action-btn{
+
+    flex:1;
+
+    text-align:center;
+
+    text-decoration:none;
+
+    padding:10px;
+
+    border-radius:12px;
+
+    font-size:12px;
+
+    font-weight:700;
+
+    transition:0.3s;
+}
+
+.btn-view{
+    background:#111827;
+    color:white;
+}
+
+.btn-pass{
+    background:#2563eb;
+    color:white;
+}
+
+.btn-checkout{
+    background:#dc2626;
+    color:white;
+}
+
+.action-btn:hover{
+    opacity:0.92;
+    transform:translateY(-2px);
+}
+
+/* =========================================
+EMPTY
+========================================= */
+
+.empty-box{
+
+    background:white;
+
+    border-radius:24px;
+
+    padding:60px;
+
+    text-align:center;
+
+    color:#9ca3af;
+
+    font-size:18px;
+
+    font-weight:600;
+}
+
+/* =========================================
+RESPONSIVE
+========================================= */
+
+@media(max-width:768px){
+
+    .visitor-grid{
+        grid-template-columns:1fr;
+    }
+
+    .info-grid{
+        grid-template-columns:1fr;
+    }
+
+    .dashboard-title h1{
+        font-size:24px;
+    }
+
+}
+
+</style>
+
+<div class="container-fluid py-4">
+
+    <!-- HEADER -->
+    <div class="dashboard-top">
+
+        <div class="dashboard-title">
+
+            <h1>
+                Visitor Dashboard
+            </h1>
+
+            <p>
+                Security & Visitor Management System
+            </p>
+
+        </div>
+
+        <a href="{% url 'visitors:create_visitor' %}"
+           class="new-btn">
+
+            + New Visitor
+
+        </a>
+
+    </div>
+
+    <!-- STATS -->
+    <div class="stats-grid">
+
+        <div class="stat-card">
+
+            <div class="stat-top">
+
+                <div>
+
+                    <div class="stat-number">
+                        {{ inside_visitors }}
+                    </div>
+
+                    <div class="stat-label">
+                        Visitors Inside
+                    </div>
+
+                </div>
+
+                <div class="stat-icon">
+                    👤
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="stat-card">
+
+            <div class="stat-top">
+
+                <div>
+
+                    <div class="stat-number">
+                        {{ checked_out }}
+                    </div>
+
+                    <div class="stat-label">
+                        Checked Out
+                    </div>
+
+                </div>
+
+                <div class="stat-icon">
+                    🚪
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="stat-card">
+
+            <div class="stat-top">
+
+                <div>
+
+                    <div class="stat-number">
+                        {{ pending_visitors }}
+                    </div>
+
+                    <div class="stat-label">
+                        Pending
+                    </div>
+
+                </div>
+
+                <div class="stat-icon">
+                    ⏳
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="stat-card">
+
+            <div class="stat-top">
+
+                <div>
+
+                    <div class="stat-number">
+                        {{ visitors.count }}
+                    </div>
+
+                    <div class="stat-label">
+                        Total Visitors
+                    </div>
+
+                </div>
+
+                <div class="stat-icon">
+                    📊
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- VISITORS -->
+    {% if visitors %}
+
+    <div class="visitor-grid">
+
+        {% for visitor in visitors %}
+
+        <div class="visitor-card">
+
+            <!-- PHOTO -->
+            <div class="visitor-photo">
+
+                {% if visitor.visitor_photo %}
+
+                <img src="{{ visitor.visitor_photo.url }}">
+
+                {% else %}
+
+                <div class="d-flex h-100 justify-content-center align-items-center">
+
+                    No Photo
+
+                </div>
+
+                {% endif %}
+
+                {% if visitor.status == "CHECKED_IN" %}
+
+                <div class="status-chip status-in">
+
+                    INSIDE
+
+                </div>
+
+                {% elif visitor.status == "CHECKED_OUT" %}
+
+                <div class="status-chip status-out">
+
+                    OUT
+
+                </div>
+
+                {% else %}
+
+                <div class="status-chip status-pending">
+
+                    PENDING
+
+                </div>
+
+                {% endif %}
+
+            </div>
+
+            <!-- BODY -->
+            <div class="visitor-body">
+
+                <div class="visitor-header">
+
+                    <div>
+
+                        <div class="visitor-name">
+
+                            {{ visitor.name }}
+
+                        </div>
+
+                        <div class="visitor-company">
+
+                            {{ visitor.company }}
+
+                        </div>
+
+                    </div>
+
+                    <div class="badge-id">
+
+                        {{ visitor.badge_number }}
+
+                    </div>
+
+                </div>
+
+                <!-- INFO -->
+                <div class="info-grid">
+
+                    <div class="info-box">
+
+                        <div class="info-label">
+                            Phone
+                        </div>
+
+                        <div class="info-value">
+                            {{ visitor.phone }}
+                        </div>
+
+                    </div>
+
+                    <div class="info-box">
+
+                        <div class="info-label">
+                            Department
+                        </div>
+
+                        <div class="info-value">
+                            {{ visitor.department }}
+                        </div>
+
+                    </div>
+
+                    <div class="info-box">
+
+                        <div class="info-label">
+                            Check In
+                        </div>
+
+                        <div class="info-value">
+                            {{ visitor.check_in_time|date:"M d, h:i A" }}
+                        </div>
+
+                    </div>
+
+                    <div class="info-box">
+
+                        <div class="info-label">
+                            Visitor ID
+                        </div>
+
+                        <div class="info-value">
+                            {{ visitor.visitor_id }}
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <!-- ACTIONS -->
+                <div class="action-row">
+
+                    <a href="{% url 'visitors:visitor_detail' visitor.id %}"
+                       class="action-btn btn-view">
+
+                        View
+
+                    </a>
+
+                    <a href="{% url 'visitors:visitor_pass' visitor.id %}"
+                       class="action-btn btn-pass">
+
+                        Pass
+
+                    </a>
+
+                    {% if visitor.status != "CHECKED_OUT" %}
+
+                    <a href="{% url 'visitors:checkout_visitor' visitor.id %}"
+                       class="action-btn btn-checkout">
+
+                        Exit
+
+                    </a>
+
+                    {% endif %}
+
+                </div>
+
+            </div>
+
+        </div>
+
+        {% endfor %}
+
+    </div>
+
+    {% else %}
+
+    <div class="empty-box">
+
+        No Visitors Found
+
+    </div>
+
+    {% endif %}
+
+</div>
+
+{% endblock %}

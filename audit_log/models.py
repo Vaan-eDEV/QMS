@@ -29,12 +29,12 @@ class AuditLog(models.Model):
 
     role = models.CharField(max_length=50, blank=True)
 
-    module = models.CharField(max_length=100)
+    module = models.CharField(max_length=500)
     action = models.CharField(max_length=20, choices=ACTION_CHOICES)
 
-    model_name = models.CharField(max_length=100, blank=True)
-    object_id = models.CharField(max_length=100, blank=True)
-    object_repr = models.CharField(max_length=255, blank=True)
+    model_name = models.CharField(max_length=500, blank=True)
+    object_id = models.CharField(blank=True)
+    object_repr = models.CharField(blank=True)
 
     old_data = models.JSONField(null=True, blank=True)
     new_data = models.JSONField(null=True, blank=True)

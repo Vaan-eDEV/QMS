@@ -104,7 +104,23 @@
     color: #555;
     margin: 0;
 }
-
+.pdf-wrapper{
+    width: 100%;
+    overflow-x: auto;
+}
+.pdf-container{
+    position: relative;
+    display: inline-block;
+}
+#pdfCanvas{
+    display: block;
+}
+#pdfLayer{
+    position: absolute;
+    top: 0;
+    left: 0;
+    pointer-events: none;
+}
 /* ------ MOBILE RESPONSIVE ------ */
 @media (max-width: 992px) {
     .container-fluid.d-flex {
@@ -177,12 +193,32 @@
 
         
         <div class="header-line d-flex justify-content-between align-items-center mb-2">
-            <h2 class="doc-title mb-0">Document - {{ doc.title }}</h2>
 
-            <div>
-                <a href="{% url 'document_home' %}" class="back-link">← Back to List</a>
-            </div>
-        </div>
+    <h2 class="doc-title mb-0">
+        Document - {{ doc.title }}
+    </h2>
+
+    <div class="d-flex gap-2 align-items-center">
+
+        {% if doc.status == "completed" %}
+        <button onclick="reviseDocument({{ doc.id }})" class="btn btn-warning btn-sm">
+            🔄 Revise Version
+        </button>
+        {% endif %}
+
+        {% if doc.folder %}
+        <a href="{% url 'folder_documents' doc.folder.id %}" class="back-link">
+            ← Back to Folder
+        </a>
+        {% else %}
+        <a href="{% url 'document_workflow' %}" class="back-link">
+            ← Back to Workflow
+        </a>
+        {% endif %}
+
+    </div>
+
+</div>
 
         <hr>
 
@@ -195,8 +231,8 @@
             <div class=" pdf-viewer-container text-center">
 
                 
-                <div class="mb-3">
-                    <a href="{{ doc.original_file.url }}"
+                <div class="mb-1">
+                    <a href="{% url 'signed_pdf' doc.id %}"
                         target="_blank"
                         class="btn btn-primary">
                         Open PDF in New Tab
@@ -204,28 +240,12 @@
                 </div>
 
                 
-                <object data="{{ doc.original_file.url }}"
-                    type="application/pdf"
-                    width="100%"
-                    height="900px">
-
-                    
-                    <iframe src="{% static 'pdfjs/web/viewer.html' %}?file={{ doc.original_file.url|urlencode }}"
-                        width="100%"
-                        height="100px"
-                        style="border:none;">
-                    </iframe>
-
-                    
-                    <p class="mt-3">
-                        Your browser cannot display this PDF.
-                        <a href="{{ doc.original_file.url }}" target="_blank">
-                            Click here to download.
-                        </a>
-                    </p>
-
-                </object>
-
+                <div class="pdf-wrapper">
+                    <div class="pdf-container">
+                        <canvas id="pdfCanvas"></canvas>
+                        <div id="pdfLayer"></div>
+                    </div>
+                </div>
             </div>
 
         {% elif unsupported %}
@@ -247,36 +267,71 @@
 
     <!-- RIGHT SIDE: Revision Panel -->
     <div class="revision-panel">
-        <h5 class="mb-3 fw-bold">Revision History</h5>
-        <hr>
 
-        {% if revisions %}
-            {% for rev in revisions %}
-                <div class="revision-box">
+    <!-- ================= REVISION HISTORY ================= -->
+    <h5 class="mb-3 fw-bold">📄 Revision History</h5>
+    <hr>
 
-                    {% if rev.change_summary %}
-                        {% with stripped=rev.change_summary|striptags %}
-                            {% with first_line=stripped.splitlines|first %}
-                                <p class="rev-main-text">
-                                    {{ first_line|truncatechars:120 }}
-                                </p>
-                            {% endwith %}
-                        {% endwith %}
-                    {% else %}
-                        <p class="rev-main-text text-muted">No summary available</p>
-                    {% endif %}
+    {% if revisions %}
+        {% for rev in revisions %}
+            <div class="revision-box">
 
-                    <p class="rev-meta-small">
-                        Edited by <strong>{{ rev.edited_by }}</strong> •
-                        {{ rev.edited_at|date:"d-m-Y H:i" }}
+                {% if rev.change_summary %}
+                <pre style="
+                    white-space: pre-wrap;
+                    font-size: 12px;
+                    color: #374151;
+                    margin: 0;
+                    line-height: 1.4;
+                ">
+                {{ rev.change_summary }}
+                    </pre>
+                {% else %}
+                    <p class="rev-main-text text-muted">
+                        No summary available
                     </p>
+                {% endif %}
 
-                </div>
-            {% endfor %}
-        {% else %}
-            <p class="text-muted">No revisions available.</p>
-        {% endif %}
-    </div>
+                <p class="rev-meta-small">
+                    👤 <strong>{{ rev.edited_by }}</strong><br>
+                    🕒 {{ rev.edited_at|date:"d-m-Y H:i" }}
+                </p>
+
+            </div>
+        {% endfor %}
+    {% else %}
+        <p class="text-muted">No revisions available.</p>
+    {% endif %}
+
+
+    <!-- ================= WORKFLOW HISTORY ================= -->
+    <h5 class="mt-4 fw-bold">🔄 Workflow History</h5>
+    <hr>
+
+    {% for log in doc.documentworkflowlog_set.all %}
+        <div class="revision-box">
+
+            <p class="rev-main-text">
+                {{ log.action }} → {{ log.stage }}
+            </p>
+
+            <p class="rev-meta-small">
+                👤 {{ log.user }}<br>
+                🕒 {{ log.timestamp|date:"d-m-Y H:i" }}
+            </p>
+
+            {% if log.message %}
+                <p class="rev-meta-small text-muted">
+                    💬 {{ log.message }}
+                </p>
+            {% endif %}
+
+        </div>
+    {% empty %}
+        <p class="text-muted">No workflow history.</p>
+    {% endfor %}
+
+</div>
 
 </div>
 
@@ -284,6 +339,103 @@
 function printDocument() {
     window.print();
 }
-</script>
 
+function reviseDocument(id){
+    if(!confirm("Start new revision cycle? All signatures will be removed.")) return;
+
+    fetch(`/revise-document/${id}/`, {
+        method: "POST",
+        headers: {
+            "X-CSRFToken": "{{ csrf_token }}",
+            "Content-Type": "application/json"
+        }
+    })
+    .then(res => res.json())
+    .then(data => {
+        if(data.error){
+            alert(data.error);
+        } else {
+            alert("Revision restarted successfully");
+            setTimeout(() => {
+                window.location.replace("{% url 'edit_document' 0 %}".replace('0', id));
+            },300);
+        }
+
+    })
+    .catch(err => {
+        console.error(err);
+        alert("Something went wrong");
+    });
+}
+</script>
+{% if is_pdf %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+
+<script>
+const url = "{{ doc.original_file.url }}";
+const savedSignatures = {{ pdf_signatures|safe }};
+
+let pdfDoc = null;
+
+const canvas = document.getElementById("pdfCanvas");
+const ctx = canvas.getContext("2d");
+const layer = document.getElementById("pdfLayer");
+
+pdfjsLib.getDocument(url).promise.then(function(pdf) {
+    pdfDoc = pdf;
+    renderPage(1);
+});
+
+function renderPage(num) {
+    pdfDoc.getPage(num).then(function(page) {
+
+        // 🔥 AUTO FIT TO SCREEN WIDTH
+        const containerWidth = document.querySelector('.pdf-wrapper').clientWidth * 1.5;
+
+        // original size
+        const viewport = page.getViewport({ scale: 1 });
+
+        // dynamic scale
+        const scale = containerWidth / viewport.width;
+
+        // scaled viewport
+        const scaledViewport = page.getViewport({ scale: scale });
+
+        canvas.height = scaledViewport.height;
+        canvas.width = scaledViewport.width;
+
+        layer.style.width = canvas.width + "px";
+        layer.style.height = canvas.height + "px";
+
+        page.render({
+            canvasContext: ctx,
+            viewport: scaledViewport
+        }).promise.then(function() {
+            renderSavedSignatures();   // 🔥 render after PDF load
+        });
+    });
+}
+
+function renderSavedSignatures() {
+
+    if (!savedSignatures || savedSignatures.length === 0) return;
+
+    layer.innerHTML = ""; // clear old
+
+    savedSignatures.forEach(sig => {
+
+        let div = document.createElement("div");
+        div.innerHTML = sig.html;
+
+        div.style.position = "absolute";
+
+        // 🔥 USE CANVAS SIZE (NOT getBoundingClientRect)
+        div.style.left = (sig.x * canvas.width) + "px";
+        div.style.top  = (sig.y * canvas.height) + "px";
+
+        layer.appendChild(div);
+    });
+}
+</script>
+{% endif %}
 {% endblock %}

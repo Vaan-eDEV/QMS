@@ -1,0 +1,497 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="container-fluid py-4">
+
+    <!-- HEADER -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+
+        <div>
+
+            <h2 class="fw-bold mb-1">
+                Manage Work Order Parts
+            </h2>
+
+            <p class="text-muted mb-0">
+
+                Add and manage production parts for
+                {{ workorder.workorder_id }}
+
+            </p>
+
+        </div>
+
+        <a href="{% url 'rfq_to_workorder_list' %}"
+           class="btn btn-outline-dark rounded-3">
+
+            ← Back
+
+        </a>
+
+    </div>
+
+
+    <!-- TOP CARDS -->
+    <div class="row g-4 mb-4">
+
+        <div class="col-lg-3">
+
+            <div class="card border-0 shadow-sm rounded-4">
+
+                <div class="card-body">
+
+                    <div class="text-muted small mb-2">
+                        Work Order
+                    </div>
+
+                    <h4 class="fw-bold">
+                        {{ workorder.workorder_id }}
+                    </h4>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="col-lg-3">
+
+            <div class="card border-0 shadow-sm rounded-4">
+
+                <div class="card-body">
+
+                    <div class="text-muted small mb-2">
+                        RFQ Reference
+                    </div>
+
+                    <h5 class="fw-semibold">
+                        {{ workorder.rfq_ref_id }}
+                    </h5>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="col-lg-3">
+
+            <div class="card border-0 shadow-sm rounded-4">
+
+                <div class="card-body">
+
+                    <div class="text-muted small mb-2">
+                        Company
+                    </div>
+
+                    <h5 class="fw-semibold">
+                        {{ workorder.company_name }}
+                    </h5>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="col-lg-3">
+
+            <div class="card border-0 shadow-sm rounded-4">
+
+                <div class="card-body">
+
+                    <div class="text-muted small mb-2">
+                        Total Parts
+                    </div>
+
+                    <h4 class="fw-bold text-success">
+                        {{ parts.count }}
+                    </h4>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- ADD PART SECTION -->
+    <div class="card border-0 shadow-sm rounded-4 mb-4">
+
+        <div class="card-body">
+
+            <div class="d-flex justify-content-between align-items-center mb-4">
+
+                <div>
+
+                    <h4 class="fw-bold mb-1">
+                        Add Part
+                    </h4>
+
+                    <p class="text-muted mb-0">
+                        Create individual production parts
+                    </p>
+
+                </div>
+
+                <button type="button"
+                        class="btn btn-dark rounded-3"
+                        onclick="addRow()">
+
+                    + Add Row
+
+                </button>
+
+            </div>
+
+
+            <!-- TABLE -->
+            <div class="table-responsive">
+
+                <table class="table align-middle">
+
+                    <thead class="table-light">
+
+                        <tr>
+
+                            <th width="25%">
+                                Part ID
+                            </th>
+
+                            <th width="15%">
+                                Qty
+                            </th>
+
+                            <th width="25%">
+                                Assign User
+                            </th>
+
+                            <th width="15%">
+                                Status
+                            </th>
+
+                            <th width="20%">
+                                Action
+                            </th>
+
+                        </tr>
+
+                    </thead>
+
+                    <tbody id="partsTable">
+
+                        <tr>
+
+                            <td>
+
+                                <input type="text"
+                                       class="form-control"
+                                       placeholder="PART-001">
+
+                            </td>
+
+                            <td>
+
+                                <input type="number"
+                                       class="form-control"
+                                       value="1"
+                                       min="1">
+
+                            </td>
+
+                            <td>
+
+                                <select class="form-select">
+
+                                    <option value="">
+                                        Select User
+                                    </option>
+
+                                    {% for user in users %}
+
+                                    <option value="{{ user.id }}">
+
+                                        {{ user.first_name }}
+                                        {{ user.last_name }}
+
+                                    </option>
+
+                                    {% endfor %}
+
+                                </select>
+
+                            </td>
+
+                            <td>
+
+                                <span class="badge bg-warning text-dark">
+
+                                    Pending
+
+                                </span>
+
+                            </td>
+
+                            <td>
+
+                                <button type="button"
+                                        class="btn btn-success btn-sm">
+
+                                    Create
+
+                                </button>
+
+                                <button type="button"
+                                        class="btn btn-danger btn-sm"
+                                        onclick="removeRow(this)">
+
+                                    Remove
+
+                                </button>
+
+                            </td>
+
+                        </tr>
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- EXISTING PARTS -->
+    <div class="card border-0 shadow-sm rounded-4">
+
+        <div class="card-body">
+
+            <div class="d-flex justify-content-between align-items-center mb-4">
+
+                <div>
+
+                    <h4 class="fw-bold mb-1">
+                        Existing Parts
+                    </h4>
+
+                    <p class="text-muted mb-0">
+                        Current production allocation
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div class="table-responsive">
+
+                <table class="table align-middle">
+
+                    <thead class="table-light">
+
+                        <tr>
+
+                            <th>
+                                Part ID
+                            </th>
+
+                            <th>
+                                Qty
+                            </th>
+
+                            <th>
+                                Assigned User
+                            </th>
+
+                            <th>
+                                Status
+                            </th>
+
+                            <th>
+                                Created
+                            </th>
+
+                        </tr>
+
+                    </thead>
+
+                    <tbody>
+
+                        {% for part in parts %}
+
+                        <tr>
+
+                            <td class="fw-semibold">
+
+                                {{ part.part_id }}
+
+                            </td>
+
+                            <td>
+
+                                {{ part.quantity }}
+
+                            </td>
+
+                            <td>
+
+                                {% if part.assigned_to %}
+
+                                    {{ part.assigned_to.first_name }}
+                                    {{ part.assigned_to.last_name }}
+
+                                {% else %}
+
+                                    -
+
+                                {% endif %}
+
+                            </td>
+
+                            <td>
+
+                                <span class="badge bg-primary">
+
+                                    {{ part.status }}
+
+                                </span>
+
+                            </td>
+
+                            <td>
+
+                                {{ part.created_at }}
+
+                            </td>
+
+                        </tr>
+
+                        {% empty %}
+
+                        <tr>
+
+                            <td colspan="5"
+                                class="text-center text-muted py-5">
+
+                                No parts added yet.
+
+                            </td>
+
+                        </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<script>
+
+function addRow(){
+
+    let html = `
+
+    <tr>
+
+        <td>
+
+            <input type="text"
+                   class="form-control"
+                   placeholder="PART-001">
+
+        </td>
+
+        <td>
+
+            <input type="number"
+                   class="form-control"
+                   value="1"
+                   min="1">
+
+        </td>
+
+        <td>
+
+            <select class="form-select">
+
+                <option value="">
+                    Select User
+                </option>
+
+                {% for user in users %}
+
+                <option value="{{ user.id }}">
+
+                    {{ user.first_name }}
+                    {{ user.last_name }}
+
+                </option>
+
+                {% endfor %}
+
+            </select>
+
+        </td>
+
+        <td>
+
+            <span class="badge bg-warning text-dark">
+
+                Pending
+
+            </span>
+
+        </td>
+
+        <td>
+
+            <button type="button"
+                    class="btn btn-success btn-sm">
+
+                Create
+
+            </button>
+
+            <button type="button"
+                    class="btn btn-danger btn-sm"
+                    onclick="removeRow(this)">
+
+                Remove
+
+            </button>
+
+        </td>
+
+    </tr>
+
+    `
+
+    document
+    .getElementById("partsTable")
+    .insertAdjacentHTML("beforeend", html)
+}
+
+
+function removeRow(btn){
+
+    btn.closest("tr").remove()
+}
+
+</script>
+
+{% endblock %}

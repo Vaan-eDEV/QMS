@@ -24,11 +24,31 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-v@oe8m&mpek0zp04m5vn+arzijdr((xfzy%dvbf-u)qq=x6#3-'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["192.168.111.90", "183.82.250.59","183.82.250.59:8452","eqms.vaan.space", "127.0.0.1", "localhost",]
+
+CSRF_TRUSTED_ORIGINS = [
+    # "https://183.82.250.59:8452",
+    "https://eqms.vaan.space",
+
+]
+
+SECURE_HSTS_SECONDS = 31536000
+SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+SECURE_HSTS_PRELOAD = True
+
+SECURE_CONTENT_TYPE_NOSNIFF = True
+
+SESSION_COOKIE_HTTPONLY = True
+CSRF_COOKIE_HTTPONLY = False
 
 
+CSRF_COOKIE_SECURE = False
+SESSION_COOKIE_SECURE = False
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO','https')
+USE_X_FORWARDED_HOST = True
+SECURE_SSL_REDIRECT = False
 # Application definition
 
 INSTALLED_APPS = [
@@ -45,6 +65,10 @@ INSTALLED_APPS = [
     'audit_log',
     'project_management',
     'form_builder',
+    'po_qu',
+    'visitors',
+    'feedback',
+    'sm',
 ]
 
 MIDDLEWARE = [
@@ -84,8 +108,12 @@ X_FRAME_OPTIONS = 'SAMEORIGIN'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'qms_db',
+        'USER': 'qms_user',
+        'PASSWORD': 'sdtadmin',
+        'HOST': 'localhost',
+        'PORT': '5434'
     }
 }
 
@@ -137,7 +165,9 @@ CURRENCY_API_KEY = "26763e7e95e7b0b9e6e0595d"
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = 'static/'
-STATICFILES_DIRS = [ BASE_DIR / 'static' ]
+#STATICFILES_DIRS = [ BASE_DIR / 'static' ]
+
+STATIC_ROOT = BASE_DIR / "staticfiles"
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
@@ -155,5 +185,20 @@ AUTHENTICATION_BACKENDS = [
 ]
 
 LOGIN_URL = 'login'
-LOGIN_REDIRECT_URL = 'dashboard'
+LOGIN_REDIRECT_URL = 'main_dashboard'
 LOGOUT_REDIRECT_URL = 'login'
+
+
+# ================= FILE UPLOAD SETTINGS =================
+
+# Max request size (100MB)
+DATA_UPLOAD_MAX_MEMORY_SIZE = 104857600  
+
+# Max size kept in memory (5MB recommended)
+FILE_UPLOAD_MAX_MEMORY_SIZE = 5242880  
+
+# Use temp file for large uploads (production safe)
+FILE_UPLOAD_HANDLERS = [
+    "django.core.files.uploadhandler.MemoryFileUploadHandler",
+    "django.core.files.uploadhandler.TemporaryFileUploadHandler",
+]

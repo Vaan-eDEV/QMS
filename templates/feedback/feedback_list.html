@@ -1,0 +1,1023 @@
+
+{% extends 'base.html' %}
+
+{% block content %}
+
+<style>
+
+body{
+
+    background:#f4f7fb;
+}
+
+/* PAGE */
+
+.feedback-page{
+
+    padding:25px;
+}
+
+/* CARDS */
+
+.custom-card{
+
+    background:#fff;
+    border-radius:18px;
+    box-shadow:0 2px 12px rgba(0,0,0,0.04);
+    border:none;
+}
+
+/* HEADER */
+
+.page-title{
+
+    font-size:28px;
+    font-weight:700;
+    color:#1f2937;
+}
+
+.page-subtitle{
+
+    color:#6b7280;
+    font-size:14px;
+}
+
+/* FILTER */
+
+.filter-label{
+
+    font-size:13px;
+    font-weight:600;
+    margin-bottom:8px;
+    color:#374151;
+}
+
+.form-control,
+.form-select{
+
+    height:46px;
+    border-radius:12px;
+    border:1px solid #dbe2ea;
+    font-size:14px;
+}
+
+.form-control:focus,
+.form-select:focus{
+
+    box-shadow:none;
+    border-color:#2563eb;
+}
+
+/* TABLE */
+
+.feedback-table{
+
+    width:100%;
+    border-collapse:separate;
+    border-spacing:0;
+}
+
+.feedback-table thead th{
+
+    background:#f8fafc;
+    color:#374151;
+    font-size:13px;
+    font-weight:700;
+    padding:18px 16px;
+    border-bottom:1px solid #e5e7eb;
+    white-space:nowrap;
+}
+
+.feedback-table tbody td{
+
+    padding:18px 16px;
+    border-bottom:1px solid #f1f5f9;
+    vertical-align:middle;
+    font-size:14px;
+}
+
+.feedback-table tbody tr{
+
+    transition:0.2s;
+}
+
+.feedback-table tbody tr:hover{
+
+    background:#f9fbff;
+}
+
+/* BADGES */
+
+.custom-badge{
+
+    padding:7px 14px;
+    border-radius:30px;
+    font-size:12px;
+    font-weight:600;
+}
+
+/* SEVERITY */
+
+.severity-critical{
+
+    background:#fee2e2;
+    color:#dc2626;
+}
+
+.severity-high{
+
+    background:#fef3c7;
+    color:#d97706;
+}
+
+.severity-medium{
+
+    background:#dbeafe;
+    color:#2563eb;
+}
+
+.severity-low{
+
+    background:#dcfce7;
+    color:#16a34a;
+}
+
+/* STATUS */
+
+.status-open{
+
+    background:#dcfce7;
+    color:#15803d;
+}
+
+.status-investigation{
+
+    background:#dbeafe;
+    color:#1d4ed8;
+}
+
+.status-capa{
+
+    background:#ede9fe;
+    color:#7c3aed;
+}
+
+.status-response{
+
+    background:#cffafe;
+    color:#0891b2;
+}
+
+.status-closed{
+
+    background:#e5e7eb;
+    color:#374151;
+}
+
+/* BUTTONS */
+
+.btn-primary{
+
+    border-radius:12px;
+    height:46px;
+    padding:0 22px;
+    font-weight:600;
+}
+
+.btn-light{
+
+    border-radius:12px;
+}
+
+/* ACTIONS */
+
+.action-btn{
+
+    width:36px;
+    height:36px;
+    border-radius:10px;
+    border:none;
+    background:#f3f4f6;
+    color:#374151;
+    transition:0.2s;
+}
+
+.action-btn:hover{
+
+    background:#2563eb;
+    color:#fff;
+}
+
+/* PAGINATION */
+
+.pagination .page-link{
+
+    border:none;
+    margin:0 4px;
+    border-radius:10px;
+    color:#374151;
+    min-width:38px;
+    text-align:center;
+}
+
+.pagination .active .page-link{
+
+    background:#2563eb;
+    color:#fff;
+}
+
+/* DROPDOWN */
+
+.dropdown-menu{
+
+    border:none;
+    border-radius:16px;
+    box-shadow:0 10px 30px rgba(0,0,0,0.08);
+    padding:10px;
+}
+
+.dropdown-item{
+
+    border-radius:10px;
+    padding:10px 14px;
+    font-size:14px;
+}
+
+.dropdown-item:hover{
+
+    background:#f3f4f6;
+}
+
+
+
+/* ACTION BUTTONS */
+
+.action-icon{
+
+    width:38px;
+    height:38px;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    border-radius:12px;
+
+    text-decoration:none;
+
+    transition:all 0.2s ease;
+
+    font-size:14px;
+
+    font-weight:bold;
+}
+
+
+/* ICON SIZE */
+
+.action-icon i{
+
+    font-size:14px;
+}
+
+
+/* VIEW */
+
+.action-view{
+
+    background:#e0f2fe;
+}
+
+.action-view i{
+
+    color:#0284c7;
+}
+
+.action-view:hover{
+
+    background:#0284c7;
+}
+
+.action-view:hover i{
+
+    color:white;
+}
+
+
+/* EDIT */
+
+.action-edit{
+
+    background:#fef3c7;
+}
+
+.action-edit i{
+
+    color:#d97706;
+}
+
+.action-edit:hover{
+
+    background:#d97706;
+}
+
+.action-edit:hover i{
+
+    color:white;
+}
+
+
+/* STATUS */
+
+.action-status{
+
+    background:#ede9fe;
+}
+
+.action-status i{
+
+    color:#7c3aed;
+}
+
+.action-status:hover{
+
+    background:#7c3aed;
+}
+
+.action-status:hover i{
+
+    color:white;
+}
+
+
+/* DELETE */
+
+.action-delete{
+
+    background:#fee2e2;
+}
+
+.action-delete i{
+
+    color:#dc2626;
+}
+
+.action-delete:hover{
+
+    background:#dc2626;
+}
+
+.action-delete:hover i{
+
+    color:white;
+}
+
+
+
+</style>
+
+<div class="feedback-page">
+
+    <!-- HEADER -->
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+
+        <div>
+
+            <div class="page-title">
+
+                Feedback Management
+
+            </div>
+
+            <div class="page-subtitle">
+
+                Manage and track customer feedback records
+
+            </div>
+
+        </div>
+
+        <a href="{% url 'feedback_form' %}"
+           class="btn btn-primary">
+
+            <i class="fa fa-plus me-2"></i>
+
+            New Feedback
+
+        </a>
+
+    </div>
+
+    <!-- FILTER -->
+
+    <div class="custom-card p-4 mb-4">
+
+        <form method="GET">
+
+            <div class="row">
+
+                <div class="col-md-3 mb-3">
+
+                    <label class="filter-label">
+
+                        Feedback No
+
+                    </label>
+
+                    <input type="text"
+                           name="feedback_no"
+                           value="{{ request.GET.feedback_no }}"
+                           class="form-control"
+                           placeholder="Search Feedback No">
+
+                </div>
+
+                <div class="col-md-3 mb-3">
+
+                    <label class="filter-label">
+
+                        Customer
+
+                    </label>
+
+                    <input type="text"
+                           name="customer"
+                           value="{{ request.GET.customer }}"
+                           class="form-control"
+                           placeholder="Search Customer">
+
+                </div>
+
+                <div class="col-md-2 mb-3">
+
+                    <label class="filter-label">
+
+                        Status
+
+                    </label>
+
+                    <select name="status"
+                            class="form-select">
+
+                        <option value="">
+                            All
+                        </option>
+
+                        <option value="Open">
+                            Open
+                        </option>
+
+                        <option value="Under Investigation">
+                            Under Investigation
+                        </option>
+
+                        <option value="CAPA Created">
+                            CAPA Created
+                        </option>
+
+                        <option value="Closed">
+                            Closed
+                        </option>
+
+                    </select>
+
+                </div>
+
+                <div class="col-md-2 mb-3">
+
+                    <label class="filter-label">
+
+                        Severity
+
+                    </label>
+
+                    <select name="severity"
+                            class="form-select">
+
+                        <option value="">
+                            All
+                        </option>
+
+                        <option value="Low">
+                            Low
+                        </option>
+
+                        <option value="Medium">
+                            Medium
+                        </option>
+
+                        <option value="High">
+                            High
+                        </option>
+
+                        <option value="Critical">
+                            Critical
+                        </option>
+
+                    </select>
+
+                </div>
+
+                <div class="col-md-2 mb-3 d-flex align-items-end">
+
+                    <button class="btn btn-primary w-100">
+
+                        <i class="fa fa-search me-2"></i>
+
+                        Search
+
+                    </button>
+
+                </div>
+
+            </div>
+
+        </form>
+
+    </div>
+
+    <!-- TABLE -->
+
+    <div class="custom-card">
+
+        <div class="d-flex justify-content-between align-items-center p-4 border-bottom">
+
+            <div>
+
+                <h5 class="fw-bold mb-0">
+
+                    Feedback Records
+
+                </h5>
+
+            </div>
+
+            <button class="btn btn-light border">
+
+                <i class="fa fa-download me-2"></i>
+
+                Export
+
+            </button>
+
+        </div>
+
+        <div class="table-responsive">
+
+            <table class="feedback-table">
+
+                <thead>
+
+                    <tr>
+
+                        <th>
+                            Feedback No
+                        </th>
+
+                        <th>
+                            Date
+                        </th>
+
+                        <th>
+                            Customer
+                        </th>
+
+                        <th>
+                            Type
+                        </th>
+
+                        <th>
+                            Severity
+                        </th>
+
+                        <th>
+                            Status
+                        </th>
+
+                        <th>
+                            Assigned To
+                        </th>
+
+                        <th>
+                            Due Date
+                        </th>
+
+                        <th class="text-center">
+                            Actions
+                        </th>
+
+                    </tr>
+
+                </thead>
+
+                <tbody>
+
+                    {% for feedback in page_obj %}
+
+                    <tr>
+
+                        <td class="fw-semibold">
+
+                            {{ feedback.feedback_no }}
+
+                        </td>
+
+                        <td>
+
+                            {{ feedback.date_received }}
+
+                        </td>
+
+                        <td>
+
+                            {{ feedback.customer_name }}
+
+                        </td>
+
+                        <td>
+
+                            {{ feedback.feedback_type }}
+
+                        </td>
+
+                        <td>
+
+                            {% if feedback.severity == 'Critical' %}
+
+                            <span class="custom-badge severity-critical">
+
+                                Critical
+
+                            </span>
+
+                            {% elif feedback.severity == 'High' %}
+
+                            <span class="custom-badge severity-high">
+
+                                High
+
+                            </span>
+
+                            {% elif feedback.severity == 'Medium' %}
+
+                            <span class="custom-badge severity-medium">
+
+                                Medium
+
+                            </span>
+
+                            {% else %}
+
+                            <span class="custom-badge severity-low">
+
+                                Low
+
+                            </span>
+
+                            {% endif %}
+
+                        </td>
+
+                        <td>
+
+                            {% if feedback.status == 'Open' %}
+
+                            <span class="custom-badge status-open">
+
+                                Open
+
+                            </span>
+
+                            {% elif feedback.status == 'Under Investigation' %}
+
+                            <span class="custom-badge status-investigation">
+
+                                Under Investigation
+
+                            </span>
+
+                            {% elif feedback.status == 'CAPA Created' %}
+
+                            <span class="custom-badge status-capa">
+
+                                CAPA Created
+
+                            </span>
+
+                            {% elif feedback.status == 'Response Sent' %}
+
+                            <span class="custom-badge status-response">
+
+                                Response Sent
+
+                            </span>
+
+                            {% else %}
+
+                            <span class="custom-badge status-closed">
+
+                                Closed
+
+                            </span>
+
+                            {% endif %}
+
+                        </td>
+
+                        <td>
+
+                            {{ feedback.assigned_to }}
+
+                        </td>
+
+                        <td>
+
+                            {{ feedback.due_date }}
+
+                        </td>
+
+                        
+
+<td class="text-center">
+
+    <div class="d-flex justify-content-center gap-2">
+
+        <!-- VIEW -->
+
+        <a href="{% url 'feedback_detail' feedback.id %}"
+           class="action-icon action-view">
+
+            <i class="fa fa-eye"></i>
+
+        </a>
+
+        <!-- EDIT -->
+
+        
+<a href="{% url 'edit_feedback' feedback.id %}"
+   class="action-icon action-edit">
+
+
+
+            <i class="fa fa-pen"></i>
+
+        </a>
+
+
+<!-- STATUS -->
+
+<button type="button"
+        class="action-icon action-status"
+        data-bs-toggle="modal"
+        data-bs-target="#statusModal{{ feedback.id }}">
+
+    <i class="fa-solid fa-arrows-rotate"></i>
+
+</button>
+
+
+
+
+        <!-- DELETE -->
+
+        <a href="{% url 'delete_feedback' feedback.id %}"
+           class="action-icon action-delete">
+
+            <i class="fa fa-trash"></i>
+
+        </a>
+
+    </div>
+
+</td>
+
+
+
+
+                    </tr>
+<!-- STATUS MODAL -->
+
+<div class="modal fade"
+     id="statusModal{{ feedback.id }}"
+     tabindex="-1">
+
+    <div class="modal-dialog modal-dialog-centered">
+
+        <div class="modal-content border-0 rounded-4">
+
+            <!-- HEADER -->
+
+            <div class="modal-header border-0 pb-0">
+
+                <h5 class="modal-title fw-bold">
+
+                    Update Feedback Status
+
+                </h5>
+
+                <button type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal"></button>
+
+            </div>
+
+            <!-- BODY -->
+
+            <form method="POST"
+                  action="{% url 'update_feedback_status' feedback.id %}">
+
+                {% csrf_token %}
+
+                <div class="modal-body pt-3">
+
+                    <div class="mb-3">
+
+                        <label class="form-label fw-semibold">
+
+                            Feedback No
+
+                        </label>
+
+                        <input type="text"
+                               class="form-control"
+                               value="{{ feedback.feedback_no }}"
+                               readonly>
+
+                    </div>
+
+                    <div class="mb-3">
+
+                        <label class="form-label fw-semibold">
+
+                            Current Status
+
+                        </label>
+
+                        <input type="text"
+                               class="form-control"
+                               value="{{ feedback.status }}"
+                               readonly>
+
+                    </div>
+
+                    <div class="mb-3">
+
+                        <label class="form-label fw-semibold">
+
+                            New Status
+
+                        </label>
+
+                        <select name="status"
+                                class="form-select">
+
+                            <option value="Open">
+                                Open
+                            </option>
+
+                            <option value="Under Investigation">
+                                Under Investigation
+                            </option>
+
+                            <option value="CAPA Created">
+                                CAPA Created
+                            </option>
+
+                            <option value="Response Sent">
+                                Response Sent
+                            </option>
+
+                            <option value="Closed">
+                                Closed
+                            </option>
+
+                        </select>
+
+                    </div>
+
+                </div>
+
+                <!-- FOOTER -->
+
+                <div class="modal-footer border-0">
+
+                    <button type="button"
+                            class="btn btn-light rounded-3"
+                            data-bs-dismiss="modal">
+
+                        Cancel
+
+                    </button>
+
+                    <button type="submit"
+                            class="btn btn-primary rounded-3">
+
+                        Update Status
+
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+</div>
+
+                    {% empty %}
+
+                    <tr>
+
+                        <td colspan="9"
+                            class="text-center py-5 text-muted">
+
+                            No feedback records found
+
+                        </td>
+
+                    </tr>
+                
+
+
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+        <!-- PAGINATION -->
+
+        <div class="d-flex justify-content-between align-items-center p-4 border-top">
+
+            <div class="text-muted">
+
+                Total Records :
+                <strong>
+
+                    {{ total_feedbacks }}
+
+                </strong>
+
+            </div>
+
+            <nav>
+
+                <ul class="pagination mb-0">
+
+                    {% if page_obj.has_previous %}
+
+                    <li class="page-item">
+
+                        <a class="page-link"
+                           href="?page={{ page_obj.previous_page_number }}">
+
+                            <i class="fa fa-angle-left"></i>
+
+                        </a>
+
+                    </li>
+
+                    {% endif %}
+
+                    <li class="page-item active">
+
+                        <a class="page-link">
+
+                            {{ page_obj.number }}
+
+                        </a>
+
+                    </li>
+
+                    {% if page_obj.has_next %}
+
+                    <li class="page-item">
+
+                        <a class="page-link"
+                           href="?page={{ page_obj.next_page_number }}">
+
+                            <i class="fa fa-angle-right"></i>
+
+                        </a>
+
+                    </li>
+
+                    {% endif %}
+
+                </ul>
+
+            </nav>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}
+

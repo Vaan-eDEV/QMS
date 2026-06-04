@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+
+/* ================= PAGE WRAPPER ================= */
+.doc-page {
+    width: 900px;
+    margin: 0 auto 25px auto;
+    padding: 25mm 20mm;
+    background: #fff;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    border-radius: 6px;
+}
+
+/* ================= TABLE FIX ================= */
+table {
+    width: 100%;
+    border-collapse: collapse !important;
+    table-layout: fixed;
+}
+
+table, th, td {
+    border: 1px solid #000 !important;
+}
+
+th, td {
+    padding: 6px;
+    vertical-align: top;
+    word-wrap: break-word;
+}
+
+/* ================= TEXT ================= */
+p {
+    margin: 0;
+    line-height: 1.4;
+}
+
+/* ================= IMAGE FIX ================= */
+img {
+    max-width: 100%;
+    height: auto;
+}
+
+/* ================= PAGE BREAK ================= */
+.page-break {
+    page-break-after: always;
+}
+
+/* ================= PRINT MODE ================= */
+@media print {
+
+    body {
+        background: white;
+    }
+
+    .doc-page {
+        box-shadow: none;
+        border-radius: 0;
+        margin: 0;
+        width: 100%;
+        page-break-after: always;
+    }
+
+    a, .btn {
+        display: none !important;
+    }
+}
+
+</style>
+
+<div class="container-fluid mt-4">
+
+    <!-- HEADER -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h4 class="fw-bold">📦 Archived Document</h4>
+
+        <div>
+            <a href="{% url 'archive_list' %}" class="btn btn-secondary btn-sm">
+                ← Back
+            </a>
+
+            <button onclick="window.print()" class="btn btn-dark btn-sm">
+                🖨 Print
+            </button>
+        </div>
+    </div>
+
+    <hr>
+
+    <!-- TITLE -->
+    <h5 class="text-primary mb-2">
+        {{ doc.title }}
+    </h5>
+
+    <!-- VERSION -->
+    {% if version %}
+    <span class="badge bg-dark mb-3">
+        Version {{ version }}
+    </span>
+    {% endif %}
+
+    <!-- DOCUMENT -->
+    {% for page in html_pages %}
+        <div class="doc-page">
+            {{ page|safe }}
+        </div>
+
+        {% if not forloop.last %}
+            <div class="page-break"></div>
+        {% endif %}
+    {% endfor %}
+
+</div>
+
+{% endblock %}

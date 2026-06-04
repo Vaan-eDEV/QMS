@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Quotation {{ quotation.quotation_number }}</title>
+
+<style>
+
+/* ================= PAGE ================= */
+@page {
+    size: A4;
+    margin: 10mm 15mm 20mm 15mm;
+
+    @bottom-center {
+        content: "Page " counter(page) " of " counter(pages);
+        font-size: 10px;
+        color: #555;
+    }
+}
+
+body {
+    font-family: "Helvetica Neue", Arial, sans-serif;
+    font-size: 12px;
+    color: #333;
+}
+
+/* WATERMARK (optional) */
+body::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: url("{{ watermark|default:'' }}");
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 80%;
+    opacity: 0.08;
+    z-index: -1;
+}
+
+/* LOGO */
+.logo {
+    height: 70px;
+}
+
+/* TABLE */
+.po-items {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 10px;
+}
+
+.po-items th {
+    background-color: #3399ff;
+    color: white;
+    padding: 6px;
+    font-size: 11px;
+    text-align: center;
+}
+
+.po-items td {
+    border-bottom: 1px solid #dad9d9;
+    padding: 7px;
+    font-size: 11px;
+}
+
+.num {
+    text-align: right;
+}
+
+/* SIGNATURE */
+.signatures {
+    display: flex;
+    gap: 40px;
+    margin-top: 20px;
+}
+
+.signatures img {
+    max-width: 120px;
+}
+
+/* FOOTER */
+.footer-note {
+    position: fixed;
+    bottom: 25px;
+    left: 15mm;
+    right: 15mm;
+    font-size: 10px;
+    color: #444;
+}
+
+
+</style>
+</head>
+
+<body>
+
+<!-- ================= COMPANY ================= -->
+<div style="text-align:center; margin-bottom:20px;">
+    {% if logo_path %}
+    <img src="{{ logo_path }}" class="logo">
+    {% endif %}
+
+    <div style="font-size:10px; color:#555;">
+        {{ company_address }} <br>
+        Phone: {{ company_phone }} | Email: {{ company_email }}
+    </div>
+</div>
+
+<!-- ================= HEADER ================= -->
+<table style="width:100%; margin-bottom:15px;">
+<tr>
+
+<td>
+    <span style="color:#3399ff; font-size:28px; font-weight:bold;">
+        wo #{{ wo.wo_number }}
+    </span><br><br>
+
+    <small>Date: {{ wo.date|date:"d M Y" }}</small><br><br>
+
+    <strong>Customer</strong><br>
+    <b>{{ wo.customer_name }}</b><br>
+
+    <span style="white-space: pre-line;">
+        {{ wo.customer_address }}
+    </span><br>
+
+    <small>Email: {{ wo.customer_email }}</small><br>
+    <small>Phone: {{ wo.customer_phone }}</small>
+</td>
+
+<td style="text-align:right;">
+
+    {% if qr_code_path %}
+    <img src="{{ qr_code_path }}" style="width:100px; border:1px solid #eee; padding:2px;">
+    {% endif %}
+
+    <br><br>
+
+    <strong>Bank Details</strong><br>
+    <small>Bank: {{wo.bank_name }}</small><br>
+    <small>A/C: {{ wo.bank_account }}</small><br>
+    <small>IFSC: {{ wo.ifsc }}</small>
+
+</td>
+
+</tr>
+</table>
+
+<!-- ================= ITEMS ================= -->
+<table class="po-items">
+<thead>
+<tr>
+    <th>#</th>
+    <th>Description</th>
+    <th>HSN/SAC</th>
+    <th>Unit</th>
+    <th>Qty</th>
+    <th>Rate</th>
+    <th>Amount</th>
+</tr>
+</thead>
+
+<tbody>
+{% for item in items %}
+<tr>
+    <td>{{ forloop.counter }}</td>
+    <td>{{ item.description }}</td>
+    <td>{{ item.hsn_code }}</td>
+    <td>{{ item.unit }}</td>
+    <td class="num">{{ item.quantity }}</td>
+    <td class="num">{{ item.rate|floatformat:2 }}</td>
+    <td class="num">{{ item.amount|floatformat:2 }}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+
+<!-- ================= TOTAL ================= -->
+<table class="po-items">
+<tr>
+    <td colspan="6"></td>
+    <td class="num"><b>Subtotal : ₹ {{rfq.subtotal|floatformat:2 }}</b></td>
+</tr>
+
+<tr>
+    <td colspan="6"></td>
+    <td class="num">
+        Discount ({{ wo.discount_percent }}%) :
+        ₹ -{{ rfq.discount_amount|floatformat:2 }}
+    </td>
+</tr>
+
+<tr>
+    <td colspan="6"></td>
+    <td class="num">CGST : ₹ {{ rfq.cgst_amount|floatformat:2 }}</td>
+</tr>
+
+<tr>
+    <td colspan="6"></td>
+    <td class="num">AGST: ₹ {{ rfq.agst_amount | floatformat:2}} </td>
+    <td class="num">CGST : ₹ {{ rfq.cgst_amount|floatformat:2 }}</td>
+</tr>
+
+
+<tr>
+    <td colspan="6"></td>
+    <td class="num">SGST : ₹ {{ rfq.sgst_amount|floatformat:2 }}</td>
+</tr>
+
+<tr>
+    <td colspan="6"></td>
+    <td class="num">IGST : ₹ {{ rfq.igst_amount|floatformat:2 }}</td>
+</tr>
+
+<tr>
+    <td colspan="6"></td>
+    <td class="num">
+        <b>Grand Total : ₹ {{ rfq.grand_total|floatformat:2 }}</b>
+    </td>
+</tr>
+
+
+<tr>
+    <td colspan="6"></td>
+    <td class="num">
+        <b>SGST : ₹ {{ rfq.grand_total|floatformat:2 }}</b>
+
+
+
+        
+    </td>
+</tr>
+</table>
+
+<!-- ================= SIGNATURE ================= -->
+<div class="signatures">
+
+    <div style="text-align:center;">
+        <div style="font-size:11px;">
+            <b>Prepared By</b><br>
+            {{ rfq.prepared_by|default:"—" }}<br>
+            {{ rfq.prepared_at|date:"d M Y H:i"|default:"—" }}<br>
+
+            {% if rfq.prepared_signature_id %}
+            ID: {{ rfq.prepared_signature_id }}
+            {% endif %}
+        </div>
+    </div>
+
+    <div style="text-align:center;">
+        <div style="font-size:11px;">
+            <b>Approved By</b><br>
+            {{ rfq.approved_by|default:"—" }}<br>
+            {{ rfq.approved_at|date:"d M Y H:i"|default:"—" }}<br>
+
+            {% if rfq.approved_signature_id %}
+            ID: {{ rfq.approved_signature_id }}
+            {% endif %}
+        </div>
+    </div>
+
+</div>
+<!-- ================= NOTES ================= -->
+<div class="footer-note">
+
+    {% if rfq.note %}
+    <div>
+        <b>Note:</b><br>
+        {{ rfq.note|default:"-" }}
+    </div>
+    {% endif %}
+
+    {% if rfq.terms %}
+    <div style="margin-top:6px;">
+        <b>Terms:</b><br>
+        {{ rfq.terms|default:"-" }}
+    </div>
+    {% endif %}
+
+</div>
+
+</body>
+</html>

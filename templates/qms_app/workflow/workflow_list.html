@@ -1,45 +1,102 @@
 {% extends "base.html" %}
 {% block content %}
-
 <h3>Workflows</h3>
 <!-- List of Batches -->
 <ul class="list-group mt-3">
 {% for b in batches %}
     <li class="list-group-item d-flex justify-content-between align-items-center">
-
         <div>
             <strong>{{ b.form__name }}</strong><br>
             <small class="text-muted">Batch: {{ b.submission_batch }}</small>
         </div>
-
         <a href="{% url 'view_form_batch' b.form_id b.submission_batch %}"
            class="btn btn-sm btn-primary">
             Open Workflow
         </a>
-
-    </li>
-{% empty %}
-    <li class="list-group-item text-muted">
-        No workflows found
-    </li>
+        <a href="{% url 'view_batch_api' a.form_id b.submission_batch %}"
+            class="btn btn-lm btn-primary">
+                View batch
+        </a>
+        </li>
+        {% empty %}
+        <li class="list-group-item text-muted">
+            No workflows found
+        </li>
 {% endfor %}
-</ul>
-
+    </ul>
 {% endblock %}
-<!-- Batch Details -->
+    <!-- Batch Details -->
 {% for b in batches %}
     <li class="list-group-item d-flex justify-content-between align-items-center">
         <div>
             <strong>{{ b.form__name }}</strong><br>
             <small class="text-muted">Batch: {{ b.submission_batch }}</small>
         </div>
-
         <a href="{% url 'view_form_batch' b.form_id b.submission_batch %}"
            class="btn btn-sm btn-primary">
-            Open Workflow
+            Open Workflow.
+        </a>
+        <a href="{% url 'view_form_batch' c.form_id c.submission_batch %}"
+            class="btn btn-sm btn-primary">
+            Open Data page
+        </a>
+        <a href="{% url 'register_detail_api' a.form_id.submission_batch %}"
+        class="btn btn-sm btn-primary">
+            Register Detail Page.
+        </a>
+        <a href="{% url 'production' a.form.id.submission_batch %} "
+         class="btn btn-sm btn-primary">
+            Register Page
+        </a>
+
+
+        <a class="{% url 'production' a.form.id.submission batch %}"
+            class="btn btn-sm btn-primary">
+            Rfq Detail Page
+            Complete RFQ Information & Approval
+        </a>
+
+
+        {% if p.card == "production"  %}
+        <div class="detail.name">
+
+        </div>
+        {% endif %}
+
+
+        <a href="{% url 'production' a.form.id.submission_batch %} "
+         class="btn btn-sm btn-primary">
+            profile label
+        </a>
+        <a href="{% url 'flow' a.form.id.submission_part_batch %} "
+         class="btn btn-sm btn-primary">
+            profile label
+        </a>
+        <a href="{% url 'flow_id' a.form.id.submission_part %} "
+         class="btn btn-sm btn-primary">
+            Register profie.
+        </a>
+        <div>
+            <a class="rfq" onclick="openDate('{{ card.ref }}','{{ card.company }}')">
+                <strong>{{ card.ref }}</strong>
+                <small>{{ card.company|default:"-" }}</small>
+            </a>
+            <button class="btn btn-success btn-sm mt-2 w-100" onclick="approveCosting('{{ card.id }}')">
+                Approve
+            </button>
+        </div>
+        <a href="{% url 'production' a.form %} "
+         class="btn btn-sm btn-primary">
+            profile label
+        </a>
+        <a href="">
+        </a>
+        <a href="{% url 'register_detail_api' a.form id.submission_batch %}"
+            class="btn btn-sm btn-primary">
+            work
         </a>
     </li>
-{% empty %}
+    {% empty %}
     <li class="list-group-item text-muted">
         No workflow found
     </li>

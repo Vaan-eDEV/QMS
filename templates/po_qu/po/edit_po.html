@@ -1,0 +1,197 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<div class="container-fluid">
+
+<form method="POST">
+{% csrf_token %}
+
+<!-- HEADER -->
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h3>
+        {% if edit_mode %} Edit Purchase Order {% else %} Create Purchase Order {% endif %}
+    </h3>
+
+    <div>
+        <a href="{% url 'po_qu:po_list' %}" class="btn btn-secondary">Back</a>
+        <button class="btn btn-success">
+            {% if edit_mode %} Update PO {% else %} Create PO {% endif %}
+        </button>
+    </div>
+</div>
+
+<div class="card shadow-sm">
+<div class="card-body">
+
+<!-- BASIC -->
+<div class="row mb-3">
+<div class="col-md-6">
+<label>Reference</label>
+<input type="text" name="reference" class="form-control"
+       value="{{ po.reference|default:'' }}">
+</div>
+
+<div class="col-md-6">
+<label>Date</label>
+<input type="date" name="date" class="form-control"
+       value="{{ po.date|date:'Y-m-d' }}">
+</div>
+</div>
+
+<!-- SUPPLIER -->
+<h5>Supplier</h5>
+<input name="supplier_name" class="form-control mb-2"
+       value="{{ po.supplier_name|default:'' }}">
+<textarea name="supplier_address" class="form-control mb-2">{{ po.supplier_address|default:'' }}</textarea>
+<input name="supplier_phone" class="form-control mb-2"
+       value="{{ po.supplier_phone|default:'' }}">
+<input name="supplier_gstin" class="form-control mb-3"
+       value="{{ po.supplier_gstin|default:'' }}">
+
+<!-- ITEMS -->
+<h5>Items</h5>
+
+<table class="table table-bordered" id="itemsTable">
+<thead>
+<tr>
+<th>Code</th>
+<th>Description</th>
+<th>Unit</th>
+<th>Qty</th>
+<th>Rate</th>
+<th>Amount</th>
+<th></th>
+</tr>
+</thead>
+
+<tbody>
+
+{% if po and po.items.all %}
+{% for item in po.items.all %}
+<tr>
+<td><input name="product_code[]" value="{{ item.product_code|default:'' }}" class="form-control"></td>
+<td><input name="description[]" value="{{ item.description|default:'' }}" class="form-control"></td>
+<td><input name="unit[]" value="{{ item.unit|default:'' }}" class="form-control"></td>
+<td><input type="number" name="quantity[]" value="{{ item.quantity|default:0 }}" class="form-control"></td>
+<td><input type="number" name="rate[]" value="{{ item.rate|default:0 }}" class="form-control"></td>
+<td><input type="number" name="amount[]" value="{{ item.amount|default:0 }}" class="form-control" readonly></td>
+<td><button type="button" class="btn btn-danger btn-sm" onclick="removeRow(this)">X</button></td>
+</tr>
+{% endfor %}
+{% else %}
+<tr>
+<td><input name="product_code[]" class="form-control"></td>
+<td><input name="description[]" class="form-control"></td>
+<td><input name="unit[]" class="form-control"></td>
+<td><input type="number" name="quantity[]" class="form-control"></td>
+<td><input type="number" name="rate[]" class="form-control"></td>
+<td><input type="number" name="amount[]" class="form-control" readonly></td>
+<td><button type="button" class="btn btn-danger btn-sm" onclick="removeRow(this)">X</button></td>
+</tr>
+{% endif %}
+
+</tbody>
+</table>
+
+<button type="button" class="btn btn-primary btn-sm" onclick="addRow()">+ Add Item</button>
+
+<!-- TOTAL -->
+<div class="row mt-3">
+<div class="col-md-6"></div>
+
+<div class="col-md-6">
+<div class="card p-3">
+
+<div class="d-flex justify-content-between">
+<span>Subtotal:</span>
+<input type="text" id="subtotal" class="form-control text-end" readonly>
+</div>
+
+</div>
+</div>
+</div>
+
+<!-- NOTES -->
+<h5 class="mt-3">Notes</h5>
+<textarea name="note" class="form-control mb-2">{{ po.note|default:'' }}</textarea>
+
+<h5>Terms</h5>
+<textarea name="terms" class="form-control">{{ po.terms|default:'' }}</textarea>
+
+</div>
+</div>
+
+</form>
+
+</div>
+
+<script>
+
+// 🔥 Calculate row
+function calculateRow(row) {
+    let qty = parseFloat(row.querySelector('[name="quantity[]"]').value) || 0;
+    let rate = parseFloat(row.querySelector('[name="rate[]"]').value) || 0;
+
+    let amount = qty * rate;
+    row.querySelector('[name="amount[]"]').value = amount.toFixed(2);
+
+    calculateTotals();
+}
+
+// 🔥 Calculate totals
+function calculateTotals() {
+    let subtotal = 0;
+
+    document.querySelectorAll('[name="amount[]"]').forEach(input => {
+        subtotal += parseFloat(input.value) || 0;
+    });
+
+    document.getElementById("subtotal").value = subtotal.toFixed(2);
+}
+
+// 🔥 Attach events
+function attachEvents(row) {
+    row.querySelector('[name="quantity[]"]').addEventListener('input', () => calculateRow(row));
+    row.querySelector('[name="rate[]"]').addEventListener('input', () => calculateRow(row));
+}
+
+// 🔥 Init existing rows
+function initRows() {
+    document.querySelectorAll("#itemsTable tbody tr").forEach(row => {
+        attachEvents(row);
+        calculateRow(row); // important
+    });
+}
+
+// 🔥 Add row
+function addRow() {
+    let row = document.createElement("tr");
+
+    row.innerHTML = `
+        <td><input name="product_code[]" class="form-control"></td>
+        <td><input name="description[]" class="form-control"></td>
+        <td><input name="unit[]" class="form-control"></td>
+        <td><input type="number" name="quantity[]" class="form-control"></td>
+        <td><input type="number" name="rate[]" class="form-control"></td>
+        <td><input type="number" name="amount[]" class="form-control" readonly></td>
+        <td><button type="button" class="btn btn-danger btn-sm" onclick="removeRow(this)">X</button></td>
+    `;
+
+    document.querySelector("#itemsTable tbody").appendChild(row);
+    attachEvents(row);
+}
+
+// 🔥 Remove row
+function removeRow(btn) {
+    btn.closest("tr").remove();
+    calculateTotals();
+}
+
+// 🔥 Run on load
+document.addEventListener("DOMContentLoaded", function () {
+    initRows();
+});
+
+</script>
+
+{% endblock %}

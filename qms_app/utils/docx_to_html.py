@@ -31,6 +31,17 @@ def convert_docx_to_html(file_path):
 
 
     
+
+
+
+
+
+
+
+
+
+
+
 # from docx import Document
 # from docx.enum.text import WD_BREAK
 # from html import escape

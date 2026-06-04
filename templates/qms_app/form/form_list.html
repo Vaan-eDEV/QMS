@@ -336,7 +336,7 @@ body {
 <div class="folder-header">
 <span>Folders</span>
 
-{% if request.user.is_superuser %}
+{% if request.user.is_superuser or request.user.page_access.can_add %}
 <button onclick="openFolderModal()" class="btn-create-folder">+</button>
 {% endif %}
 
@@ -411,7 +411,7 @@ class="btn btn-primary btn-sm">
 {% for form in forms %}
 <div class="form-card">
 
-{% if request.user.is_superuser %}
+
 <div style="position:absolute; top:12px; right:14px; display:flex; gap:10px;">
 
 <a href="{% url 'add_stage' form.id %}"
@@ -428,7 +428,7 @@ style="font-size:14px; color:#94a3b8; text-decoration:none;">
 </a>
 
 </div>
-{% endif %}
+
 
 <div class="form-title">
 <a href="{% url 'kanban_board' form.id %}">
@@ -529,9 +529,48 @@ Authenticate
      style="max-height:200px; overflow:auto;">
 </div>
 
-<button class="btn btn-success w-100 mt-3">
-Start Work
+<button type="button"
+        class="btn btn-primary w-100 mt-3"
+        onclick="goToChecklist()">
+    Next
 </button>
+
+</div>
+<div id="checklistSection" style="display:none;">
+
+    <h6 class="mb-3">Machine Operator Checklist</h6>
+
+    <div style="max-height:250px; overflow:auto; border:1px solid #ddd; padding:10px; border-radius:6px;">
+
+        <div class="form-check"><input type="checkbox" class="form-check-input chk"><label>Emergency stop functioning</label></div>
+        <div class="form-check"><input type="checkbox" class="form-check-input chk"><label>Machine guards & doors condition</label></div>
+        <div class="form-check"><input type="checkbox" class="form-check-input chk"><label>Axis movement smooth (X/Y/Z)</label></div>
+        <div class="form-check"><input type="checkbox" class="form-check-input chk"><label>Spindle condition / abnormal noise</label></div>
+        <div class="form-check"><input type="checkbox" class="form-check-input chk"><label>Previous shift alarms recorded</label></div>
+        <div class="form-check"><input type="checkbox" class="form-check-input chk"><label>Coolant level</label></div>
+        <div class="form-check"><input type="checkbox" class="form-check-input chk"><label>Coolant pump operation</label></div>
+        <div class="form-check"><input type="checkbox" class="form-check-input chk"><label>Compressed air pressure</label></div>
+        <div class="form-check"><input type="checkbox" class="form-check-input chk"><label>Tool offsets verified</label></div>
+        <div class="form-check"><input type="checkbox" class="form-check-input chk"><label>Fixture / vice condition</label></div>
+        <div class="form-check"><input type="checkbox" class="form-check-input chk"><label>Workpiece clamping verified</label></div>
+        <div class="form-check"><input type="checkbox" class="form-check-input chk"><label>Correct CNC program loaded</label></div>
+        <div class="form-check"><input type="checkbox" class="form-check-input chk"><label>Machine cleaned & chips removed</label></div>
+    
+    </div>
+
+    <!-- NOTE -->
+    <div class="mt-3">
+        <label>Operator Notes</label>
+        <textarea id="operator_note" class="form-control" rows="3"></textarea>
+    </div>
+
+    <button type="button"
+            id="startWorkBtn"
+            class="btn btn-success w-100 mt-3"
+            disabled
+            onclick="startMachine()">
+        Start Work
+    </button>
 
 </div>
 
@@ -577,6 +616,27 @@ Logout Machine
 </div>
 </div>
 </div>
+<!-- ================= FOLDER MODAL (ADD HERE) ================= -->
+<div id="folderModal" class="folder-modal-overlay">
+
+    <div class="folder-modal-box">
+        <h5>Create Folder</h5>
+
+        <input type="text" id="folder_name" class="form-control mb-2" placeholder="Folder name">
+
+        <button class="btn btn-primary w-100" onclick="createFolder()">
+            Create
+        </button>
+
+        <button class="btn btn-secondary w-100 mt-2"
+                onclick="closeFolderModal()">
+            Cancel
+        </button>
+    </div>
+
+</div>
+
+
 
 
 
@@ -632,57 +692,159 @@ alert("Incorrect password")
 }
 
 
-/* SHOW PREVIOUS OPERATOR AFTER MACHINE ID */
+/* =========================================
+   SHOW PREVIOUS OPERATOR AFTER MACHINE ID
+========================================= */
 
-document.addEventListener("DOMContentLoaded",function(){
+document.addEventListener(
+    "DOMContentLoaded",
+    function(){
 
-const machineInput = document.getElementById("machine_id")
+    const machineInput =
+        document.getElementById(
+            "machine_id"
+        );
 
-if(machineInput){
+    // =============================
+    // CHECK INPUT EXISTS
+    // =============================
 
-machineInput.addEventListener("input",function(){
+    if(machineInput){
 
-const machineId=this.value
+        machineInput.addEventListener(
+            "input",
+            function(){
 
-if(machineId.length < 1) return
+            // =====================
+            // GET MACHINE ID
+            // =====================
 
-fetch(`/machine/log/?machine_id=${machineId}`)
-.then(res=>res.json())
-.then(data=>{
+            const machineId =
+                this.value.trim();
 
-const box=document.getElementById("machineLogBox")
+            // =====================
+            // EMPTY VALUE
+            // =====================
 
-if(data.logs.length === 0){
+            if(machineId.length < 1){
 
-box.classList.add("d-none")
-return
+                document
+                .getElementById(
+                    "machineLogBox"
+                )
+                .classList.add(
+                    "d-none"
+                );
 
-}
+                return;
+            }
 
-box.classList.remove("d-none")
+            // =====================
+            // FETCH MACHINE LOG
+            // =====================
 
-let html = "<b>Machine Log</b><hr>"
+            fetch(
+                `/machine/log/?machine_id=${machineId}`
+            )
 
-data.logs.forEach(log => {
+            .then(res => res.json())
 
-html += `
-<div style="margin-bottom:10px">
-<b>[${log.time} ${log.operator}]</b><br>
-${log.message}
-</div>
-`
+            .then(data => {
 
-})
+                const box =
+                    document.getElementById(
+                        "machineLogBox"
+                    );
 
-box.innerHTML = html
+                // =================
+                // NO LOGS
+                // =================
 
-})
+                if(
+                    !data.logs
+                    ||
+                    data.logs.length === 0
+                ){
 
-})
+                    box.classList.add(
+                        "d-none"
+                    );
 
-}
+                    box.innerHTML = "";
 
-})
+                    return;
+                }
+
+                // =================
+                // SHOW BOX
+                // =================
+
+                box.classList.remove(
+                    "d-none"
+                );
+
+                let html = `
+
+                    <div class="
+                        fw-bold
+                        mb-2
+                    ">
+                        Previous Operator Logs
+                    </div>
+
+                    <hr>
+                `;
+
+                // =================
+                // LOOP LOGS
+                // =================
+
+                data.logs.forEach(log => {
+
+                    html += `
+
+                        <div style="
+                            margin-bottom:12px;
+                            padding-bottom:10px;
+                            border-bottom:1px solid #ddd;
+                        ">
+
+                            <div class="fw-bold">
+
+                                [${log.time}]
+                                ${log.operator}
+
+                            </div>
+
+                            <div style="
+                                font-size:13px;
+                                margin-top:4px;
+                            ">
+
+                                ${log.message || "-"}
+
+                            </div>
+
+                        </div>
+                    `;
+                });
+
+                box.innerHTML = html;
+            })
+
+            .catch(err => {
+
+                console.error(
+                    "Machine Log Error:",
+                    err
+                );
+            });
+
+        });
+
+    }
+
+});
 
 
 
@@ -692,7 +854,7 @@ document.addEventListener("DOMContentLoaded", function(){
 
 const currentFolderId = "{{ selected_folder.id|default:'' }}"
 
-if(currentFolderId != "17"){
+if(currentFolderId != "4"){
 return
 }
 
@@ -837,7 +999,136 @@ el.classList.remove("rotate")
 }
 
 }
+function closeFolderModal(){
+    document.getElementById("folderModal").style.display = "none";
+}
+function createFolder(){
 
+    const name = document.getElementById("folder_name").value;
+
+    if(!name){
+        alert("Enter folder name");
+        return;
+    }
+
+    fetch("/forms/create-folder/", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": "{{ csrf_token }}"
+        },
+        body: JSON.stringify({
+            name: name,
+            parent: "{{ selected_folder.id|default:'' }}"
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+
+        if(data.success){
+            location.reload();
+        }else{
+            alert("Error creating folder");
+        }
+
+    });
+}
+function deleteFolder(folderId){
+
+    if(!confirm("Delete this folder?")) return;
+
+    window.location.href = `/forms/folder/delete/${folderId}/`;
+
+}
+
+// STEP → CHECKLIST
+function goToChecklist(){
+
+    const machineId = document.getElementById("machine_id").value;
+
+    if(!machineId){
+        alert("Enter Machine ID");
+        return;
+    }
+
+    document.getElementById("machineSection").style.display = "none";
+    document.getElementById("checklistSection").style.display = "block";
+}
+
+// =====================================
+// ENABLE START BUTTON
+// =====================================
+
+document.addEventListener(
+    "DOMContentLoaded",
+    function(){
+
+    const checks = document.querySelectorAll(".chk");
+
+    const startBtn =
+        document.getElementById(
+            "startWorkBtn"
+        );
+
+    function validateChecklist(){
+
+        let allChecked = true;
+
+        checks.forEach(chk => {
+
+            if(!chk.checked){
+
+                allChecked = false;
+            }
+
+        });
+
+        startBtn.disabled = !allChecked;
+    }
+
+    checks.forEach(chk => {
+
+        chk.addEventListener(
+            "change",
+            validateChecklist
+        );
+
+    });
+
+});
+// FINAL START
+function startMachine(){
+
+    fetch("/machine/start/",{
+        method:"POST",
+        headers:{
+            "Content-Type":"application/json",
+            "X-CSRFToken":"{{ csrf_token }}"
+        },
+        body:JSON.stringify({
+            password:document.getElementById("machine_password").value,
+            machine_id:document.getElementById("machine_id").value,
+            note:document.getElementById("operator_note").value
+        })
+    })
+    .then(res=>res.json())
+    .then(data=>{
+
+        if(data.success){
+
+            bootstrap.Modal
+            .getInstance(document.getElementById("machineOperatorModal"))
+            .hide();
+
+            document.getElementById("machineLogoutBtn").style.display="inline-block";
+
+        }else{
+            alert("Failed to start");
+        }
+
+    });
+
+}
 </script>
 
 {% endblock %}

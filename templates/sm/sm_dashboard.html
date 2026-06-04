@@ -1,0 +1,514 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+
+<div class="container-fluid py-4">
+
+    <!-- ===================================== -->
+    <!-- PAGE HEADER -->
+    <!-- ===================================== -->
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+
+        <div>
+
+            <h2 class="fw-bold mb-1">
+                Supplier Management Dashboard
+            </h2>
+
+            <p class="text-muted mb-0">
+                Monitor supplier approvals, audits, evaluations and risks
+            </p>
+
+        </div>
+
+        <div>
+
+            <a
+                href="{% url 'create_supplier' %}"
+                class="btn btn-primary"
+            >
+
+                <i class="bi bi-plus-circle"></i>
+
+                Add Supplier
+
+            </a>
+
+        </div>
+
+    </div>
+
+    <!-- ===================================== -->
+    <!-- SUMMARY CARDS -->
+    <!-- ===================================== -->
+
+    <div class="row g-4 mb-4">
+
+        <!-- TOTAL -->
+
+        <div class="col-lg-3 col-md-6">
+
+            <div class="card border-0 shadow-sm h-100">
+
+                <div class="card-body">
+
+                    <div class="d-flex justify-content-between">
+
+                        <div>
+
+                            <p class="text-muted mb-1">
+                                Total Suppliers
+                            </p>
+
+                            <h2 class="fw-bold">
+                                {{ total_suppliers }}
+                            </h2>
+
+                        </div>
+
+                        <div class="dashboard-icon bg-primary">
+
+                            <i class="bi bi-buildings text-white"></i>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- APPROVED -->
+
+        <div class="col-lg-3 col-md-6">
+
+            <div class="card border-0 shadow-sm h-100">
+
+                <div class="card-body">
+
+                    <div class="d-flex justify-content-between">
+
+                        <div>
+
+                            <p class="text-muted mb-1">
+                                Approved
+                            </p>
+
+                            <h2 class="fw-bold text-success">
+                                {{ approved_suppliers }}
+                            </h2>
+
+                        </div>
+
+                        <div class="dashboard-icon bg-success">
+
+                            <i class="bi bi-check-circle text-white"></i>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- PENDING -->
+
+        <div class="col-lg-3 col-md-6">
+
+            <div class="card border-0 shadow-sm h-100">
+
+                <div class="card-body">
+
+                    <div class="d-flex justify-content-between">
+
+                        <div>
+
+                            <p class="text-muted mb-1">
+                                In Progress
+                            </p>
+
+                            <h2 class="fw-bold text-warning">
+                                {{ pending_suppliers }}
+                            </h2>
+
+                        </div>
+
+                        <div class="dashboard-icon bg-warning">
+
+                            <i class="bi bi-clock-history text-white"></i>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- HIGH RISK -->
+
+        <div class="col-lg-3 col-md-6">
+
+            <div class="card border-0 shadow-sm h-100">
+
+                <div class="card-body">
+
+                    <div class="d-flex justify-content-between">
+
+                        <div>
+
+                            <p class="text-muted mb-1">
+                                High Risk
+                            </p>
+
+                            <h2 class="fw-bold text-danger">
+                                {{ high_risk_suppliers }}
+                            </h2>
+
+                        </div>
+
+                        <div class="dashboard-icon bg-danger">
+
+                            <i class="bi bi-exclamation-triangle text-white"></i>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- ===================================== -->
+    <!-- CHART + TABLE -->
+    <!-- ===================================== -->
+
+    <div class="row g-4">
+
+        <!-- ===================================== -->
+        <!-- CHART -->
+        <!-- ===================================== -->
+
+        <div class="col-lg-4">
+
+            <div class="card border-0 shadow-sm h-100">
+
+                <div class="card-header bg-white border-0">
+
+                    <h5 class="mb-0">
+                        Supplier Status Overview
+                    </h5>
+
+                </div>
+
+                <div class="card-body">
+
+                    <canvas id="supplierChart"></canvas>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- ===================================== -->
+        <!-- SUPPLIER TABLE -->
+        <!-- ===================================== -->
+
+        <div class="col-lg-8">
+
+            <div class="card border-0 shadow-sm">
+
+                <div class="card-header bg-white border-0">
+
+                    <div class="d-flex justify-content-between align-items-center">
+
+                        <h5 class="mb-0">
+                            Suppliers
+                        </h5>
+
+                        <a
+                            href="{% url 'supplier_list' %}"
+                            class="btn btn-sm btn-outline-primary"
+                        >
+
+                            View All
+
+                        </a>
+
+                    </div>
+
+                </div>
+
+                <div class="card-body">
+
+                    <div class="table-responsive">
+
+                        <table class="table align-middle">
+
+                            <thead class="table-light">
+
+                                <tr>
+
+                                    <th>Supplier</th>
+
+                                    <th>Category</th>
+
+                                    <th>Score</th>
+
+                                    <th>Risk</th>
+
+                                    <th>Status</th>
+
+                                    <th>Action</th>
+
+                                </tr>
+
+                            </thead>
+
+                            <tbody>
+
+                                {% for supplier in suppliers %}
+
+                                <tr>
+
+                                    <td>
+
+                                        <div class="fw-semibold">
+
+                                            {{ supplier.supplier_name }}
+
+                                        </div>
+
+                                        <small class="text-muted">
+
+                                            {{ supplier.supplier_code }}
+
+                                        </small>
+
+                                    </td>
+
+                                    <td>
+
+                                        {{ supplier.category }}
+
+                                    </td>
+
+                                    <td>
+
+                                        <span class="badge bg-primary">
+
+                                            {{ supplier.evaluation_score }}
+
+                                        </span>
+
+                                    </td>
+
+                                    <td>
+
+                                        {% if supplier.risk_level == 'low' %}
+
+                                            <span class="badge bg-success">
+                                                Low
+                                            </span>
+
+                                        {% elif supplier.risk_level == 'medium' %}
+
+                                            <span class="badge bg-warning">
+                                                Medium
+                                            </span>
+
+                                        {% else %}
+
+                                            <span class="badge bg-danger">
+                                                High
+                                            </span>
+
+                                        {% endif %}
+
+                                    </td>
+
+                                    <td>
+
+                                        {% if supplier.status == 'approved' %}
+
+                                            <span class="badge bg-success">
+                                                Approved
+                                            </span>
+
+                                        {% elif supplier.status == 'in_progress' %}
+
+                                            <span class="badge bg-warning">
+                                                In Progress
+                                            </span>
+
+                                        {% else %}
+
+                                            <span class="badge bg-secondary">
+                                                Draft
+                                            </span>
+
+                                        {% endif %}
+
+                                    </td>
+
+                                    <td>
+
+                                        <a
+                                            href="{% url 'supplier_detail' supplier.id %}"
+                                            class="btn btn-sm btn-outline-primary"
+                                        >
+
+                                            View
+
+                                        </a>
+
+                                    </td>
+
+                                </tr>
+
+                                {% empty %}
+
+                                <tr>
+
+                                    <td colspan="6" class="text-center py-4">
+
+                                        No suppliers found
+
+                                    </td>
+
+                                </tr>
+
+                                {% endfor %}
+
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- ===================================== -->
+<!-- CUSTOM CSS -->
+<!-- ===================================== -->
+
+<style>
+
+.dashboard-icon{
+
+    width:55px;
+
+    height:55px;
+
+    border-radius:12px;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    font-size:24px;
+
+}
+
+.card{
+
+    border-radius:16px;
+
+}
+
+.table td,
+.table th{
+
+    vertical-align:middle;
+
+}
+
+</style>
+
+<!-- ===================================== -->
+<!-- CHART JS -->
+<!-- ===================================== -->
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+
+const ctx = document.getElementById('supplierChart');
+
+new Chart(ctx, {
+
+    type: 'doughnut',
+
+    data: {
+
+        labels: [
+
+            'Approved',
+
+            'In Progress',
+
+            'High Risk'
+
+        ],
+
+        datasets: [{
+
+            data: [
+
+                {{ approved_suppliers }},
+
+                {{ pending_suppliers }},
+
+                {{ high_risk_suppliers }}
+
+            ]
+
+        }]
+
+    },
+
+    options: {
+
+        responsive: true,
+
+        plugins: {
+
+            legend: {
+
+                position: 'bottom'
+
+            }
+
+        }
+
+    }
+
+});
+
+</script>
+
+{% endblock %}

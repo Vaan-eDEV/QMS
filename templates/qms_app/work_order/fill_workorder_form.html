@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="container py-5">
+
+    <div class="card shadow border-0 rounded-4">
+
+        <div class="card-body p-5">
+
+            <div class="mb-4">
+
+                <h2 class="fw-bold">
+                    {{ form_obj.name }}
+                </h2>
+
+                <p class="text-muted mb-0">
+
+                    {{ item.product_code }}
+
+                </p>
+
+            </div>
+
+            <form method="POST"
+                  enctype="multipart/form-data">
+
+                {% csrf_token %}
+
+                {{ form.as_p }}
+
+                <div class="mt-4 d-flex gap-3">
+
+                    <button class="btn btn-primary px-5">
+
+                        Submit Form
+
+                    </button>
+
+                    <a href="{% url 'workorder_kanban' item.work_order.id %}"
+                       class="btn btn-light border">
+
+                        Cancel
+
+                    </a>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

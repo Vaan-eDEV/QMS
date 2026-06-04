@@ -10,6 +10,7 @@
 
         <tr>
             <th>Name</th>
+            <th>Created By</th> 
             <th>Action</th>
         </tr>
 
@@ -18,6 +19,10 @@
         <tr>
 
             <td>{{form.name}}</td>
+
+            <td>
+                {{ form.created_by.email|default:"-" }}
+            </td>
 
             <td>
 
@@ -32,6 +37,7 @@
                 <a href="{% url 'edit_forms' form.id %}" class="btn btn-sm btn-warning">
                     Edit
                 </a>
+                {% if request.user.is_superuser or request.user.page_access.can_delete %}
                 <form method="POST" action="{% url 'delete_forms' form.id %}" style="display:inline;">
     {% csrf_token %}
     <button type="submit"
@@ -40,6 +46,7 @@
         Delete
     </button>
 </form>
+{% endif %}
             </td>
 
         </tr>

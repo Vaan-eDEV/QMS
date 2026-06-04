@@ -1,0 +1,345 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+.container-custom { max-width: 1400px; margin: auto; }
+
+.top-card {
+    background: #fff;
+    border-radius: 14px;
+    padding: 18px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+}
+
+.profile-img {
+    width: 90px;
+    height: 90px;
+    border-radius: 10px;
+    object-fit: cover;
+    cursor: pointer;   /* clickable */
+}
+
+.info-card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 15px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    margin-bottom: 15px;
+}
+
+label {
+    font-size: 12px;
+    color: #666;
+    margin-top: 8px;
+}
+
+input, select, textarea {
+    width: 100%;
+    border-radius: 6px;
+    border: 1px solid #ddd;
+    padding: 6px 8px;
+}
+</style>
+
+<div class="container-custom mt-4">
+
+<form method="POST" enctype="multipart/form-data">
+{% csrf_token %}
+
+<!-- HEADER -->
+<div class="top-card d-flex justify-content-between">
+
+    <div class="d-flex gap-3">
+        {% if emp.profile_image %}
+    <img src="{{ emp.profile_image.url }}" class="profile-img" id="profilePreview">
+{% else %}
+    <img src="https://randomuser.me/api/portraits/men/32.jpg" class="profile-img" id="profilePreview">
+{% endif %}
+
+<input type="file" name="profile_image" id="profileInput" class="d-none">
+
+
+        <div>
+            <h5>Edit Employee</h5>
+            <small class="text-muted">{{ emp.emp_id }}</small>
+        </div>
+    </div>
+
+    <div>
+        <button class="btn btn-success btn-sm">Update</button>
+        <a href="{% url 'employee_detail' emp.id %}" class="btn btn-secondary btn-sm">Cancel</a>
+    </div>
+
+</div>
+
+<!-- GRID -->
+<div class="row mt-3">
+
+<!-- PERSONAL -->
+<div class="col-md-4">
+<div class="info-card">
+<h6>Personal</h6>
+
+<label>Name</label>
+<input type="text" name="name" value="{{ emp.name }}">
+
+<label>Email</label>
+<input type="email" name="email" value="{{ emp.email }}">
+
+<label>DOB</label>
+<input type="date" name="dob" value="{{ emp.dob|date:'Y-m-d' }}">
+
+<label>Gender</label>
+<input type="text" name="gender" value="{{ emp.gender }}">
+
+<label>Marital Status</label>
+<input type="text" name="marital_status" value="{{ emp.marital_status }}">
+
+<label>Nationality</label>
+<input type="text" name="nationality" value="{{ emp.nationality }}">
+
+<label>Blood Group</label>
+<input type="text" name="blood_group" value="{{ emp.blood_group }}">
+
+</div>
+
+<div class="info-card">
+<h6>Extra</h6>
+
+<label>Qualification</label>
+<textarea name="qualification">{{ emp.qualification }}</textarea>
+
+<label>Skills</label>
+<textarea name="skills">{{ emp.skills }}</textarea>
+
+<label>Experience</label>
+<textarea name="experience">{{ emp.experience }}</textarea>
+
+<label>Notes</label>
+<textarea name="notes">{{ emp.notes }}</textarea>
+
+</div>
+</div>
+
+<!-- GOVT -->
+<div class="col-md-4">
+
+<div class="info-card">
+<h6>Government IDs</h6>
+
+<label>PAN</label>
+<input type="text" name="pan_number" value="{{ emp.pan_number }}">
+
+<label>Aadhar</label>
+<input type="text" name="aadhar_number" value="{{ emp.aadhar_number }}">
+
+<!-- <label>UAN</label>
+<input type="text" name="uan_number" value="{{ emp.uan_number }}"> -->
+
+<label>PF</label>
+<input type="text" name="pf_number" value="{{ emp.pf_number }}">
+
+<label>ESI</label>
+<input type="text" name="esi_number" value="{{ emp.esi_number }}">
+
+</div>
+
+<div class="info-card">
+<h6>Contact</h6>
+
+<label>Mobile</label>
+<input type="text" name="mobile_number" value="{{ emp.mobile_number }}">
+
+<label>Alternate</label>
+<input type="text" name="alternate_number" value="{{ emp.alternate_number }}">
+
+</div>
+
+<div class="info-card">
+<h6>Address</h6>
+
+<label>Current Address</label>
+<textarea name="current_address">{{ emp.current_address }}</textarea>
+
+<label>Permanent Address</label>
+<textarea name="permanent_address">{{ emp.permanent_address }}</textarea>
+
+</div>
+
+</div>
+
+<!-- EMPLOYMENT -->
+<div class="col-md-4">
+
+<div class="info-card">
+<h6>Employment</h6>
+
+<label>Department</label>
+<input type="text" name="department" value="{{ emp.department }}">
+
+<label>Role</label>
+<input type="text" name="role" value="{{ emp.role }}">
+
+<label>Date of Joining</label>
+<input type="date" name="doj" value="{{ emp.date_of_joining|date:'Y-m-d' }}">
+
+<label>Employment Type</label>
+<input type="text" name="employment_type" value="{{ emp.employment_type }}">
+
+<label>Work Location</label>
+<input type="text" name="work_location" value="{{ emp.work_location }}">
+
+<label>Shift</label>
+<input type="text" name="shift" value="{{ emp.shift }}">
+
+<label>Cost Center</label>
+<input type="text" name="cost_center" value="{{ emp.cost_center }}">
+
+<label>Reporting Manager</label>
+<input type="text" name="reporting_manager" value="{{ emp.reporting_manager }}">
+
+</div>
+
+<div class="info-card">
+<h6>Bank</h6>
+
+<label>Bank Name</label>
+<input type="text" name="bank_name" value="{{ emp.bank_name }}">
+
+<label>Branch</label>
+<input type="text" name="branch_name" value="{{ emp.branch_name }}">
+
+<label>Account</label>
+<input type="text" name="account_number" value="{{ emp.account_number }}">
+
+<label>Type</label>
+<input type="text" name="account_type" value="{{ emp.account_type }}">
+
+<label>IFSC</label>
+<input type="text" name="ifsc_code" value="{{ emp.ifsc_code }}">
+
+</div>
+
+<div class="info-card">
+<h6>Salary</h6>
+
+<label>Pay Grade</label>
+<input type="text" name="pay_grade" value="{{ emp.pay_grade }}">
+
+<label>Basic Salary</label>
+<input type="number" name="basic_salary" value="{{ emp.basic_salary }}">
+
+<label>Effective Date</label>
+<input type="date" name="effective_date" value="{{ emp.effective_date|date:'Y-m-d' }}">
+
+<label>Payment Cycle</label>
+<input type="text" name="payment_cycle" value="{{ emp.payment_cycle }}">
+
+</div>
+
+</div>
+
+</div>
+
+<!-- EMERGENCY -->
+<div class="info-card">
+<h6>Emergency Contact</h6>
+
+<div class="row">
+<div class="col-md-3">
+<label>Name</label>
+<input type="text" name="emergency_contact_name" value="{{ emp.emergency_contact_name }}">
+</div>
+
+<div class="col-md-3">
+<label>Relation</label>
+<input type="text" name="emergency_relationship" value="{{ emp.emergency_relationship }}">
+</div>
+
+<div class="col-md-3">
+<label>Mobile</label>
+<input type="text" name="emergency_mobile" value="{{ emp.emergency_mobile }}">
+</div>
+
+<div class="col-md-3">
+<label>Alternate</label>
+<input type="text" name="emergency_alternate" value="{{ emp.emergency_alternate }}">
+</div>
+</div>
+
+<label>Address</label>
+<textarea name="emergency_address">{{ emp.emergency_address }}</textarea>
+
+</div>
+
+<!-- CERTIFICATES -->
+<div class="info-card">
+<h6>Upload Certificates</h6>
+
+<div class="info-card">
+<h6>Certificates</h6>
+
+<!-- EXISTING DOCUMENTS -->
+{% for c in emp.certificates.all %}
+<div class="doc-card">
+
+    <div>
+        <div class="fw-semibold">{{ c.certificate_name }}</div>
+        <small class="text-muted">
+            {{ c.uploaded_at|date:"d M Y" }}
+        </small>
+    </div>
+
+    <div class="d-flex gap-2">
+
+    {% if c.pdf_file %}
+        <a href="{{ c.pdf_file.url }}" target="_blank" class="btn btn-sm btn-outline-primary">View</a>
+    {% elif ".docx" in c.file.url|lower %}
+        <a href="https://view.officeapps.live.com/op/view.aspx?src={{ c.file.url }}"
+           target="_blank"
+           class="btn btn-sm btn-outline-primary">View</a>
+    {% else %}
+        <a href="{{ c.file.url }}" target="_blank" class="btn btn-sm btn-outline-secondary">View</a>
+    {% endif %}
+
+    <!-- ✅ FIXED DELETE -->
+    <button type="submit"
+            formaction="{% url 'delete_certificate' c.id %}"
+            formmethod="POST"
+            class="btn btn-sm btn-danger"
+            onclick="return confirm('Delete this certificate?');">
+        Delete
+    </button>
+
+</div>
+
+</div>
+{% endfor %}
+
+<hr>
+
+<!-- UPLOAD NEW -->
+<label>Upload New Certificates</label>
+<input type="file" name="certificates" multiple class="form-control">
+
+</div>
+
+</div>
+
+</form>
+
+</div>
+<script>
+document.getElementById("profilePreview").onclick = function() {
+    document.getElementById("profileInput").click();
+};
+
+document.getElementById("profileInput").onchange = function(event) {
+    let reader = new FileReader();
+    reader.onload = function() {
+        document.getElementById("profilePreview").src = reader.result;
+    };
+    reader.readAsDataURL(event.target.files[0]);
+};
+</script>
+{% endblock %}

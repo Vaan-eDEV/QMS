@@ -18,12 +18,46 @@
     <div class="mb-3">
         <label class="form-label fw-semibold">Document Title</label>
         <input type="text"
+               id="titleInput"
                name="title"
                class="form-control form-control-lg"
                placeholder="Enter document title"
                required>
     </div>
+    <div class="mb-3">
+        <label class="form-label fw-semibold">Certificate Category</label>
 
+        <select name="certificate_category" class="form-control form-control-lg" multiple required>
+
+    {% for cat in categories %}
+        <option value="{{ cat.id }}">{{ cat.name }}</option>
+    {% endfor %}
+
+</select>
+    </div>
+    <!-- ===== CERTIFICATE ===== -->
+     <!-- <label class="form-label fw-semibold">Certificate</label>
+    <select name="certificate" class="form-control form-control-lg" multiple required>
+
+    {% for cert in certificates %}
+        <option value="{{ cert.id }}">{{ cert.name }}</option>
+    {% endfor %}
+
+</select> -->
+
+    <!-- ===== CLAUSE ===== -->
+     <label class="form-label fw-semibold">CLAUSE</label>
+    <select name="clause"
+        class="form-control form-control-lg">
+
+        <option value="">-- Select clause --</option>
+
+        <option value="4">4</option>
+        <option value="5">5</option>
+        <option value="6">6</option>
+        <option value="7">7</option>
+
+    </select>
     <!-- ===== SELECT EXISTING FOLDER ===== -->
     <div class="mb-3">
         <label class="form-label fw-semibold">Select Folder</label>
@@ -52,6 +86,7 @@
         <label class="form-label fw-semibold">Select File</label>
 
         <input type="file"
+               id="fileInput"
                name="file"
                accept=".docx,.pdf"
                class="form-control form-control-lg"
@@ -87,5 +122,29 @@
     transition: transform 0.2s ease;
 }
 </style>
+
+<!-- ✅ AUTO FILL SCRIPT -->
+<script>
+document.getElementById("fileInput").addEventListener("change", function() {
+
+    let file = this.files[0];
+
+    if (file) {
+        let titleInput = document.getElementById("titleInput");
+
+        // Only fill if empty
+        if (!titleInput.value) {
+
+            let name = file.name;
+
+            // Remove only extension (.pdf / .docx)
+            let cleanName = name.replace(/\.[^/.]+$/, "");
+
+            titleInput.value = cleanName;
+        }
+    }
+
+});
+</script>
 
 {% endblock %}

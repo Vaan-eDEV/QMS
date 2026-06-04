@@ -342,7 +342,7 @@ document.addEventListener("DOMContentLoaded", function () {
             const password =
                 document.getElementById("signaturePassword").value;
 
-            fetch("{% url 'verify_signature' %}", {
+            fetch("/verify-signature/", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -350,7 +350,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 },
                 body: JSON.stringify({
                     password: password,
-                    slot: "prepared"
+                    slot: "prepared",
                 })
             })
                 .then(res => res.json())
@@ -359,21 +359,28 @@ document.addEventListener("DOMContentLoaded", function () {
                     if (data.ok) {
 
                         const signatureData = {
-                            signed_by: data.name,
+                            signed_by: data.user,
                             signed_at: data.time,
                             reference_code: data.code
                         };
 
-                        activeSignatureCell.innerHTML = `
-                        <div class="border rounded p-2 bg-light">
-                            <strong>${data.name}</strong><br>
-                            <small>${data.time}</small><br>
-                            <span class="text-primary">Ref: ${data.code}</span>
-                        </div>
-                    `;
 
-                        activeSignatureCell.dataset.signature =
-                            JSON.stringify(signatureData);
+
+                        let name = data.user;
+
+
+
+// ✅ USE correct variable
+activeSignatureCell.innerHTML = `
+    <div class="border rounded p-2 bg-light">
+        <strong>${name}</strong><br>
+        <small>${data.time}</small><br>
+        <span class="text-primary">Ref: ${data.code}</span>
+    </div>
+`;
+
+// ✅ NOW store it
+activeSignatureCell.dataset.signature = JSON.stringify(signatureData);
 
                         bootstrap.Modal.getInstance(
                             document.getElementById("signatureModal")

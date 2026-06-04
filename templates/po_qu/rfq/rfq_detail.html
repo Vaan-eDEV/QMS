@@ -1,0 +1,1347 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+<style>
+
+.signature-box{
+
+    position:relative;
+
+    overflow:hidden;
+
+    background:#fff;
+
+}
+
+.signature-box::before{
+
+    content:"";
+
+    position:absolute;
+
+    top:0;
+
+    left:0;
+
+    width:50%;
+
+    height:100%;
+
+    background-image:url("{% static 'admin/img/watermark.jpeg' %}");
+
+    background-repeat:no-repeat;
+
+    background-position:center;
+
+    background-size:180px;
+
+    opacity:0.2;
+
+    z-index:0;
+
+    pointer-events:none;
+}
+
+.signature-content{
+
+    position:relative;
+
+    z-index:2;
+}
+
+</style>
+<div class="container-fluid py-3">
+
+    <!-- ACTIONS -->
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+
+        <div>
+
+            <h3 class="fw-bold mb-1">
+
+                RFQ Details
+
+            </h3>
+
+            <small class="text-muted">
+
+                Request For Quotation
+
+            </small>
+
+        </div>
+
+        <div class="d-flex gap-2">
+
+    <a href="{% url 'po_qu:create_rfq' %}"
+       class="btn btn-primary">
+
+        + New RFQ
+
+    </a>
+
+    <a href="{% url 'po_qu:edit_rfq' rfq.id %}"
+       class="btn btn-warning">
+
+        <i class="fas fa-edit me-1"></i>
+
+        Edit RFQ
+
+    </a>
+
+    <a href="{% url 'po_qu:po_au' %}"
+       class="btn btn-secondary">
+
+        Back
+
+    </a>
+
+</div>
+
+    </div>
+
+    <!-- HEADER -->
+
+    <div class="card shadow-sm border-0 mb-3">
+
+        <div class="card-body">
+
+            <div class="row align-items-center">
+
+                <div class="col-md-6">
+
+                    <h4 class="fw-bold mb-1">
+
+                        {{ rfq.rfq_number }}
+
+                    </h4>
+
+                    <div class="text-muted">
+
+                        RFQ Date :
+                        {{ rfq.rfq_date }}
+
+                    </div>
+
+                </div>
+
+                <div class="col-md-6 text-end">
+
+                    {% if rfq.status == "approved" %}
+
+                    <span class="badge bg-success px-3 py-2">
+
+                        Approved
+
+                    </span>
+
+                    {% elif rfq.status == "prepared" %}
+
+                    <span class="badge bg-primary px-3 py-2">
+
+                        Prepared
+
+                    </span>
+
+                    {% else %}
+
+                    <span class="badge bg-warning text-dark px-3 py-2">
+
+                        Draft
+
+                    </span>
+
+                    {% endif %}
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- COMPANY -->
+
+    <div class="card shadow-sm border-0 mb-3">
+
+        <div class="card-body">
+
+            <h5 class="fw-bold mb-4">
+
+                Company Details
+
+            </h5>
+
+            <div class="row">
+
+                <div class="col-md-3 mb-3">
+
+                    <small class="text-muted">
+
+                        Company
+
+                    </small>
+
+                    <div class="fw-semibold">
+
+                        {{ rfq.company_name }}
+
+                    </div>
+
+                </div>
+
+                <div class="col-md-3 mb-3">
+
+                    <small class="text-muted">
+
+                        Contact Person
+
+                    </small>
+
+                    <div class="fw-semibold">
+
+                        {{ rfq.contact_person }}
+
+                    </div>
+
+                </div>
+
+                <div class="col-md-3 mb-3">
+
+                    <small class="text-muted">
+
+                        Email
+
+                    </small>
+
+                    <div class="fw-semibold">
+
+                        {{ rfq.email }}
+
+                    </div>
+
+                </div>
+
+                <div class="col-md-3 mb-3">
+
+                    <small class="text-muted">
+
+                        Phone
+
+                    </small>
+
+                    <div class="fw-semibold">
+
+                        {{ rfq.phone }}
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- MATERIALS -->
+
+    <div class="card shadow-sm border-0 mb-3">
+
+        <div class="card-body">
+
+            <h5 class="fw-bold mb-4">
+
+                Material Requirement
+
+            </h5>
+
+            <div class="table-responsive">
+
+                <table class="table table-bordered align-middle">
+
+                    <thead class="table-light">
+
+                        <tr>
+
+                            <th>#</th>
+
+                            <th>Material</th>
+
+                            <th>Code / Grade</th>
+
+                            <th>Dimensions</th>
+
+                            <th>Qty</th>
+
+                            <th>Weight</th>
+
+                            <th>Price/Kg</th>
+
+                            <th>Total</th>
+
+                            <th>Use</th>
+
+                        </tr>
+
+                    </thead>
+
+                    <tbody>
+
+                        {% for item in rfq.items.all %}
+
+                        <tr>
+
+                            <td>
+
+                                {{ forloop.counter }}
+
+                            </td>
+
+                            <td>
+
+                                {{ item.material_name }}
+
+                            </td>
+
+                            <td>
+
+                                {{ item.material_code_grade }}
+
+                            </td>
+
+                            <td>
+
+                                {{ item.material_dimensions }}
+
+                            </td>
+
+                            <td>
+
+                                {{ item.quantity }}
+
+                            </td>
+
+                            <td>
+
+                                {{ item.total_weight }}
+
+                            </td>
+
+                            <td>
+
+                                ₹ {{ item.price_per_kg }}
+
+                            </td>
+
+                            <td class="fw-bold text-success">
+
+                                ₹ {{ item.total_price }}
+
+                            </td>
+
+                            <td>
+
+                                {{ item.intended_use }}
+
+                            </td>
+
+                        </tr>
+
+                        {% empty %}
+
+                        <tr>
+
+                            <td colspan="9"
+                                class="text-center text-muted">
+
+                                No Materials Added
+
+                            </td>
+
+                        </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center">
+
+            <div>
+
+                <small class="text-muted">
+
+                    Final RFQ Amount
+
+                </small>
+
+                <h3 class="fw-bold text-success mb-0">
+
+                    ₹ {{ grand_total|floatformat:2 }}
+
+                </h3>
+
+            </div>
+
+            <div>
+
+                <span class="badge bg-success px-4 py-2">
+
+                    GRAND TOTAL
+
+                </span>
+
+            </div>
+
+        </div>
+
+        </div>
+
+        
+
+    </div>
+
+    <!-- TECHNICAL -->
+
+    <div class="card shadow-sm border-0 mb-3">
+
+        <div class="card-body">
+
+            <h5 class="fw-bold mb-4">
+
+                Technical Requirements
+
+            </h5>
+
+            <div class="row">
+
+                <div class="col-md-6 mb-3">
+
+                    <small class="text-muted">
+
+                        Material Grade
+
+                    </small>
+
+                    <p class="mb-0">
+
+                        {{ rfq.material_grade }}
+
+                    </p>
+
+                </div>
+
+                <div class="col-md-6 mb-3">
+
+                    <small class="text-muted">
+
+                        Applicable Standard
+
+                    </small>
+
+                    <p class="mb-0">
+
+                        {{ rfq.applicable_standard }}
+
+                    </p>
+
+                </div>
+
+                <div class="col-md-6 mb-3">
+
+                    <small class="text-muted">
+
+                        Heat Treatment
+
+                    </small>
+
+                    <p class="mb-0">
+
+                        {{ rfq.heat_treatment }}
+
+                    </p>
+
+                </div>
+
+                <div class="col-md-6 mb-3">
+
+                    <small class="text-muted">
+
+                        Surface Condition
+
+                    </small>
+
+                    <p class="mb-0">
+
+                        {{ rfq.surface_condition }}
+
+                    </p>
+
+                </div>
+
+                <div class="col-md-6 mb-3">
+
+                    <small class="text-muted">
+
+                        Packing & Traceability
+
+                    </small>
+
+                    <p class="mb-0">
+
+                        {{ rfq.packing_traceability }}
+
+                    </p>
+
+                </div>
+
+                <div class="col-md-6 mb-3">
+
+                    <small class="text-muted">
+
+                        Certification Requirement
+
+                    </small>
+
+                    <p class="mb-0">
+
+                        {{ rfq.certification_requirement }}
+
+                    </p>
+
+                </div>
+
+                <div class="col-md-12">
+
+                    <small class="text-muted">
+
+                        Counterfeit Prevention
+
+                    </small>
+
+                    <p class="mb-0">
+
+                        {{ rfq.counterfeit_prevention }}
+
+                    </p>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- TAX
+
+   
+
+<div class="card shadow-sm border-0 mb-3">
+
+    <div class="card-body">
+
+        <h5 class="fw-bold mb-4">
+
+            Tax & Commercial Summary
+
+        </h5>
+
+        <div class="row">
+
+         
+
+            <div class="col-md-4 mb-3">
+
+                <small class="text-muted">
+
+                    Subtotal
+
+                </small>
+
+                <div class="fw-bold">
+
+                    ₹ {{ subtotal|floatformat:2 }}
+
+                </div>
+
+            </div>
+
+
+            <div class="col-md-4 mb-3">
+
+                <small class="text-muted">
+
+                    Discount
+
+                </small>
+
+                <div class="fw-bold text-danger">
+
+                    ₹ {{ discount_amount|floatformat:2 }}
+
+                    ({{ rfq.discount_percentage }}%)
+
+                </div>
+
+            </div>
+
+
+            <div class="col-md-4 mb-3">
+
+                <small class="text-muted">
+
+                    Taxable Amount
+
+                </small>
+
+                <div class="fw-bold">
+
+                    ₹ {{ taxable_amount|floatformat:2 }}
+
+                </div>
+
+            </div>
+
+          
+
+            <div class="col-md-4 mb-3">
+
+                <small class="text-muted">
+
+                    CGST
+
+                </small>
+
+                <div class="fw-bold">
+
+                    ₹ {{ cgst_amount|floatformat:2 }}
+
+                    ({{ rfq.cgst_percentage }}%)
+
+                </div>
+
+            </div>
+
+            <div class="col-md-4 mb-3">
+
+                <small class="text-muted">
+
+                    SGST
+
+                </small>
+
+                <div class="fw-bold">
+
+                    ₹ {{ sgst_amount|floatformat:2 }}
+
+                    ({{ rfq.sgst_percentage }}%)
+
+                </div>
+
+            </div>
+
+          
+
+            <div class="col-md-4 mb-3">
+
+                <small class="text-muted">
+
+                    IGST
+
+                </small>
+
+                <div class="fw-bold">
+
+                    ₹ {{ igst_amount|floatformat:2 }}
+
+                    ({{ rfq.igst_percentage }}%)
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <hr>
+
+
+        
+    </div>
+
+</div> -->
+
+
+<!-- COMMERCIAL INFORMATION -->
+
+<div class="card shadow-sm border-0 mb-3">
+
+    <div class="card-body">
+
+        <h5 class="fw-bold mb-4">
+
+            Commercial Information Required
+            in Quotation
+
+        </h5>
+
+        {% with commercial=rfq.commercial_requirements %}
+
+        <div class="border rounded-4 p-4 bg-light">
+
+            <div class="row">
+
+                <!-- UNIT PRICE -->
+
+                <div class="col-md-4 mb-3">
+
+                    <div class="form-check">
+
+                        <input class="form-check-input"
+
+                               type="checkbox"
+
+                               {% if "Unit Price" in commercial %}
+                               checked
+                               {% endif %}
+
+                               disabled>
+
+                        <label class="form-check-label">
+
+                            Unit Price
+
+                        </label>
+
+                    </div>
+
+                </div>
+
+                <!-- TOTAL PRICE -->
+
+                <div class="col-md-4 mb-3">
+
+                    <div class="form-check">
+
+                        <input class="form-check-input"
+
+                               type="checkbox"
+
+                               {% if "Total Price" in commercial %}
+                               checked
+                               {% endif %}
+
+                               disabled>
+
+                        <label class="form-check-label">
+
+                            Total Price
+
+                        </label>
+
+                    </div>
+
+                </div>
+
+                <!-- APPLICABLE TAX -->
+
+                <div class="col-md-4 mb-3">
+
+                    <div class="form-check">
+
+                        <input class="form-check-input"
+
+                               type="checkbox"
+
+                               {% if "Applicable Taxes" in commercial %}
+                               checked
+                               {% endif %}
+
+                               disabled>
+
+                        <label class="form-check-label">
+
+                            Applicable Taxes
+
+                        </label>
+
+                    </div>
+
+                </div>
+
+                <!-- FREIGHT -->
+
+                <div class="col-md-6 mb-3">
+
+                    <div class="form-check">
+
+                        <input class="form-check-input"
+
+                               type="checkbox"
+
+                               {% if "Freight Terms" in commercial %}
+                               checked
+                               {% endif %}
+
+                               disabled>
+
+                        <label class="form-check-label">
+
+                            Freight Terms
+                            (Ex-Works / FOB / CIF / Door Delivery)
+
+                        </label>
+
+                    </div>
+
+                </div>
+
+                <!-- PAYMENT -->
+
+                <div class="col-md-3 mb-3">
+
+                    <div class="form-check">
+
+                        <input class="form-check-input"
+
+                               type="checkbox"
+
+                               {% if "Payment Terms" in commercial %}
+                               checked
+                               {% endif %}
+
+                               disabled>
+
+                        <label class="form-check-label">
+
+                            Payment Terms
+
+                        </label>
+
+                    </div>
+
+                </div>
+
+                <!-- VALIDITY -->
+
+                <div class="col-md-3 mb-3">
+
+                    <div class="form-check">
+
+                        <input class="form-check-input"
+
+                               type="checkbox"
+
+                               {% if "Quotation Validity" in commercial %}
+                               checked
+                               {% endif %}
+
+                               disabled>
+
+                        <label class="form-check-label">
+
+                            Quotation Validity
+
+                        </label>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        {% endwith %}
+
+    </div>
+
+</div>
+
+    <!-- DELIVERY -->
+
+<div class="card shadow-sm border-0 mb-3">
+
+    <div class="card-body">
+
+        <h5 class="fw-bold mb-4">
+
+            Delivery Requirements
+
+        </h5>
+
+        <div class="row">
+
+            <!-- DELIVERY DATE -->
+
+            <div class="col-md-4 mb-3">
+
+                <small class="text-muted">
+
+                    Required Delivery Date
+
+                </small>
+
+                <div class="fw-semibold">
+
+                    {{ rfq.required_delivery_date }}
+
+                </div>
+
+            </div>
+
+            <!-- PARTIAL DELIVERY -->
+
+            <div class="col-md-4 mb-3">
+
+                <small class="text-muted">
+
+                    Partial Delivery
+
+                </small>
+
+                <div class="fw-semibold">
+
+                    {{ rfq.partial_delivery|default:"NIL" }}
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- DELIVERY LOCATION -->
+
+        <div class="mt-3">
+
+            <small class="text-muted">
+
+                Delivery Location
+
+            </small>
+
+            <div class="fw-semibold">
+
+                {{ rfq.delivery_location }}
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+    <!-- NOTES -->
+
+    <div class="row mb-3">
+
+        <div class="col-md-6">
+
+            <div class="card shadow-sm border-0 h-100">
+
+                <div class="card-body">
+
+                    <h6 class="fw-bold mb-3">
+
+                        Compliance Statement
+
+                    </h6>
+
+                    <p class="mb-0">
+
+                        {{ rfq.compliance_statement|default:"—" }}
+
+                    </p>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="col-md-6">
+
+            <div class="card shadow-sm border-0 h-100">
+
+                <div class="card-body">
+
+                    <h6 class="fw-bold mb-3">
+
+                        Notes
+
+                    </h6>
+
+                    <p class="mb-0">
+
+                        {{ rfq.note|default:"—" }}
+
+                    </p>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+<!-- DIGITAL SIGNATURE -->
+
+<div class="card shadow-sm mt-3">
+
+    <div class="card-body">
+
+        <h5 class="mb-4 fw-bold">
+
+            Digital Approval Workflow
+
+        </h5>
+
+        <div class="row g-3">
+
+            <!-- =====================================
+            PREPARED
+            ====================================== -->
+
+            <div class="col-md-4">
+
+                <div class="border rounded-4 p-4 h-100 signature-box">
+
+                    <div class="signature-content">
+
+                    <small class="text-muted">
+
+                        Prepared By
+
+                    </small>
+
+                    <h6 class="fw-semibold mt-2 mb-1">
+
+                        {% if rfq.prepared_by %}
+                            {{ rfq.prepared_by.get_display_name }}
+                        {% else %}
+                            —
+                        {% endif %}
+
+                    </h6>
+
+                    <small class="text-muted">
+
+                        {{ rfq.prepared_at|date:"d M Y H:i"|default:"—" }}
+
+                    </small>
+
+                    {% if rfq.prepared_signature_id %}
+
+                    <div class="mt-2 text-primary small">
+
+                        {{ rfq.prepared_signature_id }}
+
+                    </div>
+
+                    {% endif %}
+
+                    <div class="mt-3">
+
+                        {% if not rfq.prepared_by %}
+
+                        <button class="btn btn-primary btn-sm"
+
+                            onclick="signDoc(
+                                'rfq',
+                                '{{ rfq.id }}',
+                                'prepare'
+                            )">
+
+                            Sign
+
+                        </button>
+
+                        {% endif %}
+
+                    </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- =====================================
+            REVIEWED
+            ====================================== -->
+
+            <div class="col-md-4">
+
+                <div class="border rounded-4 p-4 h-100 signature-box">
+
+                    <div class="signature-content">
+
+                    <small class="text-muted">
+
+                        Reviewed By
+
+                    </small>
+
+                    <h6 class="fw-semibold mt-2 mb-1">
+
+                        {% if rfq.reviewed_by %}
+                            {{ rfq.reviewed_by.get_display_name }}
+                        {% else %}
+                            —
+                        {% endif %}
+
+                    </h6>
+
+                    <small class="text-muted">
+
+                        {{ rfq.reviewed_at|date:"d M Y H:i"|default:"—" }}
+
+                    </small>
+
+                    {% if rfq.reviewed_signature_id %}
+
+                    <div class="mt-2 text-warning small">
+
+                        {{ rfq.reviewed_signature_id }}
+
+                    </div>
+
+                    {% endif %}
+
+                    <div class="mt-3">
+
+                        {% if rfq.prepared_by and not rfq.reviewed_by %}
+
+                        <button class="btn btn-warning btn-sm"
+
+                            onclick="signDoc(
+                                'rfq',
+                                '{{ rfq.id }}',
+                                'review'
+                            )">
+
+                            Review
+
+                        </button>
+
+                        {% elif not rfq.prepared_by %}
+
+                        <small class="text-muted">
+
+                            Waiting for preparation
+
+                        </small>
+
+                        {% endif %}
+
+                    </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- =====================================
+            APPROVED
+            ====================================== -->
+
+            <div class="col-md-4">
+
+                <div class="border rounded-4 p-4 h-100 signature-box">
+
+                    <div class="signature-content">
+
+                    <small class="text-muted">
+
+                        Approved By
+
+                    </small>
+
+                    <h6 class="fw-semibold mt-2 mb-1">
+
+                        {% if rfq.approved_by %}
+                            {{ rfq.approved_by.get_display_name }}
+                        {% else %}
+                            —
+                        {% endif %}
+
+                    </h6>
+
+                    <small class="text-muted">
+
+                        {{ rfq.approved_at|date:"d M Y H:i"|default:"—" }}
+
+                    </small>
+
+                    {% if rfq.approved_signature_id %}
+
+                    <div class="mt-2 text-success small">
+
+                        {{ rfq.approved_signature_id }}
+
+                    </div>
+
+                    {% endif %}
+
+                    <div class="mt-3">
+
+                        {% if rfq.reviewed_by and not rfq.approved_by %}
+
+                        <button class="btn btn-success btn-sm"
+
+                            onclick="signDoc(
+                                'rfq',
+                                '{{ rfq.id }}',
+                                'approve'
+                            )">
+
+                            Approve
+
+                        </button>
+
+                        {% elif not rfq.reviewed_by %}
+
+                        <small class="text-muted">
+
+                            Waiting for review
+
+                        </small>
+
+                        {% endif %}
+
+                    </div>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- =====================================
+        STATUS + DIGITAL ID
+        ====================================== -->
+
+        <hr>
+
+        <div class="d-flex justify-content-between align-items-center">
+
+            <div>
+
+                <small class="text-muted">
+
+                    Digital ID
+
+                </small>
+
+                <div class="fw-semibold">
+
+                    {{ rfq.digital_id|default:"—" }}
+
+                </div>
+
+            </div>
+
+            <div>
+
+                {% if rfq.status == "approved" %}
+
+                    <span class="badge bg-success px-3 py-2">
+
+                        Approved
+
+                    </span>
+
+                {% elif rfq.status == "reviewed" %}
+
+                    <span class="badge bg-warning text-dark px-3 py-2">
+
+                        Reviewed
+
+                    </span>
+
+                {% elif rfq.status == "prepared" %}
+
+                    <span class="badge bg-primary px-3 py-2">
+
+                        Prepared
+
+                    </span>
+
+                {% else %}
+
+                    <span class="badge bg-secondary px-3 py-2">
+
+                        Draft
+
+                    </span>
+
+                {% endif %}
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+
+function signDoc(type, id, action){
+
+    let password = prompt(
+        "Enter your password:"
+    );
+
+    if(!password) return;
+
+    fetch("{% url 'po_qu:apply_signature' %}", {
+
+        method: "POST",
+
+        headers: {
+
+            "Content-Type":
+            "application/x-www-form-urlencoded",
+
+            "X-CSRFToken":
+            "{{ csrf_token }}"
+
+        },
+
+        body:
+        `type=${type}&id=${id}&password=${password}&action=${action}`
+
+    })
+
+    .then(res => res.json())
+
+    .then(data => {
+
+        if(data.status === "success"){
+
+            alert(
+                "Action completed successfully"
+            );
+
+            location.reload();
+
+        } else {
+
+            alert(
+                data.msg
+            );
+
+        }
+
+    });
+
+}
+
+</script>
+{% endblock %}

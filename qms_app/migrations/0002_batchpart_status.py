@@ -10,9 +10,5 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.AddField(
-            model_name='batchpart',
-            name='status',
-            field=models.CharField(choices=[('ACTIVE', 'Active'), ('NCR', 'Under NCR'), ('REWORK', 'Rework'), ('SCRAP', 'Scrapped')], default='ACTIVE', max_length=20),
-        ),
+        
     ]

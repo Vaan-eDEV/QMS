@@ -292,6 +292,15 @@ input:checked + .slider:before {
                             <span class="slider"></span>
                         </label>
                     </div>
+                    <div class="permission-row">
+                        <span>Documents Workflow</span>
+                        <label class="switch">
+                            <input type="checkbox"
+                                   name="dworkflow_{{ user.id }}"
+                                   {% if user.page_access and user.page_access.can_workflow_access %}checked{% endif %}>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
 
                     <div class="permission-row">
                         <span>SOP</span>
@@ -317,6 +326,15 @@ input:checked + .slider:before {
                             <input type="checkbox"
                                    name="userdetail_{{ user.id }}"
                                    {% if user.page_access and user.page_access.can_userdetail %}checked{% endif %}>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div class="permission-row">
+                        <span>Production Form</span>
+                        <label class="switch">
+                            <input type="checkbox"
+                                   name="fm_{{ user.id }}"
+                                   {% if user.page_access and user.page_access.can_fm %}checked{% endif %}>
                             <span class="slider"></span>
                         </label>
                     </div>
@@ -390,6 +408,56 @@ input:checked + .slider:before {
         <input type="checkbox"
             name="delete_{{ user.id }}"
             {% if user.page_access and user.page_access.can_delete %}checked{% endif %}>
+        <span class="slider"></span>
+    </label>
+</div>
+<div class="permission-row">
+    <span>Can Approve Document</span>
+    <label class="switch">
+        <input type="checkbox"
+            name="ad_{{ user.id }}"
+            {% if user.page_access and user.page_access.can_approved_document %}checked{% endif %}>
+        <span class="slider"></span>
+    </label>
+</div>
+       <div class="section-title" style="margin-top:25px;">Signature Permissions</div>
+
+<div class="permission-row">
+    <span>Document signature button</span>
+    <label class="switch">
+        <input type="checkbox"
+            name="sbtn_{{ user.id }}"
+            {% if user.page_access and user.page_access.can_signature_btn %}checked{% endif %}>
+        <span class="slider"></span>
+    </label>
+</div>
+
+<div class="permission-row">
+    <span>Prepared Signature</span>
+    <label class="switch">
+        <input type="checkbox"
+            name="sign_prepared_{{ user.id }}"
+            {% if user.page_access and user.page_access.can_sign_prepared %}checked{% endif %}>
+        <span class="slider"></span>
+    </label>
+</div>
+
+<div class="permission-row">
+    <span>Review Signature</span>
+    <label class="switch">
+        <input type="checkbox"
+            name="sign_reviewed_{{ user.id }}"
+            {% if user.page_access and user.page_access.can_sign_reviewed %}checked{% endif %}>
+        <span class="slider"></span>
+    </label>
+</div>
+
+<div class="permission-row">
+    <span>Approval Signature</span>
+    <label class="switch">
+        <input type="checkbox"
+            name="sign_approved_{{ user.id }}"
+            {% if user.page_access and user.page_access.can_sign_approved %}checked{% endif %}>
         <span class="slider"></span>
     </label>
 </div>

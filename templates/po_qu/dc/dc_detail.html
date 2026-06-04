@@ -1,0 +1,473 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<div class="container-fluid">
+    <!-- ACTIONS -->
+    <div class="mt-3">
+        {% if dc.prepared_by and dc.approved_by %}
+<a href="{% url 'po_qu:dc_pdf' dc.id %}" 
+   class="btn btn-danger btn-sm">
+    📄 Download PDF
+</a>
+{% endif %}
+        <a href="{% url 'po_qu:create_dc' %}" class="btn btn-primary">
+            + New DC
+        </a>
+
+        <a href="{% url 'po_qu:po_au' %}" class="btn btn-secondary">
+            Back
+        </a>
+    </div>
+    <!-- HEADER -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h3 class="fw-bold mb-0">Delivery Challan</h3>
+            <small class="text-muted">Goods Dispatch Document</small>
+        </div>
+
+        <div class="text-end">
+            <h5 class="mb-0">{{ dc.dc_number }}</h5>
+            <small class="text-muted">{{ dc.date }}</small>
+        </div>
+    </div>
+
+    <!-- INFO -->
+    <div class="card shadow-sm mb-3">
+        <div class="card-body">
+            <div class="row text-center">
+                <div class="col-md-3">
+                    <small class="text-muted">Transporter</small>
+                    <p class="fw-semibold mb-0">{{ dc.transporter|default:"—" }}</p>
+                </div>
+                <div class="col-md-3">
+                    <small class="text-muted">City</small>
+                    <p class="fw-semibold mb-0">{{ dc.city|default:"—" }}</p>
+                </div>
+                <div class="col-md-3">
+                    <small class="text-muted">Created By</small>
+                    <p class="fw-semibold mb-0">{{ dc.created_by }}</p>
+                </div>
+                <div class="col-md-3">
+                    <small class="text-muted">Status</small>
+                    <span class="badge bg-secondary">Active</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- FROM / TO -->
+    <div class="row mb-3">
+
+        <div class="col-md-6">
+            <div class="card shadow-sm h-100">
+                <div class="card-body">
+                    <h6 class="text-muted">From</h6>
+                    <strong>{{ dc.from_name }}</strong>
+                    <p class="mb-1">{{ dc.from_address }}</p>
+                    <small>{{ dc.from_city }} {{ dc.from_state }}</small><br>
+                    <small>{{ dc.from_pincode }} {{ dc.from_country }}</small><br>
+                    <small>📞 {{ dc.from_phone }}</small><br>
+                    <small>✉ {{ dc.from_email }}</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card shadow-sm h-100">
+                <div class="card-body">
+                    <h6 class="text-muted">To</h6>
+                    <strong>{{ dc.to_name }}</strong>
+                    <p class="mb-1">{{ dc.to_address }}</p>
+                    <small>{{ dc.to_city }} {{ dc.to_state }}</small><br>
+                    <small>{{ dc.to_pincode }} {{ dc.to_country }}</small><br>
+                    <small>📞 {{ dc.to_phone }}</small><br>
+                    <small>✉ {{ dc.to_email }}</small>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ITEMS -->
+    <div class="card shadow-sm mb-3">
+        <div class="card-body">
+
+            <h5 class="mb-2">Items</h5>
+
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>#</th>
+                        <th>Product</th>
+                        <th>Unit</th>
+                        <th class="text-end">Quantity</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for item in dc.items.all %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td>{{ item.product_name }}</td>
+                        <td>{{ item.unit }}</td>
+                        <td class="text-end fw-semibold">{{ item.quantity }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+        </div>
+    </div>
+
+    <!-- NOTE -->
+    {% if dc.note %}
+    <div class="card shadow-sm mb-3">
+        <div class="card-body">
+            <h6 class="text-muted">Note</h6>
+            <p class="mb-0">{{ dc.note }}</p>
+        </div>
+    </div>
+    {% endif %}
+
+        
+<!-- DIGITAL SIGNATURE -->
+
+<div class="card shadow-sm mt-3">
+
+    <div class="card-body">
+
+        <h5 class="mb-4 fw-bold">
+
+            Digital Approval Workflow
+
+        </h5>
+
+        <div class="row g-3">
+
+            <!-- =====================================
+            PREPARED
+            ====================================== -->
+
+            <div class="col-md-4">
+
+                <div class="border rounded-4 p-4 h-100 signature-box">
+
+                    <div class="signature-content">
+
+                    <small class="text-muted">
+
+                        Prepared By
+
+                    </small>
+
+                    <h6 class="fw-semibold mt-2 mb-1">
+
+                        {{ dc.prepared_by|default:"—" }}
+
+                    </h6>
+
+                    <small class="text-muted">
+
+                        {{ dc.prepared_at|date:"d M Y H:i"|default:"—" }}
+
+                    </small>
+
+                    {% if dc.prepared_signature_id %}
+
+                    <div class="mt-2 text-primary small">
+
+                        {{ dc.prepared_signature_id }}
+
+                    </div>
+
+                    {% endif %}
+
+                    <div class="mt-3">
+
+                        {% if not dc.prepared_by %}
+
+                        <button class="btn btn-primary btn-sm"
+
+                            onclick="signDoc(
+                                'dc',
+                                '{{ dc.id }}',
+                                'prepare'
+                            )">
+
+                            Sign
+
+                        </button>
+
+                        {% endif %}
+
+                    </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- =====================================
+            REVIEWED
+            ====================================== -->
+
+            <div class="col-md-4">
+
+                <div class="border rounded-4 p-4 h-100 signature-box">
+
+                    <div class="signature-content">
+
+                    <small class="text-muted">
+
+                        Reviewed By
+
+                    </small>
+
+                    <h6 class="fw-semibold mt-2 mb-1">
+
+                        {{ dc.reviewed_by|default:"—" }}
+
+                    </h6>
+
+                    <small class="text-muted">
+
+                        {{ dc.reviewed_at|date:"d M Y H:i"|default:"—" }}
+
+                    </small>
+
+                    {% if dc.reviewed_signature_id %}
+
+                    <div class="mt-2 text-warning small">
+
+                        {{ dc.reviewed_signature_id }}
+
+                    </div>
+
+                    {% endif %}
+
+                    <div class="mt-3">
+
+                        {% if dc.prepared_by and not dc.reviewed_by %}
+
+                        <button class="btn btn-warning btn-sm"
+
+                            onclick="signDoc(
+                                'dc',
+                                '{{ dc.id }}',
+                                'review'
+                            )">
+
+                            Review
+
+                        </button>
+
+                        {% elif not dc.prepared_by %}
+
+                        <small class="text-muted">
+
+                            Waiting for preparation
+
+                        </small>
+
+                        {% endif %}
+
+                    </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- =====================================
+            APPROVED
+            ====================================== -->
+
+            <div class="col-md-4">
+
+                <div class="border rounded-4 p-4 h-100 signature-box">
+
+                    <div class="signature-content">
+
+                    <small class="text-muted">
+
+                        Approved By
+
+                    </small>
+
+                    <h6 class="fw-semibold mt-2 mb-1">
+
+                        {{ dc.approved_by|default:"—" }}
+
+                    </h6>
+
+                    <small class="text-muted">
+
+                        {{ dc.approved_at|date:"d M Y H:i"|default:"—" }}
+
+                    </small>
+
+                    {% if dc.approved_signature_id %}
+
+                    <div class="mt-2 text-success small">
+
+                        {{ dc.approved_signature_id }}
+
+                    </div>
+
+                    {% endif %}
+
+                    <div class="mt-3">
+
+                        {% if dc.reviewed_by and not dc.approved_by %}
+
+                        <button class="btn btn-success btn-sm"
+
+                            onclick="signDoc(
+                                'dc',
+                                '{{ dc.id }}',
+                                'approve'
+                            )">
+
+                            Approve
+
+                        </button>
+
+                        {% elif not dc.reviewed_by %}
+
+                        <small class="text-muted">
+
+                            Waiting for review
+
+                        </small>
+
+                        {% endif %}
+
+                    </div>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- =====================================
+        STATUS + DIGITAL ID
+        ====================================== -->
+
+        <hr>
+
+        <div class="d-flex justify-content-between align-items-center">
+
+            <div>
+
+                <small class="text-muted">
+
+                    Digital ID
+
+                </small>
+
+                <div class="fw-semibold">
+
+                    {{ dc.digital_id|default:"—" }}
+
+                </div>
+
+            </div>
+
+            <div>
+
+                {% if dc.status == "approved" %}
+
+                    <span class="badge bg-success px-3 py-2">
+
+                        Approved
+
+                    </span>
+
+                {% elif dc.status == "reviewed" %}
+
+                    <span class="badge bg-warning text-dark px-3 py-2">
+
+                        Reviewed
+
+                    </span>
+
+                {% elif dc.status == "prepared" %}
+
+                    <span class="badge bg-primary px-3 py-2">
+
+                        Prepared
+
+                    </span>
+
+                {% else %}
+
+                    <span class="badge bg-secondary px-3 py-2">
+
+                        Draft
+
+                    </span>
+
+                {% endif %}
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+
+function signDoc(type, id, action){
+
+    let password = prompt(
+        "Enter your password:"
+    );
+
+    if(!password) return;
+
+    fetch("{% url 'po_qu:apply_signature' %}", {
+
+        method: "POST",
+
+        headers: {
+
+            "Content-Type":
+            "application/x-www-form-urlencoded",
+
+            "X-CSRFToken":
+            "{{ csrf_token }}"
+
+        },
+
+        body:
+        `type=${type}&id=${id}&password=${password}&action=${action}`
+
+    })
+
+    .then(res => res.json())
+
+    .then(data => {
+
+        if(data.status === "success"){
+
+            alert(
+                "Action completed successfully"
+            );
+
+            location.reload();
+
+        } else {
+
+            alert(
+                data.msg
+            );
+
+        }
+
+    });
+
+}
+
+</script>
+{% endblock %}

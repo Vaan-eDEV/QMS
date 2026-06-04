@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+body {
+    background: #f4f6f9;
+    font-family: 'Segoe UI', sans-serif;
+}
+
+.page-header {
+    margin-bottom: 20px;
+}
+
+.rfq-card {
+    background: white;
+    border-radius: 12px;
+    padding: 18px;
+    margin-bottom: 15px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    cursor: pointer;
+    transition: 0.2s;
+    border-left: 5px solid #4e73df;
+}
+
+.rfq-card:hover {
+    transform: translateY(-4px);
+    background: #eef2ff;
+}
+
+.rfq-id {
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.rfq-sub {
+    font-size: 13px;
+    color: #6c757d;
+}
+
+.search-box {
+    margin-bottom: 20px;
+}
+</style>
+
+<div class="container">
+
+    <!-- HEADER -->
+    <div class="page-header">
+        <h3>RFQs - {{ company }}</h3>
+        <p class="text-muted">Select an RFQ to view full data</p>
+    </div>
+
+    <!-- SEARCH -->
+    <input type="text" id="searchInput" class="form-control search-box" placeholder="Search RFQ...">
+
+    <!-- RFQ LIST -->
+    <div class="row" id="rfqContainer">
+
+        {% for rfq in rfqs %}
+        <div class="col-md-4 rfq-item">
+
+            <!-- ✅ FIXED -->
+            <div class="rfq-card"
+                 onclick="openData('{{ rfq }}', '{{ company }}')">
+
+                <div class="rfq-id">{{ rfq }}</div>
+                <div class="rfq-sub">{{ company }}</div>
+
+            </div>
+
+        </div>
+        {% empty %}
+        <p>No RFQs found for this company</p>
+        {% endfor %}
+
+    </div>
+
+</div>
+
+<script>
+
+// ✅ FIXED FUNCTION
+function openData(ref, company){
+    window.location.href =
+        `/form-builder/data/${ref}/?company=${encodeURIComponent(company)}`;
+}
+
+// SEARCH FILTER
+document.getElementById("searchInput").addEventListener("keyup", function(){
+
+    let value = this.value.toLowerCase();
+    let items = document.querySelectorAll(".rfq-item");
+
+    items.forEach(item => {
+        let text = item.innerText.toLowerCase();
+        item.style.display = text.includes(value) ? "block" : "none";
+    });
+
+});
+</script>
+
+{% endblock %}

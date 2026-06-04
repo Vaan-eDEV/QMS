@@ -6,6 +6,7 @@ import uuid
 from django.contrib.auth.models import User
 #from .models import QMSProcess
 from django.core.validators import MaxLengthValidator
+from po_qu.models import WorkOrderItem
 
 class Customer(models.Model):
     name = models.CharField(max_length=255)
@@ -100,6 +101,20 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
 
 
 
+class Certificate(models.Model):
+    name = models.CharField(max_length=100)
+    def __str__(self):
+        return self.name
+
+class CertificateCategory(models.Model):
+    name = models.CharField(max_length=100)
+    certificate = models.ForeignKey(
+        Certificate,
+        on_delete=models.CASCADE,
+        related_name="categories"
+    )
+    def __str__(self):
+        return f"{self.name} ({self.certificate.name})"
 
 class QMSDocument(models.Model):
     title = models.CharField(max_length=255)
@@ -112,18 +127,60 @@ class QMSDocument(models.Model):
     )
     original_file = models.FileField(upload_to="qms_docs/")
     created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL, 
         on_delete=models.SET_NULL, 
         null=True, blank=True
     )
+    status = models.CharField(
+        max_length=20,
+        choices=[
+            ('process_owner', 'Process Owner'),
+            ('reviewed', 'Reviewed'),
+            ('approved', 'Approved'),
+            ("completed", "Completed") 
+        ],
+        default='process_owner'
+    )
+    target_folder = models.ForeignKey(
+        'DocumentFolder',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="target_docs"
+    )
+    assigned_to = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="assigned_documents"
+    )
+    
+
+    last_message = models.TextField(blank=True, null=True)
+
+    is_read = models.BooleanField(default=True)
+    certificate = models.ManyToManyField(
+        Certificate,
+        blank=True, related_name="temp_fix"
+    )
+    certificate_category = models.ManyToManyField(
+        CertificateCategory,
+        blank=  True
+    )
+    clause = models.CharField(max_length=255,default="")
+    pdf_signatures = models.JSONField(default=list, blank=True)
+    class Meta:
+        ordering = ['-created_at']
     def __str__(self):
         return self.title
 
 
 class QMSDocumentVersion(models.Model):
     document = models.ForeignKey(QMSDocument, on_delete=models.CASCADE, related_name="versions")
-    version_number = models.IntegerField()
+    version_number = models.DecimalField(max_digits=5,decimal_places=2)
     edited_html = models.TextField()
     edited_docx = models.FileField(upload_to="qms_docs/versions/")
     edited_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
@@ -160,7 +217,24 @@ class DocumentRevision(models.Model):
     def __str__(self):
         return f"{self.document.title} - v{self.version_number}" 
 
+# models.py
+from django.db import models
 
+class UploadedImage(models.Model):
+    file = models.ImageField(upload_to="uploads/")
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+
+    def _str_(self):
+        return self.file.name
+    
+
+class DocumentWorkflowLog(models.Model):
+    document = models.ForeignKey(QMSDocument, on_delete=models.CASCADE)
+    stage = models.CharField(max_length=50)
+    action = models.CharField(max_length=100)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True)
+    message = models.TextField(blank=True, null=True)
+    timestamp = models.DateTimeField(auto_now_add=True)
 # --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 class MaterialBatch(models.Model):
 
@@ -289,7 +363,7 @@ class Form(models.Model):
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
-        null=True
+        null=True,related_name='qms_forms'
     )
 
     created_at = models.DateTimeField(auto_now_add=True)
@@ -355,7 +429,7 @@ class BatchPart(models.Model):
         related_name="parts"
     )
 
-    part_id = models.CharField(max_length=100,unique=True)
+    part_id = models.CharField(max_length=100)
 
     current_stage = models.ForeignKey(
         Stage,
@@ -621,7 +695,9 @@ class UserPageAccess(models.Model):
     can_userdetail = models.BooleanField(default=False)
     can_materialBatch = models.BooleanField(default=False)
     can_form_build = models.BooleanField(default=False)
+    can_fm = models.BooleanField(default=False)
     can_costing_dashboard = models.BooleanField(default=False)
+    can_workflow_access = models.BooleanField(default=False)
     # Folder permissions
     can_goods_entry = models.BooleanField(default=False)
     can_tests = models.BooleanField(default=False)
@@ -630,7 +706,12 @@ class UserPageAccess(models.Model):
     can_delete = models.BooleanField(default=False)
     can_edit = models.BooleanField(default=False)
     can_add = models.BooleanField(default=False)
+    can_signature_btn = models.BooleanField(default=False)
+    can_approved_document = models.BooleanField(default=False)
     
+    can_sign_prepared = models.BooleanField(default=False)
+    can_sign_reviewed = models.BooleanField(default=False)
+    can_sign_approved = models.BooleanField(default=False)
     allowed_folders = models.ManyToManyField(
         "FormFolder",
         blank=True,
@@ -946,7 +1027,231 @@ class MachineSession(models.Model):
     def __str__(self):
         return f"{self.machine_id} - {self.operator}"
     
+
+# =========================================================================
     
+
+# =========================================================
+# WORK ORDER
+# =========================================================
+
+class WorkOrder(models.Model):
+
+    STATUS_CHOICES = [
+
+        ("OPEN", "Open"),
+
+        ("PLANNING", "Planning"),
+
+        ("PRODUCTION", "Production"),
+
+        ("QC", "Quality Check"),
+
+        ("DISPATCH", "Dispatch"),
+
+        ("COMPLETED", "Completed"),
+
+    ]
+
+    # RFQ LINK
+    rfq_ref_id = models.CharField(
+        max_length=100
+    )
+
+    company_name = models.CharField(
+        max_length=255
+    )
+
+    workorder_id = models.CharField(
+        max_length=100,
+        unique=True
+    )
+
+    priority = models.CharField(
+        max_length=50,
+        default="MEDIUM"
+    )
+
+    status = models.CharField(
+        max_length=50,
+        choices=STATUS_CHOICES,
+        default="OPEN"
+    )
+
+    delivery_date = models.DateField(
+        null=True,
+        blank=True
+    )
+
+    remarks = models.TextField(
+        blank=True,
+        null=True
+    )
+
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True
+    )
+
+    class Meta:
+
+        ordering = ["-created_at"]
+
+    def __str__(self):
+
+        return self.workorder_id
+
+
+# =========================================================
+# WORK ORDER PART
+# =========================================================
+
+class WorkOrderPart(models.Model):
+
+    STATUS_CHOICES = [
+
+        ("INTERNAL_WORKORDER", "Internal Workorder"),
+
+        ("RAW_MATERIAL_PO", "Raw Material Purchase Order"),
+
+        ("RAW_MATERIAL_RECEIVED", "Receive Raw Material"),
+
+        ("PRODUCTION", "Production"),
+
+        ("FINAL_INSPECTION", "Final Inspection"),
+
+        ("DISPATCH", "Dispatch"),
+
+        ("POST_DISPATCH", "Post Dispatch & Feedback"),
+
+    ]
+
+    workorder = models.ForeignKey(
+        WorkOrder,
+        on_delete=models.CASCADE,
+        related_name="parts"
+    )
+
+    part_id = models.CharField(
+        max_length=100
+    )
+
+    quantity = models.PositiveIntegerField(
+        default=1
+    )
+
+    material = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True
+    )
+
+    revision = models.CharField(
+        max_length=50,
+        blank=True,
+        null=True
+    )
+    assigned_to = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="assigned_workorder_parts"
+    )
+    status = models.CharField(
+        max_length=50,
+        choices=STATUS_CHOICES,
+        default="INTERNAL_WORKORDER"
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True
+    )
+    stage_folder = models.ForeignKey(
+        FormFolder,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True
+    )
+    class Meta:
+
+        unique_together = (
+            "workorder",
+            "part_id"
+        )
+
+    def __str__(self):
+
+        return self.part_id
     
-    
-    
+
+
+
+# =========================================================
+# WORKORDER FORM TRACKING
+# =========================================================
+
+class WorkOrderPartFormSubmission(models.Model):
+
+    workorder_item = models.ForeignKey(
+        "po_qu.WorkOrderItem",
+        on_delete=models.CASCADE,
+        related_name="qms_forms",
+        null=True,
+        blank=True
+
+    )
+
+    form = models.ForeignKey(
+
+        Form,
+
+        on_delete=models.CASCADE
+
+    )
+
+    form_submission = models.ForeignKey(
+
+        FormSubmission,
+
+        on_delete=models.CASCADE,
+
+        null=True,
+
+        blank=True
+
+    )
+
+    submitted_by = models.ForeignKey(
+
+        settings.AUTH_USER_MODEL,
+
+        on_delete=models.SET_NULL,
+
+        null=True,
+
+        blank=True
+
+    )
+
+    submitted_at = models.DateTimeField(
+
+        auto_now_add=True
+
+    )
+
+    class Meta:
+
+        unique_together = ("workorder_item", "form")
+
+    def __str__(self):
+
+        if self.workorder_item:
+            return f"{self.workorder_item.product_code} - {self.form.name}"
+
+        return self.form.name

@@ -1,0 +1,1427 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<style>
+
+.card{
+    border:none;
+    border-radius:20px;
+}
+
+.card-body{
+    padding:30px;
+}
+
+.section-title{
+    font-size:20px;
+    font-weight:700;
+    margin-bottom:20px;
+    color:#111827;
+}
+
+.form-control{
+    border-radius:12px;
+    padding:10px;
+}
+
+.table th{
+    background:#f3f4f6;
+    font-size:14px;
+}
+
+.table td{
+    vertical-align:middle;
+}
+
+.btn{
+    border-radius:12px;
+}
+
+textarea{
+    min-height:100px;
+}
+
+.total-card{
+    background:#f9fafb;
+    border-radius:18px;
+}
+
+.total-row{
+    display:flex;
+    justify-content:space-between;
+    margin-bottom:10px;
+    font-size:15px;
+}
+
+.grand-total{
+    font-size:24px;
+    font-weight:700;
+    color:#059669;
+}
+
+</style>
+
+<div class="container-fluid py-4">
+
+    <!-- HEADER -->
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+
+        <div>
+
+            <h3 class="fw-bold mb-1">
+
+    {% if edit_mode %}
+
+        Edit RFQ
+
+    {% else %}
+
+        Create RFQ
+
+    {% endif %}
+
+</h3>
+
+            <div class="text-muted">
+
+                Request For Quotation
+
+            </div>
+
+        </div>
+
+        <a href="{% url 'po_qu:rfq_list' %}"
+           class="btn btn-secondary">
+
+            Back
+
+        </a>
+
+    </div>
+
+    <div class="card shadow-sm">
+
+        <div class="card-body">
+
+            <form method="POST">
+                <input type="hidden"
+                    name="item_id"
+                    value="{{ request.GET.item_id }}">
+
+                {% csrf_token %}
+
+                <!-- ================================================= -->
+                <!-- BASIC -->
+                <!-- ================================================= -->
+
+                <div class="section-title">
+
+                    Purchase Request Details
+
+                </div>
+
+                <div class="row mb-4">
+
+                    <div class="col-md-3 mb-3">
+
+                        <label class="mb-2">
+
+                            RFQ Date
+
+                        </label>
+
+                        <input type="date"
+                            name="rfq_date"
+                            class="form-control"
+
+                            value="{{ rfq.rfq_date|date:'Y-m-d' }}"
+
+                            required>
+
+                    </div>
+
+                    
+
+                    <div class="col-md-6 mb-3">
+
+                        <label class="mb-2">
+
+                            Company Name
+
+                        </label>
+
+                        <input type="text"
+                            name="company_name"
+                            class="form-control"
+
+                            value="{{ rfq.company_name }}"
+
+                            required>
+
+                    </div>
+
+                </div>
+
+                <div class="row mb-4">
+
+                    <div class="col-md-4 mb-3">
+
+                        <label class="mb-2">
+
+                            Contact Person
+
+                        </label>
+
+                        <input type="text"
+                            name="contact_person"
+                            class="form-control"
+
+                            value="{{ rfq.contact_person }}">
+
+                    </div>
+
+                    <div class="col-md-4 mb-3">
+
+                        <label class="mb-2">
+
+                            Email
+
+                        </label>
+
+                        <input type="email"
+                            name="email"
+                            class="form-control"
+
+                            value="{{ rfq.email }}">
+
+                    </div>
+
+                    <div class="col-md-4 mb-3">
+
+                        <label class="mb-2">
+
+                            Phone
+
+                        </label>
+
+                        <input type="text"
+                            name="phone"
+                            class="form-control"
+
+                            value="{{ rfq.phone }}">
+
+                    </div>
+
+                </div>
+
+                <!-- ================================================= -->
+                <!-- MATERIAL -->
+                <!-- ================================================= -->
+
+                <div class="section-title">
+
+                    Material Requirement
+
+                </div>
+
+                <div class="table-responsive mb-3">
+
+                    <table class="table table-bordered"
+                           id="itemsTable">
+
+                        <thead>
+
+                            <tr>
+
+                                <th>Material</th>
+
+                                <th>Code / Grade</th>
+
+                                <th>Dimensions</th>
+
+                                <th>Qty</th>
+
+                                <th>Weight</th>
+
+                                <th>Price/Kg</th>
+
+                                <th>Total</th>
+
+                                <th>Use</th>
+
+                                <th>Remove</th>
+
+                            </tr>
+
+                        </thead>
+
+                        <tbody>
+
+{% if edit_mode %}
+
+    {% for item in rfq.items.all %}
+
+    <tr>
+
+        <td>
+            <input type="text"
+                   name="material_name[]"
+                   class="form-control"
+                   value="{{ item.material_name }}">
+        </td>
+
+        <td>
+            <input type="text"
+                   name="material_code_grade[]"
+                   class="form-control"
+                   value="{{ item.material_code_grade }}">
+        </td>
+
+        <td>
+            <input type="text"
+                   name="material_dimensions[]"
+                   class="form-control"
+                   value="{{ item.material_dimensions }}">
+        </td>
+
+        <td>
+            <input type="number"
+                   step="0.01"
+                   name="quantity[]"
+                   class="form-control"
+                   value="{{ item.quantity }}">
+        </td>
+
+        <td>
+            <input type="number"
+                   step="0.01"
+                   name="total_weight[]"
+                   class="form-control"
+                   value="{{ item.total_weight }}">
+        </td>
+
+        <td>
+            <input type="number"
+                   step="0.01"
+                   name="price_per_kg[]"
+                   class="form-control"
+                   value="{{ item.price_per_kg }}">
+        </td>
+
+        <td>
+            <input type="number"
+                   step="0.01"
+                   name="total_price[]"
+                   class="form-control"
+                   value="{{ item.total_price }}"
+                   readonly>
+        </td>
+
+        <td>
+            <input type="text"
+                   name="intended_use[]"
+                   class="form-control"
+                   value="{{ item.intended_use }}">
+        </td>
+
+        <td>
+
+            <button type="button"
+                    class="btn btn-danger btn-sm"
+                    onclick="removeRow(this)">
+
+                X
+
+            </button>
+
+        </td>
+
+    </tr>
+
+    {% endfor %}
+
+{% else %}
+
+<tr>
+
+    <td>
+        <input type="text"
+               name="material_name[]"
+               class="form-control">
+    </td>
+
+    <td>
+        <input type="text"
+               name="material_code_grade[]"
+               class="form-control">
+    </td>
+
+    <td>
+        <input type="text"
+               name="material_dimensions[]"
+               class="form-control">
+    </td>
+
+    <td>
+        <input type="number"
+               step="0.01"
+               name="quantity[]"
+               class="form-control">
+    </td>
+
+    <td>
+        <input type="number"
+               step="0.01"
+               name="total_weight[]"
+               class="form-control">
+    </td>
+
+    <td>
+        <input type="number"
+               step="0.01"
+               name="price_per_kg[]"
+               class="form-control">
+    </td>
+
+    <td>
+        <input type="number"
+               step="0.01"
+               name="total_price[]"
+               class="form-control"
+               readonly>
+    </td>
+
+    <td>
+        <input type="text"
+               name="intended_use[]"
+               class="form-control">
+    </td>
+
+    <td>
+
+        <button type="button"
+                class="btn btn-danger btn-sm"
+                onclick="removeRow(this)">
+
+            X
+
+        </button>
+
+    </td>
+
+</tr>
+
+{% endif %}
+
+</tbody>
+
+                    </table>
+
+                </div>
+
+                <button type="button"
+                        class="btn btn-primary btn-sm mb-5"
+                        onclick="addRow()">
+
+                    + Add Material
+
+                </button>
+
+                <!-- ================================================= -->
+                <!-- TECHNICAL -->
+                <!-- ================================================= -->
+
+                <div class="section-title">
+
+                    Technical Requirements
+
+                </div>
+
+                <div class="row mb-4">
+
+                    <div class="col-md-6 mb-3">
+
+                        <label class="mb-2">
+
+                            Material Grade
+
+                        </label>
+
+                        <input type="text"
+                            name="material_grade"
+                            class="form-control"
+
+                            value="{{ rfq.material_grade }}">
+
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+
+                        <label class="mb-2">
+
+                            Applicable Standard
+
+                        </label>
+
+                        <input type="text"
+                            name="applicable_standard"
+                            class="form-control"
+
+                            value="{{ rfq.applicable_standard }}">
+
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+
+                        <label class="mb-2">
+
+                            Heat Treatment
+
+                        </label>
+
+                        <textarea name="heat_treatment"
+                                  class="form-control">{{ rfq.heat_treatment }}</textarea>
+
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+
+                        <label class="mb-2">
+
+                            Surface Condition
+
+                        </label>
+
+                        <textarea name="surface_condition"
+                                  class="form-control">{{ rfq.surface_condition }}</textarea>
+
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+
+                        <label class="mb-2">
+
+                            Packing & Traceability
+
+                        </label>
+
+                        <textarea name="packing_traceability"
+                                  class="form-control">{{ rfq.packing_traceability }}</textarea>
+
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+
+    <label class="mb-3 fw-bold">
+
+        Certification Requirement
+
+    </label>
+
+    <div class="border rounded-4 p-4 bg-light">
+
+        <!-- MTC -->
+
+        <div class="form-check mb-3">
+
+            <input class="form-check-input"
+
+                   type="checkbox"
+
+                   name="certification_requirement[]"
+
+                   value="Mill Test Certificate (MTC)"
+
+{% if "Mill Test Certificate (MTC)" in rfq.certification_requirement %}
+checked
+{% endif %}
+
+                   id="mtc">
+
+            <label class="form-check-label fw-semibold"
+
+                   for="mtc">
+
+                Mill Test Certificate (MTC) covering
+
+            </label>
+
+        </div>
+
+        <!-- SUB ITEMS -->
+
+        <div class="ms-4 mb-3">
+
+            <div class="form-check mb-2">
+
+                <input class="form-check-input"
+
+                       type="checkbox"
+
+                       name="certification_requirement[]"
+
+                       value="Chemical Composition"
+                       {% if "Chemical Composition" in rfq.certification_requirement %}
+checked
+{% endif %}
+
+                       id="chemical">
+
+                <label class="form-check-label"
+
+                       for="chemical">
+
+                    Chemical Composition
+
+                </label>
+
+            </div>
+
+            <div class="form-check mb-2">
+
+                <input class="form-check-input"
+
+                       type="checkbox"
+
+                       name="certification_requirement[]"
+
+                       value="Mechanical Properties"
+                       {% if "Mechanical Properties" in rfq.certification_requirement %}
+checked
+{% endif %}
+
+                       id="mechanical">
+
+                <label class="form-check-label"
+
+                       for="mechanical">
+
+                    Mechanical Properties
+
+                </label>
+
+            </div>
+
+            <div class="form-check mb-2">
+
+                <input class="form-check-input"
+
+                       type="checkbox"
+
+                       name="certification_requirement[]"
+
+                       value="Heat / Batch Traceability"
+                       {% if "Heat / Batch Traceability" in rfq.certification_requirement %}
+checked
+{% endif %}
+
+                       id="traceability">
+
+                <label class="form-check-label"
+
+                       for="traceability">
+
+                    Heat / Batch Traceability
+
+                </label>
+
+            </div>
+
+        </div>
+
+        <!-- HEAT REPORT -->
+
+        <div class="form-check">
+
+            <input class="form-check-input"
+
+                   type="checkbox"
+
+                   name="certification_requirement[]"
+
+                   value="Heat Treatment Report"
+                   {% if "Heat Treatment Report" in rfq.certification_requirement %}
+checked
+{% endif %}
+
+                   id="heatreport">
+
+            <label class="form-check-label"
+
+                   for="heatreport">
+
+                Heat Treatment Report
+
+            </label>
+
+        </div>
+
+    </div>
+
+</div>
+
+                    <div class="col-md-6 mb-3">
+
+                        <label class="mb-2">
+
+                            Counterfeit Prevention
+
+                        </label>
+
+                        <textarea class="form-control"
+
+          name="counterfeit_prevention"
+
+          rows="4">
+
+The supplier shall ensure prevention of counterfeit material and maintain full traceability to the original material manufacturer. Material shall be supplied with proper identification and supporting certification.
+
+</textarea>
+
+                    </div>
+
+                </div>
+
+                <!-- ================================================= -->
+                <!-- TAX -->
+                <!-- ================================================= -->
+
+                <div class="section-title">
+
+                    Tax & Discount
+
+                </div>
+
+                <div class="card total-card p-4 mb-4">
+
+                    <div class="row">
+
+                        <div class="col-md-3 mb-3">
+
+                            <label class="mb-2">
+
+                                Discount %
+
+                            </label>
+
+                            <input type="number"
+                                   step="0.01"
+                                   name="discount"
+                                   class="form-control"
+                                   value="{{ rfq.discount_percentage|default:'0' }}">
+
+                        </div>
+
+                        <div class="col-md-3 mb-3">
+
+                            <label class="mb-2">
+
+                                CGST %
+
+                            </label>
+
+                            <input type="number"
+                                   step="0.01"
+                                   name="cgst"
+                                   class="form-control"
+                                   value="{{ rfq.cgst_percentage|default:'0' }}">
+
+                        </div>
+
+                        <div class="col-md-3 mb-3">
+
+                            <label class="mb-2">
+
+                                SGST %
+
+                            </label>
+
+                            <input type="number"
+                                   step="0.01"
+                                   name="sgst"
+                                   class="form-control"
+                                   value="{{ rfq.sgst_percentage|default:'0' }}">
+
+                        </div>
+
+                        <div class="col-md-3 mb-3">
+
+                            <label class="mb-2">
+
+                                IGST %
+
+                            </label>
+
+                            <input type="number"
+                                   step="0.01"
+                                   name="igst"
+                                   class="form-control"
+                                   value="{{ rfq.igst_percentage|default:'0' }}">
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <!-- ================================================= -->
+                <!-- TOTALS -->
+                <!-- ================================================= -->
+
+                <div class="section-title">
+
+                    Totals
+
+                </div>
+
+                <div class="card total-card p-4 mb-5">
+
+                    <div class="col-md-5 ms-auto">
+
+                        <div class="total-row">
+
+                            <span>Subtotal</span>
+
+                            <strong>
+
+                                ₹ <span id="subtotal">0.00</span>
+
+                            </strong>
+
+                        </div>
+
+                        <div class="total-row">
+
+                            <span>Discount</span>
+
+                            <strong>
+
+                                ₹ <span id="discount_amount">0.00</span>
+
+                            </strong>
+
+                        </div>
+
+                        <div class="total-row">
+
+                            <span>CGST</span>
+
+                            <strong>
+
+                                ₹ <span id="cgst_amount">0.00</span>
+
+                            </strong>
+
+                        </div>
+
+                        <div class="total-row">
+
+                            <span>SGST</span>
+
+                            <strong>
+
+                                ₹ <span id="sgst_amount">0.00</span>
+
+                            </strong>
+
+                        </div>
+
+                        <div class="total-row">
+
+                            <span>IGST</span>
+
+                            <strong>
+
+                                ₹ <span id="igst_amount">0.00</span>
+
+                            </strong>
+
+                        </div>
+
+                        <hr>
+
+                        <div class="d-flex justify-content-between">
+
+                            <span class="fw-bold">
+
+                                Grand Total
+
+                            </span>
+
+                            <span class="grand-total">
+
+                                ₹ <span id="grand_total">
+
+                                    0.00
+
+                                </span>
+
+                            </span>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <!-- ================================================= -->
+                <!-- COMMERCIAL -->
+                <!-- ================================================= -->
+
+                <div class="section-title">
+
+                    Commercial Information
+
+                </div>
+
+                <div class="row mb-4">
+
+    <div class="col-md-12">
+
+        <div class="border rounded-4 p-4 bg-light">
+
+            <h6 class="fw-bold mb-4">
+
+                Kindly include the following
+                in your quotation
+
+            </h6>
+
+            <div class="row">
+
+    <!-- UNIT PRICE -->
+
+    <div class="col-md-4 mb-3">
+
+        <div class="form-check">
+
+            <input class="form-check-input"
+
+                   type="checkbox"
+
+                   name="commercial_requirements[]"
+
+                   value="Unit Price"
+                   {% if "Unit Price" in rfq.commercial_requirements %}
+                    checked
+                    {% endif %}>
+
+            <label class="form-check-label">
+
+                Unit Price
+
+            </label>
+
+        </div>
+
+    </div>
+
+    <!-- TOTAL PRICE -->
+
+    <div class="col-md-4 mb-3">
+
+        <div class="form-check">
+
+            <input class="form-check-input"
+
+                   type="checkbox"
+
+                   name="commercial_requirements[]"
+
+                   value="Total Price"
+                   {% if "Total Price" in rfq.commercial_requirements %}
+checked
+{% endif %}>
+
+            <label class="form-check-label">
+
+                Total Price
+
+            </label>
+
+        </div>
+
+    </div>
+
+    <!-- APPLICABLE TAXES -->
+
+    <div class="col-md-4 mb-3">
+
+        <div class="form-check">
+
+            <input class="form-check-input"
+
+                   type="checkbox"
+
+                   name="commercial_requirements[]"
+
+                   value="Applicable Taxes"
+                   {% if "Applicable Taxes" in rfq.commercial_requirements %}
+checked
+{% endif %}>
+
+            <label class="form-check-label">
+
+                Applicable Taxes
+
+            </label>
+
+        </div>
+
+    </div>
+
+    <!-- FREIGHT -->
+
+    <div class="col-md-6 mb-3">
+
+        <div class="form-check">
+
+            <input class="form-check-input"
+
+                   type="checkbox"
+
+                   name="commercial_requirements[]"
+
+                   value="Freight Terms"
+                   {% if "Freight Terms" in rfq.commercial_requirements %}
+checked
+{% endif %}>
+
+            <label class="form-check-label">
+
+                Freight Terms
+                (Ex-Works / FOB / CIF / Door Delivery)
+
+            </label>
+
+        </div>
+
+    </div>
+
+    <!-- PAYMENT -->
+
+    <div class="col-md-3 mb-3">
+
+        <div class="form-check">
+
+            <input class="form-check-input"
+
+                   type="checkbox"
+
+                   name="commercial_requirements[]"
+
+                   value="Payment Terms"
+                   {% if "Payment Terms" in rfq.commercial_requirements %}
+checked
+{% endif %}>
+
+            <label class="form-check-label">
+
+                Payment Terms
+
+            </label>
+
+        </div>
+
+    </div>
+
+    <!-- VALIDITY -->
+
+    <div class="col-md-3 mb-3">
+
+        <div class="form-check">
+
+            <input class="form-check-input"
+
+                   type="checkbox"
+
+                   name="commercial_requirements[]"
+
+                   value="Quotation Validity"
+                   {% if "Quotation Validity" in rfq.commercial_requirements %}
+checked
+{% endif %}>
+
+            <label class="form-check-label">
+
+                Quotation Validity
+
+            </label>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+
+
+
+
+
+        </div>
+
+    </div>
+
+</div>
+
+                <!-- ================================================= -->
+                <!-- DELIVERY -->
+                <!-- ================================================= -->
+
+                <div class="section-title">
+
+                    Delivery Requirements
+
+                </div>
+
+                <div class="mb-3">
+
+                    <label class="mb-2">
+
+                        Delivery Location
+
+                    </label>
+
+                   <textarea name="delivery_location"
+          class="form-control">{{ rfq.delivery_location }}</textarea>
+                            
+                </div>
+                <div class="col-md-3 mb-3">
+
+                        <label class="mb-2">
+
+                            Delivery Date
+
+                        </label>
+
+                        <input type="date"
+                            name="required_delivery_date"
+                            class="form-control"
+
+                            value="{{ rfq.required_delivery_date|date:'Y-m-d' }}">
+
+                    </div>
+                <div class="mb-5">
+
+                    <label class="mb-2">
+
+                        Partial Delivery
+
+                    </label>
+
+                    <input type="text"
+                        name="partial_delivery"
+                        class="form-control"
+
+                        value="{{ rfq.partial_delivery }}">
+
+                </div>
+
+                <!-- ================================================= -->
+                <!-- NOTES -->
+                <!-- ================================================= -->
+
+                <div class="section-title">
+
+                    Compliance Statement
+
+                </div>
+
+                <textarea name="compliance_statement"
+                          class="form-control mb-4">
+                        Please confirm in your quotation that the offered material fully complies with the above technical and commercial requirements.</textarea>
+
+                <div class="section-title">
+
+                    Notes
+
+                </div>
+
+                <textarea name="note"
+          class="form-control mb-5">{{ rfq.note }}</textarea>
+
+                <!-- ================================================= -->
+                <!-- SUBMIT -->
+                <!-- ================================================= -->
+
+                <button type="submit"
+                        class="btn btn-success px-5 py-2">
+
+                    {% if edit_mode %}
+
+    Update RFQ
+
+{% else %}
+
+    Create RFQ
+
+{% endif %}
+
+                </button>
+
+            </form>
+
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+
+function calculateRow(row){
+
+    let weight = parseFloat(
+        row.querySelector(
+            '[name="total_weight[]"]'
+        ).value
+    ) || 0
+
+    let price = parseFloat(
+        row.querySelector(
+            '[name="price_per_kg[]"]'
+        ).value
+    ) || 0
+
+    let total = weight * price
+
+    row.querySelector(
+        '[name="total_price[]"]'
+    ).value = total.toFixed(2)
+
+    calculateTotals()
+}
+
+function calculateTotals(){
+
+    let subtotal = 0
+
+    document.querySelectorAll(
+        '[name="total_price[]"]'
+    ).forEach(input => {
+
+        subtotal += parseFloat(
+            input.value
+        ) || 0
+
+    })
+
+    let discount = parseFloat(
+        document.querySelector(
+            '[name="discount"]'
+        ).value
+    ) || 0
+
+    let cgst = parseFloat(
+        document.querySelector(
+            '[name="cgst"]'
+        ).value
+    ) || 0
+
+    let sgst = parseFloat(
+        document.querySelector(
+            '[name="sgst"]'
+        ).value
+    ) || 0
+
+    let igst = parseFloat(
+        document.querySelector(
+            '[name="igst"]'
+        ).value
+    ) || 0
+
+    let discount_amount =
+        subtotal * (discount / 100)
+
+    let taxable =
+        subtotal - discount_amount
+
+    let cgst_amount =
+        taxable * (cgst / 100)
+
+    let sgst_amount =
+        taxable * (sgst / 100)
+
+    let igst_amount =
+        taxable * (igst / 100)
+
+    let grand_total =
+
+        taxable +
+
+        cgst_amount +
+
+        sgst_amount +
+
+        igst_amount
+
+    document.getElementById(
+        "subtotal"
+    ).innerText = subtotal.toFixed(2)
+
+    document.getElementById(
+        "discount_amount"
+    ).innerText = discount_amount.toFixed(2)
+
+    document.getElementById(
+        "cgst_amount"
+    ).innerText = cgst_amount.toFixed(2)
+
+    document.getElementById(
+        "sgst_amount"
+    ).innerText = sgst_amount.toFixed(2)
+
+    document.getElementById(
+        "igst_amount"
+    ).innerText = igst_amount.toFixed(2)
+
+    document.getElementById(
+        "grand_total"
+    ).innerText = grand_total.toFixed(2)
+}
+
+function attachEvents(row){
+
+    row.querySelector(
+        '[name="total_weight[]"]'
+    ).addEventListener(
+        'input',
+        () => calculateRow(row)
+    )
+
+    row.querySelector(
+        '[name="price_per_kg[]"]'
+    ).addEventListener(
+        'input',
+        () => calculateRow(row)
+    )
+}
+
+function addRow(){
+
+    let table = document.querySelector(
+        "#itemsTable tbody"
+    )
+
+    let row = document.createElement("tr")
+
+    row.innerHTML = `
+
+        <td>
+            <input type="text"
+                   name="material_name[]"
+                   class="form-control">
+        </td>
+
+        <td>
+            <input type="text"
+                   name="material_code_grade[]"
+                   class="form-control">
+        </td>
+
+        <td>
+            <input type="text"
+                   name="material_dimensions[]"
+                   class="form-control">
+        </td>
+
+        <td>
+            <input type="number"
+                   step="0.01"
+                   name="quantity[]"
+                   class="form-control">
+        </td>
+
+        <td>
+            <input type="number"
+                   step="0.01"
+                   name="total_weight[]"
+                   class="form-control">
+        </td>
+
+        <td>
+            <input type="number"
+                   step="0.01"
+                   name="price_per_kg[]"
+                   class="form-control">
+        </td>
+
+        <td>
+            <input type="number"
+                   step="0.01"
+                   name="total_price[]"
+                   class="form-control"
+                   readonly>
+        </td>
+
+        <td>
+            <input type="text"
+                   name="intended_use[]"
+                   class="form-control">
+        </td>
+
+        <td>
+            <button type="button"
+                    class="btn btn-danger btn-sm"
+                    onclick="removeRow(this)">
+                X
+            </button>
+        </td>
+    `
+
+    table.appendChild(row)
+
+    attachEvents(row)
+}
+
+function removeRow(btn){
+
+    btn.closest("tr").remove()
+
+    calculateTotals()
+}
+
+document.addEventListener(
+    "input",
+    function(e){
+
+        if(
+            e.target.name === "discount"
+            ||
+            e.target.name === "cgst"
+            ||
+            e.target.name === "sgst"
+            ||
+            e.target.name === "igst"
+        ){
+
+            calculateTotals()
+        }
+
+    }
+)
+
+document.addEventListener(
+    "DOMContentLoaded",
+    function(){
+
+        document.querySelectorAll(
+            "#itemsTable tbody tr"
+        ).forEach(row => {
+
+            attachEvents(row)
+
+        })
+
+        calculateTotals()
+
+    }
+)
+
+</script>
+
+{% endblock %}

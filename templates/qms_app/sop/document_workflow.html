@@ -1,0 +1,717 @@
+{% extends 'base.html' %}
+{% csrf_token %}
+{% block content %}
+
+<div class="container-fluid">
+
+<!-- HEADER -->
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h3 class="fw-semibold">📊 Document Workflow</h3>
+
+
+
+</div>
+
+<div class="row g-3">
+
+<!-- ================= PROCESS OWNER ================= -->
+<div class="col-md-4">
+<div class="board">
+    <div class="board-header process">
+        🧑‍💼 created (<span id="count-process_owner">0</span>)
+    </div>
+    <input type="text" class="form-control mb-2 filter-input"
+        placeholder="Search...."
+        data-target="process_owner">
+    <div class="drop-zone" data-status="process_owner">
+
+        {% for doc in process_docs %}
+        <div class="doc-card draggable" draggable="true" data-id="{{ doc.id }}">
+            <div class="doc-title">{{ doc.title }}</div>
+
+            <div class="doc-meta">
+                👤 {{ doc.created_by.email|default:"Unknown" }} <br>
+                📁 {% if doc.target_folder %}
+                        {{ doc.target_folder.name }}
+                    {% elif doc.folder %}
+                        {{ doc.folder.name }}
+                    {% else %}
+                        No Folder
+                    {% endif %}
+            </div>
+
+            {% if doc.last_message %}
+            <div class="doc-message">
+                💬 {{ doc.last_message }}
+            </div>
+            {% endif %}
+
+            <div class="doc-actions">
+                <a href="{% url 'edit_document' doc.id %}" class="btn-action primary">Edit</a>
+            </div>
+        </div>
+        {% empty %}
+        <p class="empty">No documents</p>
+        {% endfor %}
+
+    </div>
+</div>
+</div>
+
+<!-- ================= REVIEWED ================= -->
+<div class="col-md-4">
+<div class="board">
+    <div class="board-header reviewed">🔍 For Review (<span id="count-reviewed">0</span>)</div>
+    <input type="text" class="form-control mb-2 filter-input"
+        placeholder="Search...."
+        data-target="reviewed">
+    <div class="drop-zone" data-status="reviewed">
+
+        {% for doc in reviewed_docs %}
+        <div class="doc-card draggable" draggable="true" data-id="{{ doc.id }}">
+            <div class="doc-title">{{ doc.title }}</div>
+
+            <div class="doc-meta">
+                👤 {{ doc.created_by.email|default:"Unknown" }} <br>
+                📁 {% if doc.target_folder %}
+                        {{ doc.target_folder.name }}
+                    {% elif doc.folder %}
+                        {{ doc.folder.name }}
+                    {% else %}
+                        No Folder
+                    {% endif %}
+            </div>
+
+            {% if doc.last_message %}
+            <div class="doc-message">
+                💬 {{ doc.last_message }}
+            </div>
+            {% endif %}
+
+            <div class="doc-actions">
+                <a href="{% url 'edit_document' doc.id %}" class="btn-action primary">Edit</a>
+                <button onclick="sendBack({{ doc.id }})" class="btn-action danger">Send Back</button>
+            </div>
+        </div>
+        {% empty %}
+        <p class="empty">No documents</p>
+        {% endfor %}
+
+    </div>
+</div>
+</div>
+
+<!-- ================= APPROVED ================= -->
+{% if request.user.is_superuser or access and access.can_approved_document %}
+<div class="col-md-4">
+<div class="board">
+    <div class="board-header approved">✅ For Approval (<span id="count-approved">0</span>)</div>
+    <input type="text" class="form-control mb-2 filter-input"
+        placeholder="Search...."
+        data-target="approved">
+    <div class="drop-zone" data-status="approved">
+
+        {% for doc in approved_docs %}
+        <div class="doc-card draggable" draggable="true" data-id="{{ doc.id }}">
+            <div class="doc-title">{{ doc.title }}</div>
+
+            <div class="doc-meta">
+                👤 {{ doc.created_by.email|default:"Unknown" }} <br>
+                📁 {% if doc.target_folder %}
+                        {{ doc.target_folder.name }}
+                    {% elif doc.folder %}
+                        {{ doc.folder.name }}
+                    {% else %}
+                        No Folder
+                    {% endif %}
+            </div>
+
+            {% if doc.last_message %}
+            <div class="doc-message">
+                💬 {{ doc.last_message }}
+            </div>
+            {% endif %}
+
+            <div class="doc-actions">
+    <a href="{% url 'edit_document' doc.id %}" class="btn-action primary">Edit</a>
+    <a href="{% url 'view_document' doc.id %}" class="btn-action secondary">View</a>
+    <button onclick="sendBack({{ doc.id }})" class="btn-action danger">Send Back</button>
+
+    <!-- ✅ ADD THIS -->
+    <button onclick="moveToFolder({{ doc.id }})" class="btn-action success">
+        ✔ Final Approve
+    </button>
+</div>
+        </div>
+        {% empty %}
+        <p class="empty">No documents</p>
+        {% endfor %}
+
+    </div>
+</div>
+</div>
+{% endif %}
+
+</div>
+<!-- SEND BACK MODAL -->
+<div class="modal fade" id="sendBackModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+
+      <div class="modal-header">
+        <h5 class="modal-title">Send Back Document</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+
+      <div class="modal-body">
+
+        <label>Select User</label>
+        <select id="sendBackUser" class="form-select mb-3"></select>
+
+        <!-- 🔥 Hide for review/approval -->
+        <div id="reasonBox">
+            <label>Reason</label>
+            <textarea id="sendBackMessage" class="form-control"></textarea>
+        </div>
+
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button class="btn btn-danger" onclick="confirmSendBack()">Send</button>
+      </div>
+
+    </div>
+  </div>
+</div>
+</div>
+
+
+<!-- ================= STYLE ================= -->
+<style>
+
+.board {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+}
+
+.board-header {
+    padding: 12px;
+    font-weight: 600;
+    border-bottom: 1px solid #e5e7eb;
+    position: sticky;
+    top: 0;
+    background: white;
+    z-index: 2;
+}
+
+.board-header.process { color: #2563eb; }
+.board-header.reviewed { color: #0891b2; }
+.board-header.approved { color: #16a34a; }
+
+.board{
+    height: 85vh;
+    display: flex;
+    flex-direction: column;
+}
+.drop-zone {
+    flex: 1;
+    overflow-y: auto;
+    padding: 10px;
+}
+
+/* CARD */
+.doc-card {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 10px;
+    transition: 0.2s;
+}
+
+.doc-card:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+/* TEXT */
+.doc-title {
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.doc-meta {
+    font-size: 12px;
+    color: #6b7280;
+    margin-top: 5px;
+}
+
+/* MESSAGE */
+.doc-message {
+    background: #fff3cd;
+    padding: 6px;
+    border-radius: 5px;
+    font-size: 12px;
+    margin-top: 6px;
+}
+
+/* ACTIONS */
+.doc-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 10px;
+}
+
+.btn-action {
+    font-size: 12px;
+    padding: 5px 10px;
+    border-radius: 5px;
+    border: none;
+    cursor: pointer;
+    text-decoration: none;
+}
+
+.btn-action.primary { background: #2563eb; color: white; }
+.btn-action.secondary { background: #6b7280; color: white; }
+.btn-action.success { background: #16a34a; color: white; }
+.btn-action.danger { background: #dc2626; color: white; }
+
+.empty {
+    text-align: center;
+    color: #9ca3af;
+    margin-top: 20px;
+}
+.notif-box {
+    position: absolute;
+    right: 0;
+    top: 35px;
+    width: 300px;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    box-shadow: 0 6px 15px rgba(0,0,0,0.15);
+    padding: 10px;
+    z-index: 999;
+}
+.doc-card {
+    position: relative; /* REQUIRED */
+}
+
+.delete-icon {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    color: #9ca3af;
+    transition: 0.2s;
+}
+
+.delete-icon:hover {
+    color: #dc2626;
+    transform: scale(1.2);
+}
+.notif-item {
+    padding: 8px;
+    border-bottom: 1px solid #eee;
+    cursor: pointer;
+}
+
+.notif-item:hover {
+    background: #f3f4f6;
+}
+
+.toast {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: #111;
+    color: #fff;
+    padding: 12px;
+    border-radius: 6px;
+    z-index: 9999;
+}
+</style>
+
+<script>
+let filters = {
+    process_owner: "",
+    reviewed: "",
+    approved: ""
+};
+
+// ================= GLOBAL VAR =================
+let currentDocId = null;
+let currentStatus = null;
+
+// ================= INIT =================
+document.addEventListener("DOMContentLoaded", () => {
+    loadWorkflow();
+});
+
+
+// ================= MOVE NEXT =================
+function moveNext(id, status){
+    fetch(`/update-document-status/${id}/`, {
+        method: "POST",
+        headers: {
+            "X-CSRFToken": "{{ csrf_token }}",
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({status: status})
+    })
+    .then(() => loadWorkflow());
+}
+
+
+// ================= SEND BACK =================
+function sendBack(id){
+    openAssignModal(id, "process_owner");
+}
+
+
+// ================= OPEN MODAL =================
+function openAssignModal(id, status){
+    currentDocId = id;
+    currentStatus = status;
+
+    fetch("/users-list/")
+    .then(res => res.json())
+    .then(data => {
+
+        let dropdown = document.getElementById("sendBackUser");
+
+        // ✅ RESET DROPDOWN
+        dropdown.innerHTML = '<option value="">Select User</option>';
+
+        console.log("Users loaded:", data.users); // DEBUG
+
+        // ✅ SHOW ALL USERS (NO FILTER)
+        data.users.forEach(user => {
+
+            dropdown.innerHTML += `
+                <option value="${user.id}">
+                    ${user.name} (${user.role || "user"})
+                </option>
+            `;
+        });
+
+        // 🚨 IF STILL EMPTY
+        if(dropdown.options.length === 1){
+            dropdown.innerHTML += `<option disabled>No users found</option>`;
+        }
+
+        // ================= UI CONTROL =================
+        let reasonBox = document.getElementById("reasonBox");
+        let title = document.querySelector("#sendBackModal .modal-title");
+        let btn = document.querySelector("#sendBackModal .btn-danger");
+
+        if(status === "process_owner"){
+            reasonBox.style.display = "block";
+            title.innerText = "Send Back Document";
+            btn.innerText = "Send Back";
+        } 
+        else if(status === "reviewed"){
+            reasonBox.style.display = "none";
+            title.innerText = "Assign Reviewer";
+            btn.innerText = "Assign";
+        } 
+        else if(status === "approved"){
+            reasonBox.style.display = "none";
+            title.innerText = "Assign Approver";
+            btn.innerText = "Assign";
+        }
+
+        document.getElementById("sendBackMessage").value = "";
+
+        new bootstrap.Modal(document.getElementById("sendBackModal")).show();
+    })
+    .catch(err => {
+        console.error("User load error:", err);
+        alert("Failed to load users");
+    });
+}
+
+// ================= CONFIRM ACTION =================
+function confirmSendBack(){
+
+    let userId = document.getElementById("sendBackUser").value;
+    let msg = document.getElementById("sendBackMessage").value;
+
+    if(!userId){
+        alert("Please select a user");
+        return;
+    }
+
+    let url = "";
+    let payload = {
+        user_id: userId,
+        message: msg
+    };
+
+    // 🎯 ROUTING FIXED
+    if(currentStatus === "process_owner"){
+        url = `/send-back/${currentDocId}/`;
+    } else {
+        url = `/update-document-status/${currentDocId}/`;
+        payload.status = currentStatus;
+    }
+
+    fetch(url, {
+        method: "POST",
+        headers: {
+            "X-CSRFToken": "{{ csrf_token }}",
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify(payload)
+    })
+    .then(() => {
+        loadWorkflow();
+        bootstrap.Modal.getInstance(document.getElementById("sendBackModal")).hide();
+    })
+    .catch(err => {
+        console.error("Action error:", err);
+        alert("Action failed");
+    });
+}
+
+
+// ================= FINAL MOVE =================
+function getCSRFToken() {
+    return document.cookie
+        .split('; ')
+        .find(row => row.startsWith('csrftoken='))
+        ?.split('=')[1];
+}
+
+function moveToFolder(id){
+
+    fetch(`/finalize-document/${id}/`, {
+        method: "POST",
+        headers: {
+            "X-CSRFToken": getCSRFToken(),
+            "Content-Type": "application/json"
+        }
+    })
+    .then(async res => {
+
+        let text = await res.text();   // ✅ READ RAW RESPONSE
+
+        let data;
+        try {
+            data = JSON.parse(text);
+        } catch {
+            console.error("❌ Server returned HTML:", text);
+            throw new Error("Server returned non-JSON (likely error page)");
+        }
+
+        if (!res.ok) {
+            throw new Error(data.error || "Request failed");
+        }
+
+        return data;
+    })
+    .then(data => {
+        console.log("✅ Success:", data);
+        loadWorkflow();
+        alert("Final Approved Successfully");
+    })
+    .catch(err => {
+        console.error("❌ Error:", err);
+        alert(err.message);
+    });
+}
+// ================= LOAD WORKFLOW =================
+function loadWorkflow(){
+
+    fetch("/workflow-data/")
+    .then(res => res.json())
+    .then(data => {
+
+        updateColumn("process_owner", data.process);
+        updateColumn("reviewed", data.reviewed);
+        updateColumn("approved", data.approved);
+
+        document.getElementById("count-process_owner").innerText = data.process.length;
+        document.getElementById("count-reviewed").innerText = data.reviewed.length;
+        document.getElementById("count-approved").innerText = data.approved.length;
+
+    });
+}
+
+
+// ================= UPDATE COLUMN =================
+function updateColumn(status, docs){
+
+    let zone = document.querySelector(`[data-status="${status}"]`);
+    if(!zone) return;
+
+    let html = "";
+
+    docs.forEach(doc => {
+
+        let moveNextBtn = "";
+        let sendBackBtn = "";
+        let moveFinalBtn = "";
+
+        if(status === "process_owner"){
+            moveNextBtn = `
+                <button onclick="openAssignModal(${doc.id}, 'reviewed')" class="btn-action primary">
+                    ➡ Send to Review
+                </button>
+            `;
+        }
+
+        if(status === "reviewed"){
+            moveNextBtn = `
+                <button onclick="openAssignModal(${doc.id}, 'approved')" class="btn-action primary">
+                    ➡ Send to Approval
+                </button>
+            `;
+
+            sendBackBtn = `
+                <button onclick="openAssignModal(${doc.id}, 'process_owner')" class="btn-action danger">
+                    ⬅ Send Back
+                </button>
+            `;
+        }
+
+        if(status === "approved"){
+            moveFinalBtn = `
+                <button onclick="moveToFolder(${doc.id})" class="btn-action success">
+                    ✔ Final Approve
+                </button>
+            `;
+
+            sendBackBtn = `
+                <button onclick="openAssignModal(${doc.id}, 'process_owner')" class="btn-action danger">
+                    ⬅ Send Back
+                </button>
+            `;
+        }
+
+        html += `
+            <div class="doc-card"
+                data-id="${doc.id}"
+                data-title="${doc.title}"
+                data-user="${doc.created_by || ''}"
+                data-folder="${doc.target_folder || doc.folder || ''}">
+
+                <div class="delete-icon" onclick="deleteDocument(${doc.id})">🗑</div>
+                
+                <div class="doc-title">${doc.title}</div>
+               <div style="font-size:12px; margin-top:4px;">
+    📜 
+    ${doc.certificates?.length ? doc.certificates.join(", ") : ""}
+    ${doc.categories?.length ? (doc.certificates?.length ? " | " : "") + doc.categories.join(", ") : ""}
+    
+    📄 Clause ${doc.clause || "-"}
+</div>
+
+                <div class="doc-meta">
+                    👤 ${doc.created_by || "Unknown"}<br>
+                    📁 ${doc.target_folder || doc.folder || "No Folder"}
+                </div>
+
+                ${doc.last_message ? `<div class="doc-message">💬 ${doc.last_message}</div>` : ""}
+
+                <div class="doc-actions">
+                    <a href="/document/${doc.id}/edit/" class="btn-action primary">Edit</a>
+                    ${moveNextBtn}
+                    ${sendBackBtn}
+                    ${moveFinalBtn}
+                </div>
+
+            </div>
+        `;
+    });
+
+    zone.innerHTML = html;
+    applyFilter(status)
+}
+// ================= FILTER STATE =================
+
+// ================= INPUT LISTENER =================
+document.addEventListener("input", function(e){
+
+    if(!e.target.classList.contains("filter-input")) return;
+
+    let status = e.target.dataset.target;
+
+    if(!status) return; // safety
+
+    // store filter value
+    filters[status] = (e.target.value || "").toLowerCase().trim();
+
+    applyFilter(status);
+
+});
+
+// ================= FILTER FUNCTION =================
+function applyFilter(status){
+
+    let search = filters[status] || "";
+
+    // ✅ SAFE SELECTOR
+    let zone = document.querySelector(`[data-status="${status}"]`);
+    if(!zone) return;
+
+    let cards = zone.querySelectorAll(".doc-card");
+
+    cards.forEach(card => {
+
+        // ✅ SAFE DATA EXTRACTION
+        let title = (card.getAttribute("data-title") || "").toLowerCase();
+        let user = (card.getAttribute("data-user") || "").toLowerCase();
+        let folder = (card.getAttribute("data-folder") || "").toLowerCase();
+
+        // combine all text
+        let combined = `${title} ${user} ${folder}`;
+
+        if(combined.includes(search)){
+            card.style.display = "";   // default
+        } else {
+            card.style.display = "none";
+        }
+
+    });
+}
+
+function getCSRFToken() {
+    return document.cookie.split('; ')
+        .find(row => row.startsWith('csrftoken'))
+        ?.split('=')[1];
+}
+function deleteDocument(id){
+    if(!confirm("Delete this document?")) return;
+
+    fetch(`/documents/${id}/delete/`, {
+        method: "POST",
+        headers: {
+            "X-CSRFToken": getCSRFToken(),
+            "Content-Type": "application/json"
+        }
+    })
+    .then(res => {
+        if(!res.ok){
+            throw new Error("Delete failed");
+        }
+        return res.text();
+    })
+    .then(() => {
+        loadWorkflow();  // refresh cards
+    })
+    .catch(err => {
+        console.error(err);
+        // alert("Delete error");
+    });
+}
+// ================= POLLING =================
+setInterval(() => {
+    loadWorkflow();
+}, 5000);
+
+</script>
+{% endblock %}

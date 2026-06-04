@@ -1,0 +1,756 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+
+<div class="container-fluid py-4">
+
+    <!-- ===================================== -->
+    <!-- HEADER -->
+    <!-- ===================================== -->
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+
+        <div>
+
+            <h2 class="fw-bold mb-1">
+
+                {{ supplier.supplier_name }}
+
+            </h2>
+
+            <p class="text-muted mb-0">
+
+                Supplier Code :
+                {{ supplier.supplier_code }}
+
+            </p>
+
+        </div>
+
+        <div class="d-flex gap-2">
+
+            <a
+                href="{% url 'sm_dashboard' %}"
+                class="btn btn-light"
+            >
+
+                Back
+
+            </a>
+
+            <a
+                href="{% url 'supplier_evaluation' supplier.id %}"
+                class="btn btn-warning"
+            >
+
+                Evaluation
+
+            </a>
+
+            <a
+                href="{% url 'upload_document' supplier.id %}"
+                class="btn btn-primary"
+            >
+
+                Upload Document
+
+            </a>
+
+        </div>
+
+    </div>
+
+    <!-- ===================================== -->
+    <!-- SUMMARY -->
+    <!-- ===================================== -->
+
+    <div class="row g-4 mb-4">
+
+        <!-- STATUS -->
+
+        <div class="col-lg-3 col-md-6">
+
+            <div class="card border-0 shadow-sm">
+
+                <div class="card-body">
+
+                    <p class="text-muted mb-2">
+
+                        Status
+
+                    </p>
+
+                    {% if supplier.status == 'approved' %}
+
+                        <span class="badge bg-success fs-6">
+
+                            Approved
+
+                        </span>
+
+                    {% elif supplier.status == 'in_progress' %}
+
+                        <span class="badge bg-warning fs-6">
+
+                            In Progress
+
+                        </span>
+
+                    {% else %}
+
+                        <span class="badge bg-secondary fs-6">
+
+                            Draft
+
+                        </span>
+
+                    {% endif %}
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- SCORE -->
+
+        <div class="col-lg-3 col-md-6">
+
+            <div class="card border-0 shadow-sm">
+
+                <div class="card-body">
+
+                    <p class="text-muted mb-2">
+
+                        Evaluation Score
+
+                    </p>
+
+                    <h3 class="fw-bold text-primary">
+
+                        {{ supplier.evaluation_score }}
+
+                    </h3>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- RISK -->
+
+        <div class="col-lg-3 col-md-6">
+
+            <div class="card border-0 shadow-sm">
+
+                <div class="card-body">
+
+                    <p class="text-muted mb-2">
+
+                        Risk Level
+
+                    </p>
+
+                    {% if supplier.risk_level == 'low' %}
+
+                        <span class="badge bg-success fs-6">
+
+                            Low
+
+                        </span>
+
+                    {% elif supplier.risk_level == 'medium' %}
+
+                        <span class="badge bg-warning fs-6">
+
+                            Medium
+
+                        </span>
+
+                    {% else %}
+
+                        <span class="badge bg-danger fs-6">
+
+                            High
+
+                        </span>
+
+                    {% endif %}
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- AUDIT -->
+
+        <div class="col-lg-3 col-md-6">
+
+            <div class="card border-0 shadow-sm">
+
+                <div class="card-body">
+
+                    <p class="text-muted mb-2">
+
+                        Audit Status
+
+                    </p>
+
+                    <h5 class="fw-bold">
+
+                        {{ supplier.audit_status }}
+
+                    </h5>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- ===================================== -->
+    <!-- MAIN CONTENT -->
+    <!-- ===================================== -->
+
+    <div class="row g-4">
+
+        <!-- LEFT -->
+
+        <div class="col-lg-4">
+
+            <!-- BASIC DETAILS -->
+
+            <div class="card border-0 shadow-sm mb-4">
+
+                <div class="card-header bg-white">
+
+                    <h5 class="mb-0">
+
+                        Supplier Information
+
+                    </h5>
+
+                </div>
+
+                <div class="card-body">
+
+                    <table class="table">
+
+                        <tr>
+                            <th>Supplier Type</th>
+                            <td>{{ supplier.supplier_type }}</td>
+                        </tr>
+
+                        <tr>
+                            <th>Category</th>
+                            <td>{{ supplier.category }}</td>
+                        </tr>
+
+                        <tr>
+                            <th>Contact Person</th>
+                            <td>{{ supplier.contact_person }}</td>
+                        </tr>
+
+                        <tr>
+                            <th>Email</th>
+                            <td>{{ supplier.email }}</td>
+                        </tr>
+
+                        <tr>
+                            <th>Phone</th>
+                            <td>{{ supplier.phone }}</td>
+                        </tr>
+
+                        <tr>
+                            <th>Website</th>
+                            <td>{{ supplier.website }}</td>
+                        </tr>
+
+                        <tr>
+                            <th>GST Number</th>
+                            <td>{{ supplier.gst_number }}</td>
+                        </tr>
+
+                        <tr>
+                            <th>PAN Number</th>
+                            <td>{{ supplier.pan_number }}</td>
+                        </tr>
+
+                    </table>
+
+                </div>
+
+            </div>
+
+            <!-- DOCUMENTS -->
+
+            <div class="card border-0 shadow-sm">
+
+                <div class="card-header bg-white">
+
+                    <h5 class="mb-0">
+
+                        Documents
+
+                    </h5>
+
+                </div>
+
+                <div class="card-body">
+
+                    {% for document in documents %}
+
+                        <div class="border rounded p-3 mb-3">
+
+                            <div class="fw-semibold">
+
+                                {{ document.document_name }}
+
+                            </div>
+
+                            <small class="text-muted">
+
+                                Version :
+                                {{ document.version }}
+
+                            </small>
+
+                            <br>
+
+                            <a
+                                href="{{ document.document_file.url }}"
+                                target="_blank"
+                                class="btn btn-sm btn-outline-primary mt-2"
+                            >
+
+                                View Document
+
+                            </a>
+
+                        </div>
+
+                    {% empty %}
+
+                        <p class="text-muted">
+
+                            No documents uploaded
+
+                        </p>
+
+                    {% endfor %}
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- RIGHT -->
+
+        <div class="col-lg-8">
+
+            <!-- WORKFLOW -->
+
+            <div class="card border-0 shadow-sm mb-4">
+
+                <div class="card-header bg-white">
+
+                    <h5 class="mb-0">
+
+                        Workflow Progress
+
+                    </h5>
+
+                </div>
+
+                <div class="card-body">
+
+                    <div class="workflow-wrapper">
+
+                        {% for stage in stages %}
+
+                            <div class="workflow-step">
+
+                                <div class="
+    workflow-circle
+
+    {% if stage.status == 'completed' %}
+        completed
+    {% elif stage.status == 'in_progress' %}
+        active
+    {% else %}
+        pending
+    {% endif %}
+">
+
+                                    {{ stage.stage_no }}
+
+                                </div>
+
+                                <div class="workflow-label">
+
+                                    {{ stage.stage_name }}
+
+                                </div>
+
+                            </div>
+
+                        {% endfor %}
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            <!-- EVALUATION -->
+
+            <!-- ===================================== -->
+<!-- EVALUATION SUMMARY -->
+<!-- ===================================== -->
+
+<div class="card border-0 shadow-sm mb-4">
+
+    <div class="card-header bg-white">
+
+        <h5 class="mb-0">
+
+            Evaluation Summary
+
+        </h5>
+
+    </div>
+
+    <div class="card-body">
+
+        {% if evaluation %}
+
+            <div class="row g-3">
+
+                <!-- QUALITY -->
+
+                <div class="col-md-4">
+
+                    <div class="border rounded p-3 text-center">
+
+                        <h3 class="text-primary">
+
+                            {{ evaluation.quality_score }}/20
+
+                        </h3>
+
+                        <small>
+
+                            Quality
+
+                        </small>
+
+                    </div>
+
+                </div>
+
+                <!-- DELIVERY -->
+
+                <div class="col-md-4">
+
+                    <div class="border rounded p-3 text-center">
+
+                        <h3 class="text-success">
+
+                            {{ evaluation.delivery_score }}/15
+
+                        </h3>
+
+                        <small>
+
+                            Delivery
+
+                        </small>
+
+                    </div>
+
+                </div>
+
+                <!-- TECHNICAL -->
+
+                <div class="col-md-4">
+
+                    <div class="border rounded p-3 text-center">
+
+                        <h3 class="text-info">
+
+                            {{ evaluation.technical_score }}/15
+
+                        </h3>
+
+                        <small>
+
+                            Technical
+
+                        </small>
+
+                    </div>
+
+                </div>
+
+                <!-- DOCUMENTATION -->
+
+                <div class="col-md-4">
+
+                    <div class="border rounded p-3 text-center">
+
+                        <h3 class="text-warning">
+
+                            {{ evaluation.documentation_score }}/15
+
+                        </h3>
+
+                        <small>
+
+                            Documentation
+
+                        </small>
+
+                    </div>
+
+                </div>
+
+                <!-- COMPLIANCE -->
+
+                <div class="col-md-4">
+
+                    <div class="border rounded p-3 text-center">
+
+                        <h3 class="text-danger">
+
+                            {{ evaluation.compliance_score }}/15
+
+                        </h3>
+
+                        <small>
+
+                            Compliance
+
+                        </small>
+
+                    </div>
+
+                </div>
+
+                <!-- COMMERCIAL -->
+
+                <div class="col-md-4">
+
+                    <div class="border rounded p-3 text-center">
+
+                        <h3 class="text-dark">
+
+                            {{ evaluation.commercial_score }}/10
+
+                        </h3>
+
+                        <small>
+
+                            Commercial
+
+                        </small>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            <!-- TOTAL -->
+
+            <div class="mt-4">
+
+                <div class="border rounded p-4 bg-light text-center">
+
+                    <h1 class="fw-bold text-success">
+
+                        {{ evaluation.total_score }}/90
+
+                    </h1>
+
+                    <p class="mb-0 text-muted">
+
+                        Overall Supplier Score
+
+                    </p>
+
+                </div>
+
+            </div>
+
+        {% else %}
+
+            <div class="text-center py-5">
+
+                <h5 class="text-muted">
+
+                    No evaluation completed
+
+                </h5>
+
+                <a
+                    href="{% url 'supplier_evaluation' supplier.id %}"
+                    class="btn btn-primary mt-3"
+                >
+
+                    Start Evaluation
+
+                </a>
+
+            </div>
+
+        {% endif %}
+
+    </div>
+
+</div>
+
+            <!-- ACTIVITY -->
+
+            <div class="card border-0 shadow-sm">
+
+                <div class="card-header bg-white">
+
+                    <h5 class="mb-0">
+
+                        Activity History
+
+                    </h5>
+
+                </div>
+
+                <div class="card-body">
+
+                    {% for activity in activities %}
+
+                        <div class="border-start border-4 border-primary ps-3 mb-4">
+
+                            <div class="fw-semibold">
+
+                                {{ activity.activity }}
+
+                            </div>
+
+                            <small class="text-muted">
+
+                                {{ activity.created_at }}
+
+                            </small>
+
+                            <p class="mb-0 mt-2">
+
+                                {{ activity.description }}
+
+                            </p>
+
+                        </div>
+
+                    {% empty %}
+
+                        <p class="text-muted">
+
+                            No activity found
+
+                        </p>
+
+                    {% endfor %}
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<style>
+
+.card{
+
+    border-radius:18px;
+
+}
+
+.workflow-wrapper{
+
+    display:flex;
+
+    justify-content:space-between;
+
+    gap:20px;
+
+    overflow-x:auto;
+
+}
+
+.workflow-step{
+
+    text-align:center;
+
+    min-width:100px;
+
+}
+
+.workflow-circle{
+
+    width:55px;
+
+    height:55px;
+
+    border-radius:50%;
+
+    background:#d1d5db;
+
+    color:#fff;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    margin:auto;
+
+    font-weight:bold;
+
+}
+.workflow-circle.pending{
+
+    background:#d1d5db;
+
+}
+.workflow-circle.completed{
+
+    background:#22c55e;
+
+}
+
+.workflow-circle.active{
+
+    background:#2563eb;
+
+}
+
+.workflow-label{
+
+    margin-top:10px;
+
+    font-size:13px;
+
+}
+
+</style>
+
+{% endblock %}

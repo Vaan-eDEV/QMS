@@ -1,155 +1,164 @@
+
 {% extends 'base.html' %}
+{% load custom_filters %}
 {% block content %}
 
+
 <style>
+body { font-size: 14px; }
 
-/* ===== GLOBAL TEXT SIZE ===== */
-body {
-    font-size: 14px;
-}
-
-h4 {
-    font-size: 17px;
-}
-
-/* ===== ROW STYLE ===== */
 .file-row {
     border-bottom: 1px solid #e5e7eb;
     transition: background .12s;
     font-size: 13px;
     cursor: pointer;
 }
+.file-row:hover { background: #f1f5f9; }
 
-.file-row:hover {
-    background: #f1f5f9;
-}
+.file-icon { font-size: 18px; }
 
-/* ===== FILE ICONS ===== */
-.file-icon {
-    font-size: 18px;
-}
-
-/* ===== FILE BADGE ===== */
 .file-badge {
     font-size: 11px;
     padding: 2px 6px;
     border-radius: 6px;
     margin-left: 6px;
 }
+.badge-pdf { background: #dc2626; color: white; }
+.badge-docx { background: #2563eb; color: white; }
+.badge-other { background: #6b7280; color: white; }
 
-.badge-pdf {
-    background: #dc2626;
-    color: white;
-}
-
-.badge-docx {
-    background: #2563eb;
-    color: white;
-}
-
-.badge-other {
-    background: #6b7280;
-    color: white;
-}
-
-/* ===== ACTION ICONS ===== */
 .action-icon {
     border: none;
     background: none;
     font-size: 14px;
     margin-left: 6px;
     cursor: pointer;
-    position: relative;
-    z-index: 5;
 }
-
-.action-icon.edit { color: #d97706; }
-.action-icon.delete { color: #dc2626; }
-
-/* ===== TOOLBAR ===== */
+.badge-version{
+    background: #e5e7eb;
+    color: #111827;
+    padding: 2px 6px;
+    border-radius: 6px;
+    font-size: 11px;
+    margin-left: 4px;
+}
 .toolbar {
     background: #f8fafc;
     padding: 6px 10px;
     border-radius: 8px;
     border: 1px solid #e5e7eb;
-    font-size: 13px;
 }
 
-/* ===== HEADER TEXT ===== */
+.search-box {
+    border-radius: 8px;
+    font-size: 13px;
+    padding: 6px 10px;
+    border: 1px solid #e5e7eb;
+}
+
 .header-label {
     font-size: 13px;
     font-weight: 600;
     color: #4b5563;
 }
 
-/* ===== SEARCH ===== */
-.search-box {
-    border-radius: 8px;
-    font-size: 13px;
-    padding: 6px 10px;
-    border: 1px solid #e5e7eb;
-    width: 240px;
+.group-title {
+    font-weight: 600;
+    margin-top: 12px;
+    color: #374151;
 }
-
 </style>
-
 
 <div class="container mt-4">
 
 <!-- HEADER -->
 <div class="d-flex justify-content-between align-items-center mb-3">
     <div>
-        <h4 class="mb-0">📁 {{ folder.name }}</h4>
+        <h4>📁 {{ folder.name }}</h4>
         <small class="text-muted">Folder contents</small>
     </div>
 
     <a href="{% url 'document_home' %}" class="btn btn-light btn-sm">
-        ← Back to Folders
+        ← Back
     </a>
 </div>
 
 <!-- TOOLBAR -->
 <div class="toolbar mb-2 d-flex justify-content-between align-items-center">
 
-    <div class="text-muted">
-        Total: <span id="docCount">{{ documents|length }}</span> documents
+    <div>
+        Total: <span id="docCount">{{ documents|length }}</span>
     </div>
 
-    <div class="d-flex gap-2">
-        <input type="text"
-               id="searchInput"
-               class="search-box"
-               placeholder="⌕ Search">
+    <div class="d-flex gap-2 align-items-center">
+        <!-- CERTIFICATE FILTER -->
+        <select id="certFilter" class="search-box">
+    <option value="">All Certificates</option>
 
-        {% if request.user.is_superuser or request.user.role == "admin"  %}
+    {% for cert in certificates %}
+        <option value="{{ cert.name|lower }}">
+            {{ cert.name }}
+        </option>
+    {% endfor %}
+</select>
+
+
+
+        <!-- SORT -->
+        <select id="sortSelect" class="search-box">
+            <option value="">Sort</option>
+            <option value="name_asc">Name A → Z</option>
+            <option value="name_desc">Name Z → A</option>
+            <option value="date_desc">Newest</option>
+            <option value="date_asc">Oldest</option>
+            <option value="number_asc">Number ↑</option>
+            <option value="number_desc">Number ↓</option>
+            <option value="group_date">Group by Date</option>
+        </select>
+
+        <!-- SEARCH -->
+        <input type="text" id="searchInput" class="search-box" placeholder="⌕ Search">
+
+        <!-- UPLOAD -->
+        {% if request.user.is_superuser or request.user.role == "admin" %}
         <a href="{% url 'upload_document' %}" class="btn btn-sm btn-primary">
-            + Upload Here
+            + Upload
         </a>
         {% endif %}
+
     </div>
 
 </div>
 
 <!-- TABLE HEADER -->
 <div class="row header-label px-2 py-2">
-    <div class="col-md-5">Name</div>
-    <div class="col-md-3">Uploaded By - (Role)</div>
-    <div class="col-md-2">Date & Time</div>
-    <div class="col-md-2 text-end">Actions</div>
+    <div class="col-md-3">Name</div>
+    <div class="col-md-3">Standards</div>
+    <div class="col-md-3">Clause</div>
+    <div class="col-md-1">Created</div>
+    <div class="col-md-1">Last Edited</div>
+    <div class="col-md-1 text-end">Actions</div>
 </div>
 
 <!-- FILE LIST -->
 <div id="docContainer">
 
 {% for doc in documents %}
-
 {% with doc.original_file.name|lower as filename %}
 
 <div class="row file-row px-2 py-2 align-items-center"
+     data-name="{{ doc.title|lower }}"
+     data-date="{{ doc.updated_at|date:'Y-m-d H:i:s' }}"
+     data-number="{{ doc.id }}"
+     data-cert="{% for cat in doc.certificate_category.all %}{{ cat.certificate.name|lower }} {% endfor %}"
+ 
      onclick="openDoc('{{ doc.id }}')">
 
-    <!-- NAME -->
-    <div class="col-md-5 d-flex align-items-center gap-2">
+
+    <div class="col-md-3 d-flex flex-column">
+
+
+    <div class="d-flex align-items-center gap-2">
 
         {% if ".pdf" in filename %}
             <span class="file-icon">📕</span>
@@ -158,62 +167,81 @@ h4 {
         {% else %}
             <span class="file-icon">📄</span>
         {% endif %}
+        
 
-        <span class="text-truncate fw-semibold doc-title">
+        <span class="doc-title fw-semibold">
             {{ doc.title|default:"Untitled Document" }}
         </span>
-
-        {% if ".pdf" in filename %}
+        
+        <!-- {% if ".pdf" in filename %}
             <span class="file-badge badge-pdf">PDF</span>
         {% elif ".docx" in filename %}
             <span class="file-badge badge-docx">DOCX</span>
         {% else %}
             <span class="file-badge badge-other">FILE</span>
-        {% endif %}
+        {% endif %} -->
+        <span class="file-badge badge-version">v{{ doc.latest_version|floatformat:1 }}</span>
+    </div>
 
+</div>
+
+    <div class="col-md-3">
+        
+        {% for cat in doc.certificate_category.all %}
+            <div>
+                 {{ cat.name }} ({{ cat.certificate.name }})
+            </div>
+        {% empty %}
+            N/A
+        {% endfor %}
+    </div>
+
+    <div class="col-md-3">
+        
+        {% if doc.clause %}
+            {% for c in doc.clause|split_comma %}
+                <div>{{ c }}</div>
+            {% endfor %}
+        {% else %}
+        -
+        {% endif %}
+        
     </div>
 
     <!-- USER -->
-    <div class="col-md-3 doc-user">
+    <!-- <div class="col-md-1 doc-user">
         {% if doc.created_by %}
-            {{ doc.created_by.get_display_name }} - {{ doc.created_by.get_role_display }}
+            {{ doc.created_by.get_display_name }}
         {% else %}
-            <span class="text-muted">System</span>
+            System
         {% endif %}
+    </div> -->
+
+    <!-- DATE -->
+    <div class="col-md-1 text-muted">
+        <span>{{ doc.created_at|date:"d M Y" }}</span><br>
+        <small>{{ doc.created_at|date:"h:i A" }}</small>
     </div>
 
-    <!-- TIME -->
-    <div class="col-md-2 text-muted">
-        <span class="doc-date">{{ doc.created_at|date:"d M Y" }}</span>
-        <small class="doc-time">{{ doc.created_at|date:"h:i A" }}</small>
+    <!-- LAST EDITED -->
+    <div class="col-md-1 text-muted">
+        <span>{{ doc.updated_at|date:"d M Y" }}</span><br>
+        <small>{{ doc.updated_at|date:"h:i A" }}</small>
     </div>
 
-    <!-- ACTIONS -->
-    <div class="col-md-2 text-end" onclick="event.stopPropagation()">
+    <!-- ACTION -->
+    <div class="col-md-1 text-end" onclick="event.stopPropagation()">
 
-    {% if request.user.is_superuser or request.user.role == "admin"  %}
-
-        <a href="{% url 'edit_document' doc.id %}"
-           class="action-icon edit"
-           title="Edit">
-           ✏
-        </a>
+    {% if request.user.is_superuser or request.user.role == "admin" or request.user.role == "user" %}
+        <!-- <a href="{% url 'edit_document' doc.id %}" class="action-icon">✏</a> -->
 
         <form method="POST"
               action="{% url 'delete_document' doc.id %}"
               style="display:inline"
               onsubmit="return confirm('Delete this document?')">
-
             {% csrf_token %}
-
-            <button class="action-icon delete" title="Delete">
-                🗑
-            </button>
-
+            <button class="action-icon">🗑</button>
         </form>
-
-    {% else %}
-        <span class="text-muted">-</span>
     {% endif %}
 
     </div>
@@ -221,57 +249,122 @@ h4 {
 </div>
 
 {% endwith %}
-{% empty %}
-
-<div class="text-center p-5 text-muted">
-    <div style="font-size:40px;">📂</div>
-    <h6 class="mt-3">This folder is empty</h6>
-    <p>Upload documents to see them here</p>
-</div>
-
 {% endfor %}
 
 </div>
 
 </div>
 
-
 <script>
 
-// OPEN DOCUMENT WHEN ROW CLICKED
+// OPEN
 function openDoc(id) {
     window.location.href = `/documents/${id}/view/`;
 }
 
-// SMART SEARCH
-document.getElementById("searchInput").addEventListener("keyup", function() {
+document.getElementById("searchInput").addEventListener("keyup", applyFilters);
 
-    let value = this.value.toLowerCase();
+// SORT + GROUP
+document.getElementById("sortSelect").addEventListener("change", function() {
+
+    let val = this.value;
+    let container = document.getElementById("docContainer");
+    let rows = Array.from(container.querySelectorAll(".file-row"));
+
+    if (val === "group_date") {
+        groupByDate(rows, container);
+        return;
+    }
+
+    rows.sort((a, b) => {
+
+        let dA = new Date(a.dataset.date);
+        let dB = new Date(b.dataset.date);
+
+        if (val === "date_desc") return dB - dA;
+        if (val === "date_asc") return dA - dB;
+
+        if (val === "name_asc") return a.dataset.name.localeCompare(b.dataset.name);
+        if (val === "name_desc") return b.dataset.name.localeCompare(a.dataset.name);
+
+        if (val === "number_asc") return a.dataset.number - b.dataset.number;
+        if (val === "number_desc") return b.dataset.number - a.dataset.number;
+
+        return 0;
+    });
+
+    container.innerHTML = "";
+    rows.forEach(r => container.appendChild(r));
+});
+
+// GROUPING
+function groupByDate(rows, container) {
+
+    container.innerHTML = "";
+
+    let today = new Date();
+
+    let groups = {
+        "Today": [],
+        "Yesterday": [],
+        "Last 7 Days": [],
+        "Older": []
+    };
+
+    rows.forEach(row => {
+        let d = new Date(row.dataset.date);
+        let diff = Math.floor((today - d) / (1000*60*60*24));
+
+        if (diff === 0) groups["Today"].push(row);
+        else if (diff === 1) groups["Yesterday"].push(row);
+        else if (diff <= 7) groups["Last 7 Days"].push(row);
+        else groups["Older"].push(row);
+    });
+
+    for (let g in groups) {
+        if (groups[g].length > 0) {
+
+            let header = document.createElement("div");
+            header.className = "group-title";
+            header.innerText = g;
+            container.appendChild(header);
+
+            groups[g].forEach(r => container.appendChild(r));
+        }
+    }
+}
+document.getElementById("searchInput").addEventListener("keyup", applyFilters);
+document.getElementById("certFilter").addEventListener("change", applyFilters);
+
+function applyFilters() {
+
+    let cert = document.getElementById("certFilter").value.toLowerCase();
+   
+    let search = document.getElementById("searchInput").value.toLowerCase();
+
     let rows = document.querySelectorAll(".file-row");
     let count = 0;
 
-    rows.forEach(row => {
+    rows.forEach(r => {
 
-        let title = row.querySelector(".doc-title")?.innerText.toLowerCase() || "";
-        let user  = row.querySelector(".doc-user")?.innerText.toLowerCase() || "";
-        let date  = row.querySelector(".doc-date")?.innerText.toLowerCase() || "";
-        let time  = row.querySelector(".doc-time")?.innerText.toLowerCase() || "";
+        let text = r.innerText.toLowerCase();
+        let rCert = (r.dataset.cert || "").toLowerCase();
+   
 
-        let combined = title + " " + user + " " + date + " " + time;
-
-        if (combined.includes(value)) {
-            row.style.display = "";
+        let matchSearch = text.includes(search);
+        let matchCert = !cert || rCert.includes(cert);
+     
+        if (matchSearch && matchCert) {
+            r.style.display = "";
             count++;
         } else {
-            row.style.display = "none";
+            r.style.display = "none";
         }
 
     });
 
     document.getElementById("docCount").innerText = count;
-
-});
-
+}
 </script>
 
 {% endblock %}

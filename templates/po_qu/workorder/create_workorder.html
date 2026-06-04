@@ -1,0 +1,259 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+.card-custom {
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.06);
+    margin-bottom: 20px;
+}
+
+.section-title {
+    font-weight: 600;
+    font-size: 15px;
+    color: #4e73df;
+    margin-bottom: 10px;
+}
+
+.table th {
+    font-size: 13px;
+    background: #f8f9fc;
+}
+
+.table td input {
+    font-size: 13px;
+}
+
+.delivery-box {
+    background: #f8f9fc;
+    padding: 6px;
+    border-radius: 6px;
+}
+
+.add-btn {
+    border-radius: 8px;
+    padding: 6px 14px;
+}
+
+.remove-btn {
+    border-radius: 6px;
+}
+
+textarea {
+    resize: none;
+}
+</style>
+
+<div class="container-fluid mt-4">
+
+<form method="POST">
+{% csrf_token %}
+
+<!-- ================= HEADER ================= -->
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h4 class="fw-bold">📄 Create Work Order</h4>
+    <button class="btn btn-success add-btn">💾 Save</button>
+</div>
+
+<!-- ================= SOURCE ================= -->
+<div class="card-custom p-3">
+    <div class="section-title">Source Selection</div>
+
+    <div class="row">
+        <div class="col-md-4">
+            <label class="form-label">RFQ + Company</label>
+            <select class="form-control" id="rfqSelect">
+                <option value="">Select</option>
+
+                {% for r in rfq_list %}
+                <option value="{{ r.ref_id }}||{{ r.company }}"
+                    {% if r.ref_id == selected_ref and r.company == selected_company %}selected{% endif %}>
+                    {{ r.ref_id }} | {{ r.company }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+</div>
+
+<!-- ================= BASIC ================= -->
+<div class="card-custom p-3">
+    <div class="section-title">Basic Information</div>
+
+    <div class="row g-3">
+
+        <div class="col-md-2">
+            <label>Date</label>
+            <input type="date" name="date" class="form-control" required>
+        </div>
+
+        <div class="col-md-2">
+            <label>Rfq No</label>
+            <input type="text" name="po_number" value="{{ prefill.po_number }}" class="form-control">
+        </div>
+
+        <div class="col-md-2">
+            <label>PO Date</label>
+            <input type="date" name="po_date" class="form-control">
+        </div>
+
+        <div class="col-md-3">
+            <label>Customer</label>
+            <input type="text" name="customer_name" value="{{ prefill.customer_name }}" class="form-control">
+        </div>
+
+        <div class="col-md-3">
+            <label>Address</label>
+            <input type="text" name="customer_address" value="{{ prefill.customer_address }}" class="form-control">
+        </div>
+
+    </div>
+</div>
+
+<!-- ================= ITEMS ================= -->
+<div class="card-custom p-3">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+        <div class="section-title">Items</div>
+        <button type="button" class="btn btn-primary btn-sm add-btn" id="addRow">+ Add Item</button>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-bordered align-middle">
+            <thead>
+                <tr>
+                    <th style="width:120px">Code</th>
+                    <th>Name</th>
+                    <th style="width:120px">Material</th>
+                    <th style="width:80px">Qty</th>
+                    <th style="width:80px">Unit</th>
+                    <th style="width:250px">Deliveries</th>
+                    <th style="width:60px"></th>
+                </tr>
+            </thead>
+
+            <tbody id="itemsBody">
+
+                {% for item in prefill.items %}
+                <tr>
+                    <td><input name="product_code[]" value="{{ item.product_code }}" class="form-control"></td>
+                    <td><input name="product_name[]" value="{{ item.product_name }}" class="form-control"></td>
+                    <td><input name="material[]" value="{{ item.material }}" class="form-control"></td>
+                    <td><input name="quantity[]" value="{{ item.quantity }}" class="form-control"></td>
+                    <td><input name="unit[]" value="{{ item.unit }}" class="form-control"></td>
+
+                    <td>
+                        <div class="delivery-box"></div>
+                        <button type="button" class="btn btn-outline-secondary btn-sm mt-1 add-delivery">
+                            + Delivery
+                        </button>
+                    </td>
+
+                    <td>
+                        <button type="button" class="btn btn-outline-danger btn-sm remove-row">✕</button>
+                    </td>
+                </tr>
+                {% endfor %}
+
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- ================= NOTES ================= -->
+<div class="card-custom p-3">
+    <div class="section-title">Instructions / Notes</div>
+
+    <div class="row g-3">
+
+        <div class="col-md-6">
+            <label>Product Notes</label>
+            <textarea name="product_notes" class="form-control"></textarea>
+        </div>
+
+        <div class="col-md-6">
+            <label>Process Notes</label>
+            <textarea name="process_notes" class="form-control"></textarea>
+        </div>
+
+        <div class="col-md-6">
+            <label>Packing Notes</label>
+            <textarea name="packing_notes" class="form-control"></textarea>
+        </div>
+
+        <div class="col-md-6">
+            <label>Delivery Notes</label>
+            <textarea name="delivery_notes" class="form-control"></textarea>
+        </div>
+
+        <div class="col-md-12">
+            <label>Documentation</label>
+            <textarea name="documentation_notes" class="form-control"></textarea>
+        </div>
+
+        <div class="col-md-12">
+            <label>Other Notes</label>
+            <textarea name="other_notes" class="form-control"></textarea>
+        </div>
+
+    </div>
+</div>
+
+</form>
+</div>
+
+<!-- ================= SCRIPT ================= -->
+<script>
+
+// RFQ SELECT
+document.getElementById("rfqSelect").addEventListener("change", function(){
+    let val = this.value;
+    if(val){
+        let [ref, company] = val.split("||");
+        window.location = `?ref_id=${ref}&company=${company}`;
+    }
+});
+
+// ADD ROW
+document.getElementById("addRow").onclick = function(){
+    let row = `
+    <tr>
+        <td><input name="product_code[]" class="form-control"></td>
+        <td><input name="product_name[]" class="form-control"></td>
+        <td><input name="material[]" class="form-control"></td>
+        <td><input name="quantity[]" class="form-control"></td>
+        <td><input name="unit[]" class="form-control"></td>
+        <td>
+            <div class="delivery-box"></div>
+            <button type="button" class="btn btn-outline-secondary btn-sm mt-1 add-delivery">+ Delivery</button>
+        </td>
+        <td><button type="button" class="btn btn-outline-danger btn-sm remove-row">✕</button></td>
+    </tr>`;
+    document.getElementById("itemsBody").insertAdjacentHTML("beforeend", row);
+};
+
+// REMOVE ROW
+document.addEventListener("click", function(e){
+    if(e.target.classList.contains("remove-row")){
+        e.target.closest("tr").remove();
+    }
+});
+
+// ADD DELIVERY
+document.addEventListener("click", function(e){
+    if(e.target.classList.contains("add-delivery")){
+        let box = e.target.previousElementSibling;
+        let index = Array.from(document.querySelectorAll("#itemsBody tr")).indexOf(e.target.closest("tr"));
+
+        box.insertAdjacentHTML("beforeend", `
+        <div class="d-flex gap-1 mt-1">
+            <input type="date" name="delivery_date_${index}[]" class="form-control">
+            <input type="number" name="delivery_qty_${index}[]" class="form-control" placeholder="Qty">
+        </div>
+        `);
+    }
+});
+
+</script>
+
+{% endblock %}

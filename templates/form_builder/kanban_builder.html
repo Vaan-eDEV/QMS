@@ -1,462 +1,1442 @@
 {% extends "base.html" %}
 {% block content %}
 {% load custom_tags %}
+
 <style>
-    body {
-        background: #f4f6f9;
-        font-family: 'Segoe UI', sans-serif;
-    }
 
-    /* ===== PROCESS ===== */
-    .process-wrapper {
-        display: flex;
-        gap: 15px;
-        overflow-x: auto;
-        padding-bottom: 5px;
-    }
+body{
+    background:#f3f6fb;
+    font-family:'Segoe UI',sans-serif;
+    color:#1e293b;
+}
 
-    .process-box {
-        background: #ffffff;
-        border-radius: 12px;
-        padding: 12px;
-        min-width: 280px;
-        height: 320px;
-        overflow-y: auto;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
-    }
+/* =========================
+   KANBAN WRAPPER
+========================= */
 
-    .process-title {
-        font-weight: 600;
-        margin-bottom: 10px;
-        font-size: 14px;
-        color: #444;
-        border-bottom: 1px solid #eee;
-        padding-bottom: 6px;
-    }
+.kanban{
+    display:flex;
+    gap:24px;
+    padding:24px;
+    align-items:flex-start;
+    overflow-x:auto;
+}
 
-    .form-card {
-        background: #f9fafc;
-        padding: 10px;
-        margin-bottom: 10px;
-        border-radius: 10px;
-        border-left: 4px solid #4e73df;
-        cursor: pointer;
-        transition: 0.2s;
-    }
+/* =========================
+   COLUMN
+========================= */
 
-    .form-card:hover {
-        background: #eef2ff;
-        transform: translateY(-2px);
-    }
+.column{
+    min-width:320px;
+    flex:1;
 
-    /* ===== RIGHT BOX ===== */
-    .folder-box,
-    .data-box {
-        background: #ffffff;
-        border-radius: 12px;
-        padding: 15px;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
-    }
+    background:linear-gradient(
+        180deg,
+        #ffffff 0%,
+        #f8fbff 100%
+    );
 
-    /* ===== BUTTON ===== */
-    .btn-box {
-        background: #4e73df;
-        color: white;
-        padding: 6px 14px;
-        border-radius: 8px;
-        font-size: 13px;
-        cursor: pointer;
-        margin: 5px 5px 5px 0;
-        display: inline-block;
-    }
+    border-radius:20px;
 
-    .btn-box:hover {
-        background: #2e59d9;
-    }
+    padding:18px;
 
-    .btn-box:first-child {
-        background: #6c757d;
-    }
+    height:50vh;
 
-    /* ===== RFQ ===== */
-    .rfq-card {
-        background: #f1f3f6;
-        padding: 8px 14px;
-        border-radius: 8px;
-        margin: 5px;
-        cursor: pointer;
-    }
+    overflow-y:auto;
 
-    .rfq-card:hover {
-        background: #dbe4ff;
-    }
+    border:1px solid #e7edf5;
 
-    /* ===== DATA ===== */
-    .data-box {
-        margin-top: 20px;
-        min-height: 350px;
-        overflow-x: auto;
-    }
+    box-shadow:
+        0 10px 30px rgba(15,23,42,.06),
+        0 2px 8px rgba(15,23,42,.04);
 
-    .table {
-        min-width: 600px;
-    }
+    transition:.3s ease;
+}
 
-    .table thead {
-        background: #4e73df;
-        color: white;
-    }
+/* COLUMN HOVER */
 
-    /* ===== RESPONSIVE ===== */
+.column:hover{
+    transform:translateY(-2px);
 
-    /* Tablet */
-    @media (max-width: 1024px) {
+    box-shadow:
+        0 16px 38px rgba(79,70,229,.10),
+        0 6px 12px rgba(15,23,42,.05);
+}
 
-        .top-section {
-            flex-direction: column;
-        }
+/* =========================
+   COLUMN HEADER
+========================= */
 
-        .left-panel,
-        .right-panel {
-            width: 100%;
-        }
+.header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
 
-    }
+    margin-bottom:18px;
+    padding-bottom:12px;
 
-    /* ===== DESKTOP ONLY (LARGE SCREENS) ===== */
-    @media (min-width: 1200px) {
+    border-bottom:1px solid #edf2f7;
+}
 
-        .right-panel {
-            flex: 0 0 45%;
-            max-width: 45%;
-        }
+.header h3,
+.column h3{
+    margin:0;
+    font-size:24px;
+    font-weight:700;
+    color:#111827;
+}
 
-        .left-panel {
-            flex: 0 0 55%;
-            max-width: 55%;
-        }
+/* ADD BUTTON */
 
-        .folder-box {
-            height: 320px;
-            /* ✅ FIXED HEIGHT */
-            overflow-y: auto;
-            /* ✅ ENABLE SCROLL */
-            padding: 20px;
-        }
+.header button{
+    width:38px;
+    height:38px;
 
-    }
+    border:none;
+    border-radius:12px;
 
-    /* Mobile */
-    @media (max-width: 768px) {
+    background:linear-gradient(
+        135deg,
+        #028bbd,
+        #028bbd
+    );
 
-        .process-box {
-            min-width: 240px;
-            height: 280px;
-        }
+    color:white;
 
-        .folder-box {
-            height: auto;
-            max-height: 300px;
-            /* ✅ mobile scroll */
-        }
+    font-size:20px;
+    font-weight:700;
 
-        .btn-box {
-            font-size: 12px;
-            padding: 5px 10px;
-        }
-    }
+    cursor:pointer;
+
+    transition:.25s ease;
+
+    box-shadow:
+        0 8px 20px rgba(79,70,229,.25);
+}
+
+.header button:hover{
+    transform:scale(1.08);
+}
+
+/* =========================
+   CARD
+========================= */
+
+.card{
+    position:relative;
+
+    background:white;
+
+    padding:16px;
+
+    margin-bottom:14px;
+
+    border-radius:16px;
+
+    cursor:grab;
+
+    border:1px solid #edf2f7;
+
+    border-left:5px solid #028bbd;
+
+    transition:.25s ease;
+
+    box-shadow:
+        0 6px 16px rgba(15,23,42,.05);
+}
+
+/* CARD HOVER */
+
+.card:hover{
+    transform:translateY(-3px);
+
+    background:#fbfdff;
+
+    box-shadow:
+        0 14px 28px rgba(79,70,229,.12);
+}
+
+/* CARD TITLE */
+
+.card strong{
+    display:block;
+
+    font-size:16px;
+    font-weight:700;
+
+    color:#111827;
+
+    margin-bottom:4px;
+}
+
+/* CARD SUBTITLE */
+
+.card small{
+    color:#64748b;
+    font-size:13px;
+}
+
+/* =========================
+   DELETE ICON
+========================= */
+
+.delete-icon{
+    position:absolute;
+
+    top:10px;
+    right:10px;
+
+    width:26px;
+    height:26px;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    border-radius:50%;
+
+    background:#fff1f2;
+
+    color:#e11d48;
+
+    font-size:13px;
+
+    cursor:pointer;
+
+    transition:.2s ease;
+}
+
+.delete-icon:hover{
+    background:#e11d48;
+    color:white;
+
+    transform:scale(1.12);
+}
+
+/* =========================
+   DATA BOX
+========================= */
+
+.data-box{
+
+    margin:24px;
+
+    background:white;
+
+    border-radius:20px;
+
+    border:1px solid #e7edf5;
+
+   
+
+    overflow:hidden;
+
+    box-shadow:
+        0 10px 28px rgba(15,23,42,.06);
+
+    display:flex;
+
+    flex-direction:column;
+}
+
+/* =========================
+   TABLE
+========================= */
+
+.table{
+    border-radius:14px;
+    overflow:hidden;
+
+    background:white;
+}
+
+.table thead{
+    background:linear-gradient(
+        135deg,
+        #028bbd,
+        #028bbd
+    );
+
+    color:white;
+}
+
+.table th{
+    font-weight:600;
+    border:none;
+    padding:12px;
+}
+
+.table td{
+    vertical-align:middle;
+    padding:12px;
+}
+
+/* ROW HOVER */
+
+.table tbody tr:hover{
+    background:#f8fbff;
+}
+
+/* =========================
+   POPUP
+========================= */
+
+#rfqPopup{
+    display:none;
+
+    position:fixed;
+
+    top:0;
+    left:0;
+
+    width:100%;
+    height:100%;
+
+    background:rgba(15,23,42,.45);
+
+    backdrop-filter:blur(4px);
+
+    z-index:999;
+}
+
+.popup-box{
+    background:white;
+
+    width:420px;
+
+    margin:90px auto;
+
+    padding:24px;
+
+    border-radius:18px;
+
+    box-shadow:
+        0 20px 40px rgba(0,0,0,.18);
+}
+
+/* =========================
+   INPUTS
+========================= */
+
+.form-control,
+.form-select{
+    border-radius:12px;
+    border:1px solid #dbe3ef;
+
+    padding:10px 14px;
+
+    box-shadow:none;
+
+    transition:.2s ease;
+}
+
+.form-control:focus,
+.form-select:focus{
+    border-color:#028bbd;
+
+    box-shadow:
+        0 0 0 4px rgba(99,102,241,.12);
+}
+
+/* =========================
+   BUTTONS
+========================= */
+
+.btn{
+    border-radius:12px;
+    font-weight:600;
+    padding:8px 14px;
+}
+
+/* =========================
+   SIGNATURE
+========================= */
+
+.signature-box{
+    display:inline-block;
+    margin-top:6px;
+}
+
+.signature-ui{
+    position:relative;
+
+    padding:12px;
+
+    background:#f8faff;
+
+    border:1px solid #e5eaf5;
+
+    border-radius:14px;
+
+    font-size:13px;
+
+    width:240px;
+
+    overflow:hidden;
+
+    box-shadow:
+        0 4px 14px rgba(15,23,42,.05);
+}
+
+.signature-title{
+    font-weight:700;
+    color:#059669;
+    margin-bottom:6px;
+}
+
+.signature-user{
+    font-weight:600;
+    color:#1e293b;
+}
+
+.signature-time,
+.signature-ref{
+    font-size:12px;
+    color:#64748b;
+}
+
+.signature-logo{
+    position:absolute;
+
+    top:50%;
+    left:50%;
+
+    width:110px;
+
+    opacity:.08;
+
+    transform:translate(-50%,-50%);
+
+    pointer-events:none;
+}
+
+/* =========================
+   IMAGE PREVIEW
+========================= */
+
+.image-box{
+    display:inline-block;
+    margin-top:5px;
+}
+
+.img-preview{
+    border-radius:12px;
+    cursor:pointer;
+
+    border:1px solid #e5e7eb;
+
+    transition:.25s ease;
+}
+
+.img-preview:hover{
+    transform:scale(1.04);
+}
+
+.img-preview.small{
+    max-width:80px;
+}
+
+.img-preview.medium{
+    max-width:160px;
+}
+
+.img-preview.large{
+    max-width:300px;
+}
+
+/* =========================
+   SCROLLBAR
+========================= */
+
+.column::-webkit-scrollbar,
+.data-box::-webkit-scrollbar{
+    width:7px;
+}
+
+.column::-webkit-scrollbar-thumb,
+.data-box::-webkit-scrollbar-thumb{
+    background:#cbd5e1;
+    border-radius:10px;
+}
+
+.column::-webkit-scrollbar-track,
+.data-box::-webkit-scrollbar-track{
+    background:transparent;
+}
+
 </style>
-
 
 <div class="container-fluid">
 
-    <!-- ===== TOP ===== -->
-    <div class="d-flex gap-3 top-section">
+    <!-- ================= KANBAN ================= -->
+    <div class="kanban">
 
-        <!-- LEFT -->
-        <div class="left-panel flex-fill">
-
-            <div class="process-wrapper">
-
-                {% for process in processes %}
-                <div class="process-box">
-
-                    <div class="process-title">{{ process }}</div>
-
-                    {% for form in forms %}
-                    {% if form.process == process %}
-                    <div class="form-card" onclick="openForm('{{ form.process }}', {{ form.id }})">
-                        {{ form.name }}
-                    </div>
-                    {% endif %}
-                    {% endfor %}
-
-                </div>
-                {% endfor %}
-
+        <!-- RFQ -->
+        <div class="column" data-process="RFQ">
+            <div class="header">
+                <h3>RFQ</h3>
+                <button onclick="openRFQPopup()">+</button>
             </div>
 
-        </div>
-
-        <!-- RIGHT -->
-        <div class="right-panel flex-fill">
-
-            <div class="folder-box">
-
-                <div class="d-flex justify-content-between mb-3">
-                    <div class="btn-box" onclick="goBack()">←</div>
-                    <strong>Folders</strong>
-                </div>
-
-                <div class="mb-3">
-                    {% for process in processes %}
-                    <span class="btn-box" onclick="openProcess('{{ process }}')">
-                        {{ process }}
-                    </span>
-                    {% endfor %}
-                </div>
-
-                <div class="d-flex flex-wrap">
-                    {% if ref_list %}
-                    {% for ref in ref_list %}
-                    <div class="rfq-card" onclick="openRef('{{ selected_process }}','{{ ref }}')">
-
-                        {% if selected_process == "RFQ" %}
-                        RFQ ID: {{ ref }}
-
-                        {% elif selected_process == "COSTING" %}
-                        Company: {{ ref }}
-
-                        {% elif selected_process == "FEASIBILITY" %}
-                        Ref ID: {{ ref }}
-
-                        {% else %}
-                        {{ ref }}
-                        {% endif %}
-
-                    </div>
-                    {% endfor %}
-                    {% endif %}
-                </div>
-
+            {% for card in rfq_cards %}
+            <div class="card" draggable="true" data-ref="{{ card.ref }}" data-company="{{ card.company }}"
+                onclick="openData('{{ card.ref }}','{{ card.company }}')">
+                <strong>{{ card.ref }}</strong><br>
+                <small>{{ card.company|default:"-" }}</small>
+                 <span class="delete-icon"
+                    onclick="event.stopPropagation(); confirmDelete('{{ card.id }}','{{ card.ref }}','{{ card.company }}')">
+                         ❌
+                </span>
+            
+            </button>
             </div>
-
+            
+            {% empty %}
+            <p>No RFQ</p>
+            {% endfor %}
         </div>
 
-    </div>
+        <!-- FEASIBILITY -->
+        <div class="column" data-process="FEASIBILITY">
+            <h3>Feasibility</h3>
 
+            {% for card in feas_cards %}
+            <div class="card" draggable="true" data-ref="{{ card.ref }}" data-company="{{ card.company }}"
+                onclick="openData('{{ card.ref }}','{{ card.company }}')">
 
-    <!-- ===== DATA FULL WIDTH ===== -->
-    <div class="row">
-        <div class="col-12">
+                <span class="delete-icon"
+                    onclick="event.stopPropagation(); confirmDelete('{{ card.id }}','{{ card.ref }}','{{ card.company }}')">
+                         ❌
+                </span>
+                <strong>{{ card.ref }}</strong><br>
+                <small>{{ card.company|default:"-" }}</small>
+            </div>
+            {% empty %}
+            <p>No Data</p>
+            {% endfor %}
+        </div>
 
-            <div class="data-box">
+        <!-- COSTING -->
+        <div class="column" data-process="COSTING">
+            <h3>Costing</h3>
 
+            {% for card in cost_cards %}
+            <div class="card" draggable="true" data-ref="{{ card.ref }}" data-company="{{ card.company }}" data-approved="{{ card.approved|yesno:'true,false'}}">
 
-
-                {% if selected_ref %}
-
-                {% for response in responses %}
-                <div class="mb-2 text-end">
-                    <a href="/form-builder/edit-response/{{ response.id }}/" class="btn btn-warning btn-sm">
-                        ✏️ Edit Data
-                    </a>
+                <div onclick="openData('{{ card.ref }}','{{ card.company }}')">
+                                    <span class="delete-icon"
+                    onclick="event.stopPropagation(); confirmDelete('{{ card.id }}','{{ card.ref }}','{{ card.company }}')">
+                         ❌
+                </span>
+                    <strong>{{ card.ref }}</strong><br>
+                    <small>{{ card.company|default:"-" }}</small>
                 </div>
 
-                <!-- ===== STAGE LOOP ===== -->
-                {% for stage in response.form.stage_set.all %}
-
-                <div class="card mb-4">
-
-                    <div class="card-header">
-                        <strong>{{ forloop.counter }}. {{ stage.name }}</strong>
-                    </div>
-
-                    <div class="card-body">
-
-                        <!-- ===== NORMAL FIELDS ===== -->
-                        {% for field in stage.field_set.all %}
-
-                        {% with value=response.data|get_item:field.label %}
-
-                        <!-- ✅ SAFE CHECK FOR NORMAL FIELD -->
-                        {% if value is not None %}
-
-                        <!-- ❌ skip table-like values -->
-                        {% if not value.0 or not value.0.items %}
-
-                        <div class="row mb-2 align-items-center">
-
-                            <div class="col-md-3 text-muted fw-semibold">
-                                {{ field.label }}
-                            </div>
-
-                            <div class="col-md-9">
-                                <span class="fw-medium text-dark">
-                                    {{ value|default:"-" }}
-                                </span>
-                            </div>
-
-                        </div>
-
-                        {% endif %}
-
-                        {% endif %}
-
-                        {% endwith %}
-
-                        {% endfor %}
-
-
-                        <!-- ===== TABLES ===== -->
-                        {% for table in stage.table_set.all %}
-
-                        {% with table_data=response.data|get_item:table.name %}
-
-                        {% if table_data and table_data.0 and table_data.0.items %}
-
-                        <h6 class="mt-3">{{ table.name }}</h6>
-
-                        <table class="table table-bordered">
-
-                            <thead>
-                                <tr>
-                                    {% for col, v in table_data.0.items %}
-                                    <th>{{ col }}</th>
-                                    {% endfor %}
-
-                                </tr>
-                            </thead>
-
-                            <tbody>
-
-                                {% with total_price=0 %}
-
-                                {% for row in table_data %}
-                                <tr>
-
-                                    {% for col, v in row.items %}
-
-                                    <td>
-
-                                        {% if v.signed_by %}
-                                        <div class="border rounded p-2 bg-light">
-                                            <strong>{{ v.signed_by }}</strong><br>
-                                            <small>{{ v.signed_at }}</small><br>
-                                            <span class="text-primary">
-                                                Ref: {{ v.reference_code }}
-                                            </span>
-                                        </div>
-                                        {% else %}
-                                        {{ v }}
-                                        {% endif %}
-
-                                        {% if "cost" in col|lower %}
-                                        {% with total_price=total_price|add:v %}
-                                        {% endwith %}
-                                        {% endif %}
-
-                                    </td>
-
-                                    {% endfor %}
-
-                                </tr>
-                                {% endfor %}
-
-                                {% endwith %}
-
-                            </tbody>
-                            {% if table.has_total %}
-                            <tfoot>
-                                <tr style="font-weight:bold; background:#f1f3f6;">
-
-                                    {% for col in table.tablecolumn_set.all %}
-
-                                    {% if col.is_total %}
-                                    <td>
-                                        {{ response.data|get_item:table.total_key|default:"0.00" }}
-                                    </td>
-                                    {% elif forloop.first %}
-                                    <td><strong>Total</strong></td>
-                                    {% else %}
-                                    <td></td>
-                                    {% endif %}
-
-                                    {% endfor %}
-
-                                </tr>
-                            </tfoot>
-                            {% endif %}
-
-                        </table>
-
-                        {% endif %}
-
-                        {% endwith %}
-
-                        {% endfor %}
-
-                    </div>
-
-                </div>
-
-                {% endfor %}
-
-                {% endfor %}
-
+                <!-- 🔥 APPROVE BUTTON -->
+                {% if not card.approved %}
+                <button class="btn btn-success btn-sm mt-2 w-100" onclick="approveCosting('{{ card.id }}')">
+                    Approve
+                </button>
+                {% else %}
+                <span class="badge bg-success mt-2 w-100">
+                    Approved
+                </span>
                 {% endif %}
 
             </div>
+            {% empty %}
+            <p>No Data</p>
+            {% endfor %}
         </div>
+        <!-- ================= PROPOSAL ================= -->
+        <div class="column" data-process="PROPOSAL">
+            <h3>Proposal</h3>
+
+            {% for card in proposal_cards %}
+            <div class="card" draggable="true" data-ref="{{ card.ref }}"
+                data-company="{{ card.company }}"
+                onclick="openData('{{ card.ref }}','{{ card.company }}')">
+                                <span class="delete-icon"
+                    onclick="event.stopPropagation(); confirmDelete('{{ card.id }}','{{ card.ref }}','{{ card.company }}')">
+                         ❌
+                </span>
+                <strong>{{ card.ref }}</strong><br>
+                <small>{{ card.company }}</small>
+
+                {% if card.quotation %}
+                    <div class="mt-2 text-success">
+                        Quotation: {{ card.quotation.quotation_number }}
+                    </div>
+                {% else %}
+                    <div class="mt-2 text-danger">
+                        No Quotation
+                    </div>
+                {% endif %}
+
+            </div>
+            {% empty %}
+            <p>No Data</p>
+            {% endfor %}
+        </div>
+        <!-- ========================== WON ========================== -->
+
+        <div class="column" data-process="WON">
+            <h3>Won</h3>
+
+            {% for card in won_cards %}
+            <div class="card"
+                draggable="true"
+                data-ref="{{ card.ref }}" data-company="{{ card.company }}"
+                onclick="openData('{{ card.ref }}','{{ card.company }}')">
+                                <span class="delete-icon"
+                    onclick="event.stopPropagation(); confirmDelete('{{ card.id }}','{{ card.ref }}','{{ card.company }}')">
+                         ❌
+                </span>
+            <strong>{{ card.ref }}</strong><br>
+            <small>{{ card.company }}</small>
+
+        {% if card.quotation %}
+        <div class="mt-2 text-success">
+            Quotation: {{ card.quotation.quotation_number }}
+        </div>
+        {% endif %}
+
+        <!-- 🔥 REVIEW BUTTON -->
+        {% if not card.reviewed %}
+        <button class="btn btn-warning btn-sm mt-2 w-100"
+            onclick="event.stopPropagation(); reviewCard('{{ card.ref }}')">
+            Review
+        </button>
+        {% else %}
+
+<div class="signature-box mt-2">
+    <div class="signature-ui">
+
+        <div class="signature-title">✔ Reviewed</div>
+
+        <div class="signature-user">
+            👤 {{ card.reviewed_by.get_full_name|default:card.reviewed_by }}
+        </div>
+
+        <div class="signature-time">
+            🕒 {{ card.reviewed_at|date:"d M Y h:i A" }}
+        </div>
+
+        <div class="signature-ref">
+            RFQ: {{ card.ref }}
+        </div>
+
+        <!-- 🔥 WATERMARK -->
+        <img src="/static/admin/img/watermark.jpeg"
+             class="signature-logo">
 
     </div>
 </div>
 
+{% endif %}
+
+    </div>
+    {% empty %}
+    <p>No Data</p>
+    {% endfor %}
+</div>
+    </div>
+
+    <!-- ================= DATA VIEW ================= -->
+    <div class="data-box">
+
+        {% if selected_ref %}
+
+
+
+        {% for res in processed_responses %}
+
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <strong>{{ res.form.process }} - {{ res.form.name }}</strong>
+
+                {% if res.response_id %}
+                <a href="/form-builder/edit-response/{{ res.response_id }}/?ref_id={{ selected_ref }}&company={{ selected_company }}"
+                    class="btn btn-warning btn-sm">
+                    ✏️ Edit Data
+                </a>
+                {% endif %}
+            </div>
+
+            <div class="card-body">
+
+                {% for stage in res.stages %}
+                <div class="mb-3">
+
+                    <h5>{{ forloop.counter }}. {{ stage.name }}</h5>
+
+                    <!-- FIELDS -->
+                    {% for item in stage.items %}
+                    {% if item.type == "field" %}
+                    <div class="row mb-2">
+                        <div class="col-md-3 text-muted fs-5 fw-bold">
+                            {{ item.label }}
+                        </div>
+                        <div class="col-md-9">
+
+                            {% if item.field_type == "link" and item.value %}
+
+    <a href="{% url 'view_document' item.value.id %}" target="_blank">
+        🔗 {{ item.value.name }}
+    </a>
+
+{% else %}
+
+    {% with sig=item.value|parse_json %}
+
+        {% if sig.signed_by %}
+
+            <div class="signature-box">
+                <div class="signature-ui">
+
+                    <div class="signature-title">
+                        ✔️ Digitally Signed
+                    </div>
+
+                    <div class="signature-user">
+                        👤 {{ sig.signed_by }}
+                    </div>
+
+                    <div class="signature-time">
+                        🕒 {{ sig.signed_at }}
+                    </div>
+
+                    <div class="signature-ref">
+                        {{ sig.reference_code }}
+                    </div>
+
+                    <img src="/static/admin/img/watermark.jpeg"
+                         class="signature-logo">
+
+                </div>
+            </div>
+
+        {% else %}
+
+            {% if item.value %}
+
+                {% if item.value|is_list %}
+
+                    {% for file in item.value %}
+
+                        {% if file|is_image %}
+
+                            <div class="image-box">
+                                <img src="{{ file }}"
+                                     class="img-preview medium"
+                                     onclick="window.open(this.src)">
+                            </div>
+
+                        {% else %}
+
+                            <a href="{{ file }}" target="_blank">
+                                📎 {{ file|clean_filename }}
+                            </a><br>
+
+                        {% endif %}
+
+                    {% endfor %}
+
+                {% else %}
+
+                    {% if item.value|is_image %}
+
+                        <div class="image-box">
+                            <img src="{{ item.value }}"
+                                 class="img-preview medium"
+                                 onclick="window.open(this.src)">
+                        </div>
+
+                    {% elif item.value|stringformat:"s"|slice:":6" == "/media" %}
+
+                        <a href="{{ item.value }}" target="_blank">
+                            📎 {{ item.value|clean_filename }}
+                        </a>
+
+                    {% else %}
+
+                        {{ item.value }}
+
+                    {% endif %}
+
+                {% endif %}
+
+            {% endif %}
+
+        {% endif %}
+
+    {% endwith %}
+
+{% endif %}
+                        </div>
+                    </div>
+                    
+
+                    <!-- TABLES -->
+                    {% elif item.type == "table" %}
+                    <h6>{{ item.name }}</h6>
+
+                    {% if item.rows %}
+                    <table class="table table-bordered">
+                        <thead>
+                            <tr>
+                                 <th> {{ item.row_header_name|default:"Row Name" }}</th>
+                                {% for col in item.columns %}
+                                <th>{{ col.name }}</th>
+                                {% endfor %}
+                            </tr>
+                        </thead>
+
+                        <tbody>
+
+{% for row in item.rows %}
+
+<tr>
+
+    <td class="fw-bold bg-light">
+        {{ row.row_name }}
+    </td>
+
+    {% for col in item.columns %}
+
+    <td>
+
+        {% with v=row|get_item:col.name %}
+
+        <!-- ================= LINK ================= -->
+
+        {% if v and v.type == "link" %}
+
+            <a href="{% url 'view_document' v.id %}" target="_blank">
+                🔗 {{ v.name }}
+            </a>
+
+        <!-- ================= SIGNATURE ================= -->
+
+        {% else %}
+
+            {% with sig=v|parse_json %}
+
+                {% if sig.signed_by %}
+
+                    <div class="signature-box">
+
+                        <div class="signature-ui">
+
+                            <div class="signature-title">
+                                ✔ Digitally Signed
+                            </div>
+
+                            <div class="signature-user">
+                                👤 {{ sig.signed_by }}
+                            </div>
+
+                            <div class="signature-time">
+                                🕒 {{ sig.signed_at }}
+                            </div>
+
+                            <div class="signature-ref">
+                                {{ sig.reference_code }}
+                            </div>
+
+                            <img src="/static/admin/img/watermark.jpeg"
+                                 class="signature-logo">
+
+                        </div>
+
+                    </div>
+
+                {% else %}
+
+                    {% if v %}
+
+                        <!-- MULTIPLE FILES -->
+
+                        {% if v|is_list and v.0|stringformat:"s"|slice:":6" == "/media" %}
+
+                            {% for file in v %}
+
+                                {% if file|is_image %}
+
+                                    <div class="image-box">
+                                        <img src="{{ file }}"
+                                             class="img-preview small"
+                                             onclick="window.open(this.src)">
+                                    </div>
+
+                                {% else %}
+
+                                    <a href="{{ file }}" target="_blank">
+                                        📎 {{ file|clean_filename }}
+                                    </a><br>
+
+                                {% endif %}
+
+                            {% endfor %}
+
+                        <!-- SINGLE IMAGE -->
+
+                        {% elif v|is_image %}
+
+                            <div class="image-box">
+                                <img src="{{ v }}"
+                                     class="img-preview medium"
+                                     onclick="window.open(this.src)">
+                            </div>
+
+                        <!-- SINGLE FILE -->
+
+                        {% elif v|stringformat:"s"|slice:":6" == "/media" %}
+
+                            <a href="{{ v }}" target="_blank">
+                                📎 {{ v|clean_filename }}
+                            </a>
+
+                        <!-- NORMAL TEXT -->
+
+                        {% else %}
+
+                            {{ v }}
+
+                        {% endif %}
+
+                    {% endif %}
+
+                {% endif %}
+
+            {% endwith %}
+
+        {% endif %}
+
+        {% endwith %}
+
+    </td>
+
+    {% endfor %}
+
+</tr>
+
+{% endfor %}
+
+</tbody>
+
+<!-- ================= TOTAL FOOTER ================= -->
+ 
+<!-- ================= TOTAL FOOTER ================= -->
+
+{% if item.columns|has_total_column %}
+
+<tfoot class="table-light">
+
+    <tr>
+
+        <td>
+            <strong>Total</strong>
+        </td>
+
+        {% for col in item.columns %}
+
+        <td>
+
+            {% if col.is_total %}
+
+            <strong class="text-primary total-cell"
+                    data-col="{{ col.name }}">
+            </strong>
+
+            {% endif %}
+
+        </td>
+
+        {% endfor %}
+
+    </tr>
+
+</tfoot>
+
+{% endif %}
+
+</table>
+{% endif %}
+
+                    {% if item.total %}
+                    <p><strong>Total:</strong> {{ item.total }}</p>
+                    {% endif %}
+                    {% endif %}
+                {% endfor %}
+                    
+
+                </div>
+            {% endfor %}
+                {% if res.form.process == "COSTING" and res.approved %}
+
+                <div class="mb-3 p-2 border rounded bg-light">
+
+                    <strong>Approval Details</strong><br>
+
+                    <small>
+                        👤 Approved By:
+                    {{ res.approved_by.get_full_name|default:res.approved_by }}<br>
+
+                        🕒 Approved At:
+                        {{ res.approved_at|date:"d M Y h:i A" }}
+                    </small>
+
+                </div>
+
+                {% endif %}
+                {% if res.form.process == "PROPOSAL" and res.quotation %}
+
+                    <div class="mt-3 p-3 border rounded bg-light">
+
+                    <strong>Quotation Details</strong><br>
+
+                        <small>
+                            📄 Quotation ID:
+                            {{ res.quotation.quotation_number }}
+                        </small>
+
+                        <br>
+
+                        <a href="{% url 'po_qu:quotation_detail' res.quotation.id %}"
+                            class="btn btn-primary btn-sm mt-2">
+                            Open Quotation
+                        </a>
+
+                    </div>
+
+                    {% endif %}
+                </div>
+            
+            </div>
+
+        </div>
+        {% endfor %}
+    {% endif %}
+    </div>
+
+<!-- ================= RFQ POPUP ================= -->
+<div id="rfqPopup">
+    <div class="popup-box">
+
+        <h4>Create RFQ</h4>
+
+        <label>Company Name</label>
+        <input type="text" id="companyName" class="form-control mb-2">
+
+        <label>Select RFQ Form</label>
+        <select id="formSelect" class="form-control mb-2">
+            <option value="">-- Select Form --</option>
+            {% for f in rfq_forms %}
+            <option value="{{ f.id }}">{{ f.name }}</option>
+            {% endfor %}
+        </select>
+
+        <label>RFQ ID</label>
+        <input type="text" id="rfqId" class="form-control mb-3" readonly>
+
+        <button class="btn btn-success" onclick="startRFQ()">Start</button>
+        <button class="btn btn-secondary" onclick="closePopup()">Cancel</button>
+
+    </div>
 </div>
 
+<div id="stagePopup"
+    style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.4);">
+    <div class="popup-box">
 
+        <h4>Select Form</h4>
+
+        <input type="hidden" id="move_ref">
+        <input type="hidden" id="move_company">
+        <input type="hidden" id="move_process">
+
+        <label>Select Form</label>
+        <select id="stageFormSelect" class="form-control mb-3">
+            <option value="">-- Select Form --</option>
+        </select>
+
+        <button class="btn btn-success" onclick="proceedMove()">Proceed</button>
+        <button class="btn btn-secondary" onclick="closeStagePopup()">Cancel</button>
+
+    </div>
+</div>
+{{ stage_forms|json_script:"stage-forms-data" }}
 <script>
 
-    function openForm(process, formId) {
+    // ================= LOAD STAGE FORMS (FINAL FIX) =================
+    const stageForms = JSON.parse(
+        document.getElementById("stage-forms-data").textContent
+    );
 
-        // ===== RFQ =====
-        if (process === "RFQ") {
-            window.location.href = `/form-builder/fill/${formId}/`;
+
+    // ================= POPUP =================
+    function openRFQPopup() {
+        document.getElementById("rfqPopup").style.display = "block";
+    }
+
+    function closePopup() {
+        document.getElementById("rfqPopup").style.display = "none";
+    }
+
+
+    // ================= AUTO RFQ GENERATION =================
+    document.addEventListener("DOMContentLoaded", function () {
+
+        const companyInput = document.getElementById("companyName");
+
+        if (companyInput) {
+            companyInput.addEventListener("blur", function () {
+
+                let company = this.value.trim();
+                if (!company) return;
+
+                fetch(`/form-builder/get-next-rfq/?company=${encodeURIComponent(company)}`)
+                    .then(res => res.json())
+                    .then(data => {
+                        document.getElementById("rfqId").value = data.rfq_id || "";
+                    })
+                    .catch(() => {
+                        console.warn("RFQ generation failed");
+                    });
+            });
         }
 
-        // ===== COSTING (NEW) =====
-        else if (process === "COSTING") {
-            let company = prompt("Enter Company Name");
-            if (!company) return;
+    });
 
-            // store as ref_id
-            window.location.href = `/form-builder/fill/${formId}/?ref_id=${company}`;
+
+    // ================= START RFQ =================
+    function startRFQ() {
+
+        let name = document.getElementById("companyName").value.trim();
+        let rfq = document.getElementById("rfqId").value;
+        let formId = document.getElementById("formSelect").value;
+
+        if (!name) {
+            alert("Enter company name");
+            return;
         }
 
-        // ===== OTHER =====
-        else {
-            window.location.href = `/form-builder/fill/${formId}/`;
+        if (!formId) {
+            alert("Select form");
+            return;
         }
+
+        window.location.href =
+            `/form-builder/open-next-form/?process=RFQ&form_id=${formId}&ref_id=${rfq}&company=${encodeURIComponent(name)}`;
     }
 
 
-    // ===== PROCESS CLICK =====
-    function openProcess(process) {
-        window.location.href = `/form-builder/kanban/?process=${process}`;
+    // ================= OPEN DATA =================
+    function openData(ref, company) {
+        window.location.href =
+            `/form-builder/kanban/?ref_id=${ref}&company=${encodeURIComponent(company)}`;
     }
 
 
-    // ===== CARD CLICK =====
-    function openRef(process, ref) {
-        window.location.href = `/form-builder/kanban/?process=${process}&ref_id=${ref}`;
+    // ================= DRAG & DROP =================
+    let dragged = null;
+
+    document.addEventListener("DOMContentLoaded", function () {
+
+    const cards = document.querySelectorAll(".card");
+    const columns = document.querySelectorAll(".column");
+
+    // DRAG START
+    cards.forEach(card => {
+        card.addEventListener("dragstart", function () {
+            dragged = this;
+        });
+    });
+
+    // DROP
+    columns.forEach(col => {
+
+        col.addEventListener("dragover", function (e) {
+            e.preventDefault();
+        });
+
+ col.addEventListener("drop", function () {
+
+    if (!dragged) return;
+
+    const process = this.dataset.process;
+    const ref_id = dragged.dataset.ref;
+    const approved = dragged.dataset.approved;
+    const company = dragged.dataset.company;
+
+    // =============================
+    // 🚫 COSTING → PROPOSAL CHECK
+    // =============================
+    if (process === "PROPOSAL") {
+
+        if (approved !== "true") {
+            alert("❌ Approve costing first");
+            return;
+        }
+
+        fetch("/form-builder/move-stage/", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/x-www-form-urlencoded",
+                "X-CSRFToken": "{{ csrf_token }}"
+            },
+            body: `ref_id=${ref_id}&company=${encodeURIComponent(company)}&next_stage=PROPOSAL`
+        })
+        .then(res => res.json())
+        .then(data => {
+
+            if (data.status === "error") {
+                alert(data.msg);
+                return;
+            }
+
+            // ✅ ONLY FOR PROPOSAL → OPEN FORM
+            openStagePopup(ref_id, company, process);
+        });
+
+        return;
     }
 
+    // =============================
+    // ✅ WON → NO POPUP
+    // =============================
+    if (process === "WON") {
 
-    // ===== BACK =====
-    function goBack() {
-        window.location.href = `/form-builder/kanban/`;
+        fetch("/form-builder/move-stage/", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/x-www-form-urlencoded",
+                "X-CSRFToken": "{{ csrf_token }}"
+            },
+            body: `ref_id=${ref_id}&company=${encodeURIComponent(company)}&next_stage=WON`
+        })
+        .then(res => res.json())
+        .then(data => {
+
+            if (data.status === "error") {
+                alert(data.msg);
+                return;
+            }
+
+            // ✅ DIRECT MOVE (NO FORM)
+            location.reload();
+        });
+
+        return;
     }
 
+    // =============================
+    // ✅ NORMAL FLOW (FEASIBILITY / COSTING)
+    // =============================
+    openStagePopup(ref_id, company, process);
+
+});
+
+    });
+
+});
+function openStagePopup(ref, company, process) {
+
+    document.getElementById("move_ref").value = ref;
+    document.getElementById("move_company").value = company;
+    document.getElementById("move_process").value = process;
+
+    const select = document.getElementById("stageFormSelect");
+    select.innerHTML = '<option value="">-- Select Form --</option>';
+
+    // 🔥 Load forms for that stage
+    const forms = stageForms[process] || [];
+
+    forms.forEach(f => {
+        const opt = document.createElement("option");
+        opt.value = f.id;
+        opt.textContent = f.name;
+        select.appendChild(opt);
+    });
+
+    document.getElementById("stagePopup").style.display = "block";
+}
+
+    // ================= STAGE POPUP =================
+    function closeStagePopup() {
+        document.getElementById("stagePopup").style.display = "none";
+    }
+
+    function proceedMove() {
+
+        let formId = document.getElementById("stageFormSelect").value;
+        let ref = document.getElementById("move_ref").value;
+        let company = document.getElementById("move_company").value;
+        let process = document.getElementById("move_process").value;
+
+        if (!formId) {
+            alert("Select form");
+            return;
+        }
+
+        window.location.href =
+            `/form-builder/open-next-form/?process=${process}&form_id=${formId}&ref_id=${ref}&company=${encodeURIComponent(company)}`;
+    }
+
+    function approveCosting(id) {
+
+        fetch("{% url 'costing_action' %}", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/x-www-form-urlencoded",
+                "X-CSRFToken": "{{ csrf_token }}"
+            },
+            body: `id=${id}&action=approve`
+        })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === "success") {
+                    location.reload();
+                } else {
+                    alert("Error approving");
+                }
+            });
+    }
+    function reviewCard(ref_id){
+
+    let password = prompt("Enter your password to review:");
+
+    if(!password) return;
+
+    fetch("/form-builder/review-won/", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+            "X-CSRFToken": "{{ csrf_token }}"
+        },
+        body: `ref_id=${ref_id}&password=${encodeURIComponent(password)}`
+    })
+    .then(res => res.json())
+    .then(data => {
+        if(data.status === "success"){
+            location.reload();
+        }else{
+            alert(data.msg || "Review failed");
+        }
+    });
+}
+function confirmDelete(id, ref, company){
+
+    let choice = confirm(
+        "YES → Delete full card\n\nCANCEL → Delete current stage only and move back"
+    );
+
+    if(choice){
+        // ✅ FULL DELETE
+        fetch("/form-builder/delete-card/", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/x-www-form-urlencoded",
+                "X-CSRFToken": "{{ csrf_token }}"
+            },
+            body: `id=${id}&type=full`
+        })
+        .then(res => res.json())
+        .then(data => {
+            if(data.status === "success"){
+                location.reload();
+            } else {
+                alert("Delete failed");
+            }
+        });
+
+    } else {
+
+        // 🔁 MOVE TO PREVIOUS STAGE
+        fetch("/form-builder/delete-card/", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/x-www-form-urlencoded",
+                "X-CSRFToken": "{{ csrf_token }}"
+            },
+            body: `id=${id}&type=rollback&ref=${ref}&company=${encodeURIComponent(company)}`
+        })
+        .then(res => res.json())
+        .then(data => {
+            if(data.status === "success"){
+                location.reload();
+            } else {
+                alert("Rollback failed");
+            }
+        });
+
+    }
+}
+function resizeImg(btn, size){
+    let img = btn.closest(".image-box").querySelector("img");
+    img.classList.remove("small","medium","large");
+    img.classList.add(size);
+}
+document.addEventListener(
+    "DOMContentLoaded",
+    function(){
+
+    document.querySelectorAll(
+        "table"
+    ).forEach(table => {
+
+        table.querySelectorAll(
+            ".total-cell"
+        ).forEach(cell => {
+
+            let col =
+                cell.dataset.col;
+
+            let total = 0;
+
+            table.querySelectorAll(
+                "tbody tr"
+            ).forEach(row => {
+
+                let headers =
+                    table.querySelectorAll(
+                        "thead th"
+                    );
+
+                let colIndex = -1;
+
+                headers.forEach((th, i) => {
+
+                    if(
+                        th.innerText.trim() ===
+                        col
+                    ){
+                        colIndex = i;
+                    }
+                });
+
+                if(colIndex >= 0){
+
+                    let td =
+                        row.children[colIndex];
+
+                    if(td){
+
+                        let val =
+                            parseFloat(
+                                td.innerText
+                            ) || 0;
+
+                        total += val;
+                    }
+                }
+            });
+
+            cell.innerText =
+                total.toFixed(2);
+        });
+    });
+});
 </script>
-
 {% endblock %}

@@ -1,0 +1,209 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class="container-fluid">
+
+    <!-- HEADER -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h3>
+            {% if edit_mode %} Edit Purchase Order {% else %} Create Purchase Order {% endif %}
+        </h3>
+        <a href="{% url 'po_qu:po_list' %}" class="btn btn-secondary">
+            Back to List
+        </a>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+
+            <form method="POST">
+                {% csrf_token %}
+
+                <!-- BASIC -->
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label>Reference</label>
+                        <input type="text" name="reference" class="form-control"
+                               value="{{ po.reference|default:'' }}">
+                    </div>
+                    <div class="col-md-6">
+                        <label>Date</label>
+                        <input type="date" name="date" class="form-control"
+                               value="{{ po.date|date:'Y-m-d' }}">
+                    </div>
+                </div>
+
+                <!-- SUPPLIER -->
+                <h5>Supplier</h5>
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <input type="text" name="supplier_name" class="form-control mb-2"
+                               placeholder="Supplier Name"
+                               value="{{ po.supplier_name|default:'' }}">
+
+                        <textarea name="supplier_address" class="form-control mb-2"
+                                  placeholder="Address">{{ po.supplier_address|default:'' }}</textarea>
+
+                        <input type="text" name="supplier_phone" class="form-control mb-2"
+                               placeholder="Phone"
+                               value="{{ po.supplier_phone|default:'' }}">
+
+                        <input type="text" name="supplier_gstin" class="form-control"
+                               placeholder="GSTIN"
+                               value="{{ po.supplier_gstin|default:'' }}">
+                    </div>
+                </div>
+
+                <!-- BILLING -->
+                <h5>Billing</h5>
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <input type="text" name="billing_name" class="form-control mb-2"
+                               value="{{ po.billing_name|default:'' }}">
+
+                        <textarea name="billing_address" class="form-control mb-2">
+{{ po.billing_address|default:'' }}</textarea>
+
+                        <input type="text" name="billing_phone" class="form-control mb-2"
+                               value="{{ po.billing_phone|default:'' }}">
+
+                        <input type="text" name="billing_gstin" class="form-control"
+                               value="{{ po.billing_gstin|default:'' }}">
+                    </div>
+                </div>
+
+                <!-- SHIPPING -->
+                <h5>Shipping</h5>
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <input type="text" name="shipping_name" class="form-control mb-2"
+                               value="{{ po.shipping_name|default:'' }}">
+
+                        <textarea name="shipping_address" class="form-control mb-2">
+{{ po.shipping_address|default:'' }}</textarea>
+
+                        <input type="text" name="shipping_phone" class="form-control mb-2"
+                               value="{{ po.shipping_phone|default:'' }}">
+
+                        <input type="text" name="shipping_gstin" class="form-control"
+                               value="{{ po.shipping_gstin|default:'' }}">
+                    </div>
+                </div>
+
+                <!-- ITEMS -->
+                <h5>Items</h5>
+
+                <table class="table table-bordered" id="itemsTable">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Product Code</th>
+                            <th>Description</th>
+                            <th>Unit</th>
+                            <th>Qty</th>
+                            <th>Rate</th>
+                            <th>Amount</th>
+                            <th>Remove</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {% if po and po.items.all %}
+                        {% for item in po.items.all %}
+                        <tr>
+                            <td><input name="product_code[]" value="{{ item.product_code }}" class="form-control"></td>
+                            <td><input name="description[]" value="{{ item.description }}" class="form-control"></td>
+                            <td><input name="unit[]" value="{{ item.unit }}" class="form-control"></td>
+                            <td><input type="number" name="quantity[]" value="{{ item.quantity }}" class="form-control"></td>
+                            <td><input type="number" name="rate[]" value="{{ item.rate }}" class="form-control"></td>
+                            <td><input type="number" name="amount[]" value="{{ item.amount }}" class="form-control" readonly></td>
+                            <td><button type="button" class="btn btn-danger btn-sm" onclick="removeRow(this)">X</button></td>
+                        </tr>
+                        {% endfor %}
+                        {% else %}
+                        <tr>
+                            <td><input name="product_code[]" class="form-control"></td>
+                            <td><input name="description[]" class="form-control"></td>
+                            <td><input name="unit[]" class="form-control"></td>
+                            <td><input type="number" name="quantity[]" class="form-control"></td>
+                            <td><input type="number" name="rate[]" class="form-control"></td>
+                            <td><input type="number" name="amount[]" class="form-control" readonly></td>
+                            <td><button type="button" class="btn btn-danger btn-sm" onclick="removeRow(this)">X</button></td>
+                        </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+
+                <button type="button" class="btn btn-primary btn-sm mb-3" onclick="addRow()">
+                    + Add Item
+                </button>
+
+                <!-- NOTES -->
+                <h5 class="mt-3">Notes</h5>
+                <textarea name="note" class="form-control mb-3">{{ po.note|default:'' }}</textarea>
+
+                <h5>Terms</h5>
+                <textarea name="terms" class="form-control mb-3">{{ po.terms|default:'' }}</textarea>
+
+                <!-- SUBMIT -->
+                <button type="submit" class="btn btn-success">
+                    {% if edit_mode %} Update PO {% else %} Create PO {% endif %}
+                </button>
+
+            </form>
+
+        </div>
+    </div>
+
+</div>
+
+<!-- JS -->
+<script>
+
+function calculateRow(row) {
+    let qty = parseFloat(row.querySelector('[name="quantity[]"]').value) || 0;
+    let rate = parseFloat(row.querySelector('[name="rate[]"]').value) || 0;
+
+    let amount = qty * rate;
+    row.querySelector('[name="amount[]"]').value = amount.toFixed(2);
+}
+
+function attachEvents(row) {
+    row.querySelector('[name="quantity[]"]').addEventListener('input', () => calculateRow(row));
+    row.querySelector('[name="rate[]"]').addEventListener('input', () => calculateRow(row));
+}
+
+function initRows() {
+    document.querySelectorAll("#itemsTable tbody tr").forEach(row => {
+        attachEvents(row);
+        calculateRow(row);
+    });
+}
+
+function addRow() {
+    let table = document.querySelector("#itemsTable tbody");
+    let row = document.createElement("tr");
+
+    row.innerHTML = `
+        <td><input name="product_code[]" class="form-control"></td>
+        <td><input name="description[]" class="form-control"></td>
+        <td><input name="unit[]" class="form-control"></td>
+        <td><input type="number" name="quantity[]" class="form-control"></td>
+        <td><input type="number" name="rate[]" class="form-control"></td>
+        <td><input type="number" name="amount[]" class="form-control" readonly></td>
+        <td><button type="button" class="btn btn-danger btn-sm" onclick="removeRow(this)">X</button></td>
+    `;
+
+    table.appendChild(row);
+    attachEvents(row);
+}
+
+function removeRow(btn) {
+    btn.closest("tr").remove();
+}
+
+document.addEventListener("DOMContentLoaded", initRows);
+
+</script>
+
+{% endblock %}

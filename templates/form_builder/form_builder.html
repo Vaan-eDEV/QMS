@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% block content %}
-
+{% load custom_tags %}
 <style>
 .add-field-scroll { max-height: 350px; overflow-y: auto; }
 .preview-scroll { max-height: 400px; overflow-y: auto; }
@@ -14,6 +14,9 @@
 .preview-scroll::-webkit-scrollbar-thumb {
     background: #bbb;
     border-radius: 10px;
+}
+.preview-scroll table {
+    min-width: 1200px;
 }
 </style>
 
@@ -38,6 +41,8 @@
 <option value="RFQ">RFQ</option>
 <option value="FEASIBILITY">Feasibility</option>
 <option value="COSTING">Costing</option>
+<option value="REGISTER">Register</option>
+<option value="PROPOSAL">Proposal</option>
 </select>
 </div>
 
@@ -115,6 +120,10 @@
 <option value="select">Select</option>
 <option value="checkbox">Checkbox</option>
 <option value="table">Table</option>
+<option value="signature">Signature</option>
+<option value="link">Link</option>
+<option value="file">File Upload</option>
+<option value="image">Image Upload</option>
 </select>
 </div>
 
@@ -131,32 +140,122 @@ style="display:none;">
 <input type="text" name="options" class="form-control" placeholder="Options (A,B,C)">
 </div>
 
-<!-- TABLE BUILDER -->
-<div id="tableBuilder" style="display:none">
+<!-- ================= MATRIX TABLE BUILDER ================= -->
 
-<h5>Table Columns</h5>
+<div id="tableBuilder"
+     style="display:none;"
+     class="border rounded p-3 bg-light shadow-sm">
 
-<table class="table table-bordered">
-<thead>
-<tr>
-<th>Column Name</th>
-<th>Type</th>
-<th>Formula</th>
-<th>Total</th>
-<th></th>
-</tr>
-</thead>
+    <div class="d-flex justify-content-between align-items-center mb-3">
 
-<tbody id="columnBody"></tbody>
-</table>
+        <div>
 
-<button type="button" class="btn btn-secondary btn-sm" onclick="addColumn()">
-Add Column
-</button>
+            <h5 class="mb-0">
+                Matrix Table Builder
+            </h5>
+
+            <small class="text-muted">
+                Create dynamic rows and columns with different cell types
+            </small>
+
+        </div>
+
+        <span class="badge bg-primary">
+            Matrix Mode
+        </span>
+
+    </div>
+
+    <div class="table-responsive">
+
+        <table class="table table-bordered align-middle"
+               id="matrixBuilderTable">
+
+            <thead class="table-light">
+
+                <tr id="matrixHeaderRow">
+
+                   <th style="width:220px;">
+
+    <input type="text"
+           id="rowHeaderName"
+           class="form-control"
+           value="Row Name"
+           placeholder="Enter Header Name">
+
+</th>
+
+                </tr>
+
+            </thead>
+
+            <tbody id="matrixBody">
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+    <div class="d-flex gap-2 mt-3">
+
+        <button type="button"
+                class="btn btn-primary btn-sm"
+                onclick="addMatrixColumn()">
+
+            + Add Column
+
+        </button>
+
+        <button type="button"
+                class="btn btn-success btn-sm"
+                onclick="addMatrixRow()">
+
+            + Add Row
+
+        </button>
+
+    </div>
+
+    <div class="alert alert-info mt-3 mb-0">
+
+        <strong>How it works:</strong>
+
+        <ul class="mb-0 mt-2">
+
+            <li>Add columns and select cell types</li>
+
+            <li>Add rows dynamically</li>
+
+            <li>Each column can have different field types</li>
+
+            <li>Supports formula, checkbox, file, image and signature cells</li>
+
+        </ul>
+
+    </div>
 
 </div>
 
-<input type="hidden" name="table_columns" id="tableColumns">
+<input type="hidden"
+       name="layout_type"
+       value="matrix">
+
+<input type="hidden"
+       name="table_columns"
+       id="tableColumns">
+
+<input type="hidden"
+       name="table_rows"
+       id="tableRows">
+
+<input type="hidden"
+       name="table_cell_configs"
+       id="tableCellConfigs">
+
+<input type="hidden"
+       name="row_header_name"
+       id="rowHeaderHidden">
 
 <button class="btn btn-primary mt-3">Add Field</button>
 
@@ -175,211 +274,1026 @@ Add Column
 <div class="card-body preview-scroll">
 
 {% for stage in stages %}
+
 <div class="mb-4 p-3 border rounded bg-light">
 
-<div class="d-flex justify-content-between align-items-center mb-2">
-<h5 class="text-primary mb-0">{{stage.name}}</h5>
+<div class="d-flex justify-content-between align-items-center mb-3">
+
+<h5 class="text-primary mb-0">
+{{stage.name}}
+</h5>
 
 <button type="button"
-class="btn btn-danger btn-sm"
-onclick="deleteStage({{ stage.id }})">
-Delete
+        class="btn btn-danger btn-sm"
+        onclick="deleteStage({{ stage.id }})">
+
+    Delete
+
 </button>
+
 </div>
 
 <div class="row">
-{% for field in stage.field_set.all %}
+
+{% for item in stage.combined_items %}
+
+<!-- ================================================= -->
+<!-- NORMAL FIELD -->
+<!-- ================================================= -->
+
+{% if item.type == "field" %}
+
+{% with field=item.data %}
+
 <div class="col-md-4 mb-3 position-relative">
 
 <button type="button"
-class="btn btn-danger btn-sm position-absolute"
-style="top:0; right:0;"
-onclick="deleteField({{field.id}})">
-✖
+        class="btn btn-danger btn-sm position-absolute"
+        style="top:0; right:0;"
+        onclick="deleteField({{field.id}})">
+
+    ✖
+
 </button>
 
-<label>{{field.label}}</label>
+<label class="fw-bold">
+{{field.label}}
+</label>
 
 {% if field.field_type == "textarea" %}
+
 <textarea class="form-control"></textarea>
 
 {% elif field.field_type == "select" %}
+
 <select class="form-control">
+
 {% for opt in field.option_list %}
 <option>{{ opt }}</option>
 {% endfor %}
+
 </select>
 
 {% elif field.field_type == "checkbox" %}
+
 <input type="checkbox">
 
+{% elif field.field_type == "signature" %}
+
+<button class="btn btn-success btn-sm">
+Sign
+</button>
+
+{% elif field.field_type == "link" %}
+
+<input type="url"
+       class="form-control"
+       placeholder="Enter URL">
+
+{% elif field.field_type == "date" %}
+
+<input type="date"
+       class="form-control">
+
+{% elif field.field_type == "file" %}
+
+<input type="file"
+       class="form-control">
+
+{% elif field.field_type == "image" %}
+
+<input type="file"
+       class="form-control"
+       accept="image/*">
+
 {% else %}
+
 <input class="form-control">
+
 {% endif %}
 
 </div>
-{% endfor %}
+
+{% endwith %}
+
+<!-- ================================================= -->
+<!-- MATRIX TABLE -->
+<!-- ================================================= -->
+
+{% elif item.type == "table" %}
+
+{% with table=item.data %}
+
+<div class="col-12 mb-4">
+
+<div class="border rounded p-3 bg-white shadow-sm">
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+
+<h5 class="mb-0 text-dark">
+{{table.name}}
+</h5>
+
+<span class="badge bg-primary">
+{{ table.layout_type|title }}
+</span>
+
 </div>
 
-{% for table in stage.table_set.all %}
-<h6>{{table.name}}</h6>
+<div class="table-responsive">
 
-<table class="table table-bordered" id="previewTable_{{table.id}}">
-<thead>
+<table class="table table-bordered align-middle"
+       id="previewTable_{{table.id}}">
+
+<thead class="table-light">
+
 <tr>
+
+<th style="min-width:200px;">
+{{ table.row_header_name|default:"Row Name" }}
+</th>
+
 {% for col in table.tablecolumn_set.all %}
-<th>{{col.name}}</th>
+
+<th style="min-width:220px;">
+
+<div>
+
+<div class="fw-bold">
+{{col.name}}
+</div>
+
+<small class="text-muted">
+    Matrix Cell
+</small>
+</div>
+
+</th>
+
 {% endfor %}
-<th>Action</th>
+
+<th width="100">
+Action
+</th>
+
 </tr>
+
 </thead>
 
 <tbody>
-<tr>
-{% for col in table.tablecolumn_set.all %}
-<td>
-{% if col.column_type == "signature" %}
-<button class="btn btn-primary btn-sm">Sign</button>
-{% else %}
-<input class="form-control">
-{% endif %}
-</td>
-{% endfor %}
-<td>
-<button type="button" class="btn btn-danger btn-sm"
-onclick="deletePreviewRow(this)">Delete</button>
-</td>
-</tr>
-</tbody>
-</table>
 
-<button type="button" class="btn btn-success btn-sm"
-onclick="addPreviewRow('previewTable_{{table.id}}')">
-Add Row
+{% for row in table.tablerow_set.all %}
+
+<tr>
+
+<td class="fw-bold">
+
+{{row.name}}
+
+</td>
+
+{% for col in table.tablecolumn_set.all %}
+
+<td>
+{% with row.id|stringformat:"s" as row_id %}
+{% with col.id|stringformat:"s" as col_id %}
+{% with row_id|add:"_"|add:col_id as key %}
+{% with config=cell_configs|get_item:key %}
+<!-- ================= TEXT ================= -->
+
+{% if config.cell_type == "text" %}
+
+<input type="text"
+       class="form-control">
+
+<!-- ================= TEXTAREA ================= -->
+
+{% elif config.cell_type == "textarea" %}
+
+<textarea class="form-control"></textarea>
+
+<!-- ================= NUMBER ================= -->
+
+{% elif config.cell_type == "number" %}
+
+<input type="number"
+       class="form-control">
+
+<!-- ================= DATE ================= -->
+
+{% elif config.cell_type == "date" %}
+
+<input type="date"
+       class="form-control">
+
+<!-- ================= PERCENTAGE ================= -->
+
+{% elif config.cell_type == "percentage" %}
+
+<div class="input-group">
+
+<input type="number"
+       class="form-control">
+
+<span class="input-group-text">
+%
+</span>
+
+</div>
+
+<!-- ================= FORMULA ================= -->
+
+{% elif config.cell_type == "formula" %}
+
+<input type="text"
+       class="form-control"
+       placeholder="{{col.formula}}">
+
+<!-- ================= SIGNATURE ================= -->
+
+{% elif config.cell_type == "signature" %}
+
+<button class="btn btn-success btn-sm w-100">
+
+    Sign
+
 </button>
 
+<!-- ================= CHECKBOX ================= -->
+
+{% elif config.cell_type == "checkbox" %}
+
+{% for opt in col.option_list %}
+
+<div class="form-check">
+
+<input type="checkbox"
+       class="form-check-input">
+
+<label class="form-check-label">
+
+{{ opt }}
+
+</label>
+
+</div>
+
+{% empty %}
+
+<input type="checkbox">
+
 {% endfor %}
-</div>
+
+<!-- ================= SELECT ================= -->
+
+{% elif config.cell_type == "select" %}
+
+<select class="form-control">
+
+<option value="">
+-- Select --
+</option>
+
+{% for opt in col.option_list %}
+
+<option value="{{ opt }}">
+{{ opt }}
+</option>
+
 {% endfor %}
 
-</div>
-
-</div>
-</div>
-
-<script>
-
-// SAFE VARIABLES
-let tableBuilder = document.getElementById("tableBuilder");
-let formulaBox = document.getElementById("formulaBox");
-let optionsBox = document.getElementById("optionsBox");
-
-// TYPE SWITCH
-document.getElementById("fieldType").addEventListener("change", function () {
-tableBuilder.style.display = this.value === "table" ? "block" : "none";
-formulaBox.style.display = this.value === "formula" ? "block" : "none";
-optionsBox.style.display = this.value === "select" ? "block" : "none";
-});
-
-// DELETE FIELD
-function deleteField(id){
-if(confirm("Delete this field?")){
-fetch(`/form-builder/delete-field/${id}/`, {
-method: "POST",
-headers: {
-"X-CSRFToken": document.querySelector('[name=csrfmiddlewaretoken]').value
-}
-}).then(() => location.reload())
-}
-}
-
-// ADD COLUMN
-function addColumn() {
-
-let row = `
-<tr>
-<td><input class="form-control colName"></td>
-
-<td>
-<select class="form-control colType" onchange="handleColumnType(this)">
-<option value="text">Text</option>
-<option value="number">Number</option>
-<option value="percentage">Percentage</option>
-<option value="formula">Formula</option>
-<option value="signature">Signature</option>
 </select>
+
+<!-- ================= LINK ================= -->
+
+{% elif config.cell_type == "link" %}
+
+<input type="url"
+       class="form-control"
+       placeholder="Enter URL">
+
+<!-- ================= FILE ================= -->
+
+{% elif config.cell_type == "file" %}
+
+<input type="file"
+       class="form-control">
+
+<!-- ================= IMAGE ================= -->
+
+{% elif config.cell_type == "image" %}
+
+<input type="file"
+       class="form-control"
+       accept="image/*">
+
+<!-- ================= DEFAULT ================= -->
+
+{% else %}
+
+<input type="text"
+       class="form-control">
+
+{% endif %}
+{% endwith %}
+{% endwith %}
+{% endwith %}
+{% endwith %}
+
 </td>
 
-<td><input class="form-control colFormula"></td>
+{% endfor %}
 
 <td class="text-center">
-<input type="checkbox" class="colTotal">
+
+<button type="button"
+        class="btn btn-danger btn-sm"
+        onclick="deletePreviewRow(this)">
+
+    Delete
+
+</button>
+
 </td>
 
-<td>
-<button class="btn btn-danger btn-sm"
-onclick="this.closest('tr').remove()">X</button>
-</td>
 </tr>
-`;
 
-document.getElementById("columnBody").insertAdjacentHTML("beforeend", row);
-}
+{% empty %}
 
-// HANDLE SIGNATURE
-function handleColumnType(select){
+<tr>
 
-let row = select.closest("tr");
+<td colspan="{{ table.tablecolumn_set.all|length|add:2 }}"
+    class="text-center text-muted">
 
-let formulaInput = row.querySelector(".colFormula");
-let totalCheckbox = row.querySelector(".colTotal");
+    No Rows Added
 
-if(select.value === "signature"){
-formulaInput.value = "";
-formulaInput.disabled = true;
+</td>
 
-totalCheckbox.checked = false;
-totalCheckbox.disabled = true;
-}else{
-formulaInput.disabled = false;
-totalCheckbox.disabled = false;
-}
-}
+</tr>
 
-// SAVE TABLE
-document.getElementById("fieldForm").addEventListener("submit", function () {
+{% endfor %}
 
-let cols = [];
+</tbody>
 
-document.querySelectorAll("#columnBody tr").forEach(row => {
-cols.push({
-name: row.querySelector(".colName").value,
-type: row.querySelector(".colType").value,
-formula: row.querySelector(".colFormula").value,
-is_total: row.querySelector(".colTotal").checked
+</table>
+
+</div>
+
+<button type="button"
+        class="btn btn-success btn-sm mt-2"
+        onclick="addPreviewRow('previewTable_{{table.id}}')">
+
+    Add Preview Row
+
+</button>
+
+</div>
+
+</div>
+
+{% endwith %}
+
+{% endif %}
+
+{% endfor %}
+
+</div>
+
+</div>
+
+{% endfor %}
+
+</div>
+
+</div>
+</div>
+<script>
+
+// =====================================================
+// SAFE VARIABLES
+// =====================================================
+
+let tableBuilder =
+    document.getElementById("tableBuilder");
+
+let formulaBox =
+    document.getElementById("formulaBox");
+
+let optionsBox =
+    document.getElementById("optionsBox");
+
+let matrixColumns = [];
+
+let matrixRows = [];
+
+let matrixCellConfigs = {};
+
+// =====================================================
+// FIELD TYPE SWITCH
+// =====================================================
+
+document.getElementById("fieldType")
+.addEventListener("change", function(){
+
+    tableBuilder.style.display =
+        this.value === "table"
+        ? "block"
+        : "none";
+
+    formulaBox.style.display =
+        this.value === "formula"
+        ? "block"
+        : "none";
+
+    optionsBox.style.display =
+        this.value === "select"
+        ? "block"
+        : "none";
 });
-});
 
-document.getElementById("tableColumns").value = JSON.stringify(cols);
-});
+// =====================================================
+// INITIALIZE CELL CONFIGS
+// =====================================================
 
-// ROW FUNCTIONS
-function addPreviewRow(tableId) {
-let table = document.getElementById(tableId);
-let newRow = table.querySelector("tbody tr").cloneNode(true);
-newRow.querySelectorAll("input").forEach(i => i.value = "");
-table.querySelector("tbody").appendChild(newRow);
+function initializeCellConfigs(){
+
+    matrixRows.forEach((row, rowIndex) => {
+
+        matrixColumns.forEach((col, colIndex) => {
+
+            let key = `${rowIndex}_${colIndex}`;
+
+            if(!matrixCellConfigs[key]){
+
+                matrixCellConfigs[key] = {
+
+                    type: "text",
+
+                    options: "",
+
+                    formula: "",
+
+                    is_total: false
+
+                };
+            }
+        });
+    });
 }
 
-function deletePreviewRow(btn) {
-btn.closest("tr").remove();
+// =====================================================
+// ADD MATRIX COLUMN
+// =====================================================
+
+function addMatrixColumn(){
+
+    matrixColumns.push({
+
+        name: "Column Name",
+
+        is_total: false
+
+    });
+
+    initializeCellConfigs();
+
+    renderMatrixBuilder();
 }
+
+// =====================================================
+// ADD MATRIX ROW
+// =====================================================
+
+function addMatrixRow(){
+
+    matrixRows.push({
+
+        name: "Row Name"
+
+    });
+
+    initializeCellConfigs();
+
+    renderMatrixBuilder();
+}
+
+// =====================================================
+// REMOVE MATRIX COLUMN
+// =====================================================
+
+function removeMatrixColumn(index){
+
+    matrixColumns.splice(index, 1);
+
+    renderMatrixBuilder();
+}
+
+// =====================================================
+// REMOVE MATRIX ROW
+// =====================================================
+
+function removeMatrixRow(index){
+
+    matrixRows.splice(index, 1);
+
+    renderMatrixBuilder();
+}
+
+// =====================================================
+// RENDER MATRIX BUILDER
+// =====================================================
+
+function renderMatrixBuilder(){
+
+    let header =
+        document.getElementById(
+            "matrixHeaderRow"
+        );
+
+    let body =
+        document.getElementById(
+            "matrixBody"
+        );
+
+    // =================================================
+    // PRESERVE ROW HEADER NAME
+    // =================================================
+
+    let savedHeaderName =
+        document.getElementById(
+            "rowHeaderHidden"
+        )?.value || "Row Name";
+
+    // =================================================
+    // HEADER
+    // =================================================
+
+    header.innerHTML = `
+
+        <th style="width:220px;">
+
+            <input type="text"
+                   id="rowHeaderName"
+                   class="form-control"
+                   value="${savedHeaderName}"
+                   placeholder="Enter Header Name"
+                   oninput="
+                       document.getElementById(
+                           'rowHeaderHidden'
+                       ).value = this.value
+                   ">
+
+        </th>
+    `;
+
+    // =================================================
+    // COLUMNS
+    // =================================================
+
+    matrixColumns.forEach((col, colIndex) => {
+
+        header.innerHTML += `
+
+            <th style="min-width:220px;">
+
+                <div class="position-relative">
+
+                    <button type="button"
+                            class="btn-close position-absolute end-0 top-0"
+                            onclick="removeMatrixColumn(${colIndex})">
+                    </button>
+
+                    <input type="text"
+                           class="form-control"
+                           value="${col.name}"
+                           placeholder="Column Name"
+                           onchange="
+                               matrixColumns[${colIndex}].name=this.value
+                           ">
+
+                </div>
+
+            </th>
+        `;
+    });
+
+    // =================================================
+    // BODY
+    // =================================================
+
+    body.innerHTML = "";
+
+    matrixRows.forEach((row, rowIndex) => {
+
+        let tr = `
+
+            <tr>
+
+                <td>
+
+                    <div class="position-relative">
+
+                        <button type="button"
+                                class="btn-close position-absolute end-0 top-0"
+                                onclick="removeMatrixRow(${rowIndex})">
+                        </button>
+
+                        <input type="text"
+                               class="form-control"
+                               value="${row.name}"
+                               placeholder="Row Name"
+                               onchange="
+                                   matrixRows[${rowIndex}].name=this.value
+                               ">
+
+                    </div>
+
+                </td>
+        `;
+
+        // =============================================
+        // CELLS
+        // =============================================
+
+        matrixColumns.forEach((col, colIndex) => {
+
+            let key = `${rowIndex}_${colIndex}`;
+
+            let cell =
+                matrixCellConfigs[key] || {
+
+                    type: "text",
+
+                    options: "",
+
+                    formula: "",
+
+                    is_total: false
+                };
+
+            tr += `
+
+            <td style="min-width:260px;">
+
+                <!-- CELL TYPE -->
+
+                <select class="form-control mb-2"
+                        onchange="
+                            matrixCellConfigs['${key}'].type=this.value;
+                            renderMatrixBuilder();
+                        ">
+
+                    <option value="text"
+                        ${cell.type === "text" ? "selected" : ""}>
+                        Text
+                    </option>
+
+                    <option value="textarea"
+                        ${cell.type === "textarea" ? "selected" : ""}>
+                        Textarea
+                    </option>
+
+                    <option value="number"
+                        ${cell.type === "number" ? "selected" : ""}>
+                        Number
+                    </option>
+
+                    <option value="date"
+                        ${cell.type === "date" ? "selected" : ""}>
+                        Date
+                    </option>
+
+                    <option value="percentage"
+                        ${cell.type === "percentage" ? "selected" : ""}>
+                        Percentage
+                    </option>
+
+                    <option value="formula"
+                        ${cell.type === "formula" ? "selected" : ""}>
+                        Formula
+                    </option>
+
+                    <option value="checkbox"
+                        ${cell.type === "checkbox" ? "selected" : ""}>
+                        Checkbox
+                    </option>
+
+                    <option value="select"
+                        ${cell.type === "select" ? "selected" : ""}>
+                        Select
+                    </option>
+
+                    <option value="signature"
+                        ${cell.type === "signature" ? "selected" : ""}>
+                        Signature
+                    </option>
+
+                    <option value="link"
+                        ${cell.type === "link" ? "selected" : ""}>
+                        Link
+                    </option>
+
+                    <option value="file"
+                        ${cell.type === "file" ? "selected" : ""}>
+                        File
+                    </option>
+
+                    <option value="image"
+                        ${cell.type === "image" ? "selected" : ""}>
+                        Image
+                    </option>
+
+                </select>
+
+                <!-- OPTIONS -->
+
+                ${
+                    cell.type === "select" ||
+                    cell.type === "checkbox"
+                    ?
+                    `
+                    <input type="text"
+                           class="form-control mb-2"
+                           placeholder="Options (A,B,C)"
+                           value="${cell.options || ''}"
+                           onchange="
+                               matrixCellConfigs['${key}'].options=this.value
+                           ">
+                    `
+                    :
+                    ""
+                }
+
+                <!-- FORMULA -->
+
+                <!-- IS TOTAL -->
+
+<!-- FORMULA -->
+
+${
+    cell.type === "formula"
+    ?
+    `
+    <input type="text"
+           class="form-control mb-2"
+           placeholder="Formula (qty*rate)"
+           value="${cell.formula || ''}"
+
+           onchange="
+               matrixCellConfigs['${key}'].formula=this.value
+           ">
+    `
+    :
+    ""
+}
+
+<!-- IS TOTAL -->
+
+${
+    cell.type === "number" ||
+    cell.type === "percentage" ||
+    cell.type === "formula"
+    ?
+    `
+    <div class="form-check mt-2">
+
+        <input type="checkbox"
+               class="form-check-input"
+
+               ${
+                   cell.is_total
+                   ? "checked"
+                   : ""
+               }
+
+               onchange="
+                   matrixCellConfigs['${key}'].is_total=this.checked;
+
+                    matrixColumns[${colIndex}].is_total=this.checked;
+               ">
+
+        <label class="form-check-label">
+
+            Is Total
+
+        </label>
+
+    </div>
+    `
+    :
+    ""
+}
+            </td>
+            `;
+        });
+
+        tr += `</tr>`;
+
+        body.innerHTML += tr;
+    });
+}
+// =====================================================
+// SAVE MATRIX JSON
+// =====================================================
+
+document.getElementById("fieldForm")
+.addEventListener("submit", function(event){
+
+    let fieldType =
+        document.getElementById(
+            "fieldType"
+        ).value;
+
+    // =========================================
+    // VALIDATE ONLY TABLE
+    // =========================================
+
+    if(fieldType === "table"){
+
+        // =====================================
+        // COLUMN VALIDATION
+        // =====================================
+
+        if(matrixColumns.length === 0){
+
+            alert(
+                "Please add at least one column"
+            );
+
+            event.preventDefault();
+
+            return;
+        }
+
+        // =====================================
+        // ROW VALIDATION
+        // =====================================
+
+        if(matrixRows.length === 0){
+
+            alert(
+                "Please add at least one row"
+            );
+
+            event.preventDefault();
+
+            return;
+        }
+
+        // =====================================
+        // SAVE ROW HEADER NAME
+        // =====================================
+
+        let rowHeaderInput =
+            document.getElementById(
+                "rowHeaderName"
+            );
+
+        let rowHeaderHidden =
+            document.getElementById(
+                "rowHeaderHidden"
+            );
+
+        if(
+            rowHeaderInput &&
+            rowHeaderHidden
+        ){
+
+            rowHeaderHidden.value =
+                rowHeaderInput.value.trim()
+                || "Row Name";
+        }
+
+        // =====================================
+        // SAVE COLUMNS
+        // =====================================
+
+        document.getElementById(
+            "tableColumns"
+        ).value = JSON.stringify(
+            matrixColumns
+        );
+
+        // =====================================
+        // SAVE ROWS
+        // =====================================
+
+        document.getElementById(
+            "tableRows"
+        ).value = JSON.stringify(
+
+            matrixRows.map(r => {
+
+                return (
+                    r.name || ""
+                ).trim();
+
+            })
+        );
+
+        // =====================================
+        // SAVE CELL CONFIGS
+        // =====================================
+
+        document.getElementById(
+            "tableCellConfigs"
+        ).value = JSON.stringify(
+            matrixCellConfigs
+        );
+    }
+});
+// =====================================================
+// DELETE FIELD
+// =====================================================
+
+
+function deleteField(id){
+
+    if(confirm("Delete this field?")){
+
+        fetch(`/form-builder/delete-field/${id}/`, {
+
+            method: "POST",
+
+            headers: {
+                "X-CSRFToken":
+                    document.querySelector(
+                        '[name=csrfmiddlewaretoken]'
+                    ).value
+            }
+
+        }).then(() => location.reload())
+    }
+}
+
+// =====================================================
+// DELETE STAGE
+// =====================================================
 
 function deleteStage(id){
-if(confirm("Delete this stage?")){
-fetch(`/form-builder/delete-stage/${id}/`)
-.then(() => location.reload())
+
+    if(confirm("Delete this stage?")){
+
+        fetch(`/form-builder/delete-stage/${id}/`)
+        .then(() => location.reload())
+    }
 }
+
+// =====================================================
+// ADD PREVIEW ROW
+// =====================================================
+
+function addPreviewRow(tableId){
+
+    let table =
+        document.getElementById(tableId);
+
+    let firstRow =
+        table.querySelector("tbody tr");
+
+    let newRow =
+        firstRow.cloneNode(true);
+
+    newRow.querySelectorAll("input")
+    .forEach(i => {
+
+        if(
+            i.type === "checkbox" ||
+            i.type === "radio"
+        ){
+            i.checked = false;
+        }else{
+            i.value = "";
+        }
+    });
+
+    newRow.querySelectorAll("select")
+    .forEach(s => {
+        s.selectedIndex = 0;
+    });
+
+    newRow.querySelectorAll("textarea")
+    .forEach(t => {
+        t.value = "";
+    });
+
+    table.querySelector("tbody")
+    .appendChild(newRow);
+}
+
+// =====================================================
+// DELETE PREVIEW ROW
+// =====================================================
+
+function deletePreviewRow(btn){
+
+    let tbody = btn.closest("tbody");
+
+    if(tbody.querySelectorAll("tr").length === 1){
+        return;
+    }
+
+    btn.closest("tr").remove();
 }
 
 </script>

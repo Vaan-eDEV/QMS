@@ -67,11 +67,18 @@ from .models import (
     StageHistory,
     CAPA,
     CustomUser,
-    MaterialBatch
+    MaterialBatch,
+    DocumentWorkflowLog,
+    Certificate,
+    CertificateCategory
 )
 from datetime import timedelta
 from django.db.models import Max
 from django.db import transaction
+from django.views.decorators.http import require_POST
+from po_qu.models import RFQAttachment
+from django.contrib.auth import update_session_auth_hash
+
 
 
 # ==============================================================================================
@@ -127,7 +134,7 @@ def login_view(request):
     if request.user.is_authenticated:
         if request.user.role == "student":
             return redirect("test_list")
-        return redirect("dashboard")
+        return redirect("main_dashboard")
 
     if request.method == 'POST':
 
@@ -150,14 +157,17 @@ def login_view(request):
             user = form.get_user()
 
       
-            if user.password_changed_at + timedelta(days=60) < timezone.now():
-                return redirect("change_password")
+            # LOGIN USER FIRST
+            login(request, user)
 
-         
+            # PASSWORD EXPIRY CHECK
+            if user.password_changed_at:
+                if user.password_changed_at + timedelta(days=60) < timezone.now():
+                    return redirect("change_password")
+
+            # RESET FAILED ATTEMPTS
             user.failed_attempts = 0
             user.save()
-
-            login(request, user)
 
    
             AuditLog.objects.create(
@@ -174,7 +184,7 @@ def login_view(request):
             if user.role == "student":
                 return redirect("test_list")
 
-            return redirect("dashboard")
+            return redirect("main_dashboard")
 
         else:
             
@@ -192,6 +202,78 @@ def login_view(request):
     return render(request, 'qms_app/login.html', {'form': form})
 
 
+
+
+
+@login_required
+def change_password(request):
+
+    if request.method == "POST":
+
+        old_password = request.POST.get("old_password")
+        new_password = request.POST.get("new_password")
+        confirm_password = request.POST.get("confirm_password")
+
+        # CHECK OLD PASSWORD
+        if not request.user.check_password(old_password):
+
+            messages.error(
+                request,
+                "Current password is incorrect"
+            )
+
+            return redirect("change_password")
+
+        # CHECK PASSWORD MATCH
+        if new_password != confirm_password:
+
+            messages.error(
+                request,
+                "Passwords do not match"
+            )
+
+            return redirect("change_password")
+
+        # OPTIONAL PASSWORD VALIDATION
+        try:
+            validate_password(new_password, request.user)
+
+        except ValidationError as e:
+
+            for error in e.messages:
+                messages.error(request, error)
+
+            return redirect("change_password")
+
+        # SET NEW PASSWORD
+        request.user.set_password(new_password)
+
+        # UPDATE PASSWORD CHANGE TIME
+        request.user.password_changed_at = timezone.now()
+
+        # SAVE USER
+        request.user.save()
+
+        # KEEP USER LOGGED IN
+        update_session_auth_hash(
+            request,
+            request.user
+        )
+
+        messages.success(
+            request,
+            "Password updated successfully"
+        )
+
+        return redirect("main_dashboard")
+
+    return render(
+        request,
+        "qms_app/change_password.html"
+    )
+
+
+    
 @login_required
 def logout_view(request):
 
@@ -344,6 +426,7 @@ def dashboard(request):
     user_email = request.GET.get("user")
     batch_id = request.GET.get("batch_id")
     part_id = request.GET.get("part_id")
+    company =request.GET.get("company")
 
     if user_email or batch_id or part_id:
 
@@ -363,10 +446,19 @@ def dashboard(request):
         if part_id:
             parts = parts.filter(part_id=part_id)
 
+        if company:
+            parts = parts.fillter(batch__company_name__icontains=company)
+
         part = parts.first()
 
         if part:
             search_result = {
+                "company_name":part.batch.company_name,
+                "folder_name": (
+                    part.batch.form.folder.name
+                    if part.batch and part.batch.form and part.batch.form.folder
+                    else "N/A"
+                ),
                 "form_name": (
                     part.batch.form.name
                     if part.batch and part.batch.form
@@ -434,32 +526,57 @@ def upload_document(request):
 
     if request.method == "POST":
 
+        # ================= BASIC DATA =================
         title = request.POST.get("title")
-        file  = request.FILES.get("file")
+        clause = request.POST.get("clause")
+        file = request.FILES.get("file")
 
-        folder_id  = request.POST.get("folder_id")
+        # ✅ MANY TO MANY (IMPORTANT)
+        certificate_ids = request.POST.getlist("certificate")
+        category_ids = request.POST.getlist("certificate_category")
+
+        # ================= VALIDATION =================
+        if not title:
+            return JsonResponse({"error": "Title is required"}, status=400)
+
+        if not file:
+            return JsonResponse({"error": "File is required"}, status=400)
+
+        # ================= FOLDER =================
+        folder_id = request.POST.get("folder_id")
         new_folder = request.POST.get("new_folder")
 
         folder = None
 
-        # ----- CREATE NEW FOLDER IF PROVIDED -----
         if new_folder:
             folder = DocumentFolder.objects.create(
                 name=new_folder,
                 created_by=request.user
             )
 
-        # ----- OR USE EXISTING FOLDER -----
         elif folder_id:
             folder = get_object_or_404(DocumentFolder, id=folder_id)
 
-        # ----- SAVE DOCUMENT -----
+        # ================= CREATE DOCUMENT =================
         doc = QMSDocument.objects.create(
             title=title,
+            clause=clause,
             original_file=file,
             created_by=request.user,
-            folder=folder
+            folder=folder,
+            target_folder=folder,
+            assigned_to=request.user
         )
+
+        # ================= SET MANY TO MANY =================
+        doc.certificate.set(certificate_ids)
+        doc.certificate_category.set(category_ids)
+
+        # ================= DEBUG (REMOVE LATER) =================
+        print("CERT IDS:", certificate_ids)
+        print("CATEGORY IDS:", category_ids)
+
+        # ================= AUDIT =================
         AuditLog.objects.create(
             user=request.user,
             role=request.user.role,
@@ -467,88 +584,200 @@ def upload_document(request):
             action="CREATE",
             model_name="QMSDocument",
             object_repr=doc.title,
-            new_data={"folder": folder.name if folder else None},
+            new_data={
+                "folder": folder.name if folder else None,
+                "certificate_ids": certificate_ids,
+                "category_ids": category_ids,
+                "clause": clause,
+            },
             ip_address=request.META.get("REMOTE_ADDR")
         )
 
         return redirect("edit_document", doc.id)
 
-
+    # ================= GET (PAGE LOAD) =================
     folders = DocumentFolder.objects.all()
+    certificates = Certificate.objects.all()
+    categories = CertificateCategory.objects.all()
 
     return render(request, "qms_app/sop/upload_document.html", {
-        "folders": folders
+        "folders": folders,
+        "certificates": certificates,
+        "categories": categories
     })
 
 
 
 
+# @require_page_permission("can_documents")
+# @login_required
+# def document_home(request, folder_id=None):
 
+#     # ✅ ALL USERS SEE EVERYTHING
+#     folders = DocumentFolder.objects.all()
+
+#     if folder_id:
+#         current_folder = get_object_or_404(DocumentFolder, id=folder_id)
+#         documents = QMSDocument.objects.filter(folder=current_folder,status='completed')
+#     else:
+#         current_folder = None
+#         documents = []
+
+#     return render(request, 'qms_app/sop/document_home.html', {
+#         'documents': documents,
+#         'folders': folders,
+#         'current_folder': current_folder
+#     })
+
+
+#     #  Get or create page access safely
+#     page_access, created = UserPageAccess.objects.get_or_create(
+#         user=request.user
+#     )
+
+#     #  Page restriction
+#     if not page_access.can_documents:
+#         return redirect("denied")
+
+#     #  Folder restriction (if you want same folder logic)
+#     allowed_folders = page_access.allowed_folders.all()
+
+#     if folder_id:
+#         current_folder = allowed_folders.filter(id=folder_id).first()
+
+#         if not current_folder:
+#             return redirect("denied")
+
+#         documents = QMSDocument.objects.filter(folder=current_folder,status='completed')
+#     else:
+#         current_folder = None
+#         documents = []
+
+#     return render(request, 'qms_app/sop/document_home.html', {
+#         'documents': documents,
+#         'folders': allowed_folders,
+#         'current_folder': current_folder
+#     })
+# @require_page_permission("can_documents")
+# @login_required
+# def document_home(request, folder_id=None):
+
+#     # ✅ Get access FIRST (for all users)
+#     page_access, created = UserPageAccess.objects.get_or_create(
+#         user=request.user
+#     )
+
+#     # ✅ Superuser bypass
+#     if request.user.is_superuser:
+
+#         folders = DocumentFolder.objects.all()
+
+#         if folder_id:
+#             current_folder = get_object_or_404(DocumentFolder, id=folder_id)
+#             documents = QMSDocument.objects.filter(
+#                 folder=current_folder,
+#                 status="completed"
+#             )
+#         else:
+#             current_folder = None
+#             documents = []
+
+#         return render(request, 'qms_app/sop/document_home.html', {
+#             'documents': documents,
+#             'folders': folders,
+#             'current_folder': current_folder,
+#             'access': page_access   # 🔥 ADD THIS
+#         })
+
+#     # ✅ Page restriction
+#     if not page_access.can_documents:
+#         return redirect("denied")
+
+#     # ✅ Folder restriction
+#     allowed_folders = page_access.allowed_folders.all()
+
+#     if folder_id:
+#         current_folder = allowed_folders.filter(id=folder_id).first()
+
+#         if not current_folder:
+#             return redirect("denied")
+
+#         documents = QMSDocument.objects.filter(
+#             folder=current_folder,
+#             status="completed"
+#         )
+#     else:
+#         current_folder = None
+#         documents = []
+
+#     return render(request, 'qms_app/sop/document_home.html', {
+#         'documents': documents,
+#         'folders': allowed_folders,
+#         'current_folder': current_folder,
+#         'access': page_access   # 🔥 ADD THIS
+#     })
 @require_page_permission("can_documents")
 @login_required
 def document_home(request, folder_id=None):
 
-    #  Superuser bypass everything
-    if request.user.is_superuser:
-
-        folders = DocumentFolder.objects.all()
-
-        if folder_id:
-            current_folder = get_object_or_404(DocumentFolder, id=folder_id)
-            documents = QMSDocument.objects.filter(folder=current_folder)
-        else:
-            current_folder = None
-            documents = []
-
-        return render(request, 'qms_app/sop/document_home.html', {
-            'documents': documents,
-            'folders': folders,
-            'current_folder': current_folder
-        })
-
-
-    #  Get or create page access safely
+    # Get access
     page_access, created = UserPageAccess.objects.get_or_create(
         user=request.user
     )
 
-    #  Page restriction
+    # Page restriction only
     if not page_access.can_documents:
         return redirect("denied")
 
-    #  Folder restriction (if you want same folder logic)
-    allowed_folders = page_access.allowed_folders.all()
+    # ✅ SHOW ALL DOCUMENT FOLDERS (NO RESTRICTION)
+    folders = DocumentFolder.objects.all()
 
     if folder_id:
-        current_folder = allowed_folders.filter(id=folder_id).first()
+        current_folder = get_object_or_404(DocumentFolder, id=folder_id)
 
-        if not current_folder:
-            return redirect("denied")
-
-        documents = QMSDocument.objects.filter(folder=current_folder)
+        documents = QMSDocument.objects.filter(
+            folder=current_folder,
+            status="completed"
+        )
     else:
         current_folder = None
         documents = []
 
     return render(request, 'qms_app/sop/document_home.html', {
         'documents': documents,
-        'folders': allowed_folders,
+        'folders': folders,
         'current_folder': current_folder
     })
 
+from django.shortcuts import render, get_object_or_404
+from django.contrib.auth.decorators import login_required
+from .models import DocumentFolder, QMSDocument, Certificate
 
 @login_required
 def folder_documents(request, folder_id):
 
     folder = get_object_or_404(DocumentFolder, id=folder_id)
 
-    documents = QMSDocument.objects.filter(folder=folder)
+    documents = QMSDocument.objects.filter(
+        folder=folder,
+        status='completed'
+    ).prefetch_related(
+        'versions',
+        'certificate_category__certificate'   # ✅ IMPORTANT (for performance)
+    )
+
+    for doc in documents:
+        latest = doc.versions.order_by('-version_number').first()
+        doc.latest_version = latest.version_number if latest else 1
+
+   
+    certificates = Certificate.objects.all()
 
     return render(request, 'qms_app/sop/folder_documents.html', {
         'folder': folder,
-        'documents': documents
+        'documents': documents,
+        'certificates': certificates   # ✅ PASS TO TEMPLATE
     })
-
 
 
 
@@ -595,31 +824,40 @@ def view_document(request, doc_id):
     # Detect file extension
     file_ext = os.path.splitext(doc.original_file.name)[1].lower()
 
-
     # ======================= PDF FLOW =========================
     if file_ext == ".pdf":
         return render(request, "qms_app/sop/view_document.html", {
             "doc": doc,
             "is_pdf": True,
             "html_pages": None,
-            "revisions": None
+            "revisions": None,
+            "pdf_signatures": doc.pdf_signatures or "[]",
         })
-
 
     # ======================= DOCX FLOW ========================
     elif file_ext == ".docx":
 
         latest_revision = doc.revisions.order_by('-edited_at').first()
 
+        # ✅ FIXED PAGE SPLIT
         if latest_revision and latest_revision.edited_html:
-            html_pages = latest_revision.edited_html.split('<div class="page">')
-            html_pages = [
-                p.replace('</div>', '').strip()
-                for p in html_pages if p.strip()
-            ]
-        else:
-            html_pages = convert_docx_to_html(doc.original_file.path)
 
+            html = latest_revision.edited_html
+
+            # 🔥 USE SAME SPLIT AS EDITOR
+            page_divs = html.split('<div class="page-break"></div>')
+
+            html_pages = [
+                p.strip() for p in page_divs if p.strip()
+            ]
+
+        else:
+            try:
+                html_pages = convert_docx_to_html(doc.original_file.path)
+            except Exception as e:
+                html_pages = [f"<p>Error loading document: {str(e)}</p>"]
+
+        # ✅ GET ALL REVISIONS
         revisions = doc.revisions.order_by('-edited_at')
 
         return render(request, "qms_app/sop/view_document.html", {
@@ -628,7 +866,6 @@ def view_document(request, doc_id):
             "revisions": revisions,
             "is_pdf": False
         })
-
 
     # =================== UNSUPPORTED FILE =====================
     else:
@@ -640,121 +877,790 @@ def view_document(request, doc_id):
         })
 
 
+
+
+from pypdf import PdfReader, PdfWriter
+from reportlab.pdfgen import canvas
+from io import BytesIO
+from django.http import HttpResponse
+from django.shortcuts import get_object_or_404, redirect
+from django.contrib.auth.decorators import login_required
+
+@login_required
+def render_signed_pdf(request, doc_id):
+    doc = get_object_or_404(QMSDocument, id=doc_id)
+
+    if not doc.pdf_signatures:
+        return redirect(doc.original_file.url)
+    reader = PdfReader(doc.original_file.path)
+    writer = PdfWriter()
+
+    for page_num, page in enumerate(reader.pages):
+        packet = BytesIO()
+        can = canvas.Canvas(packet)
+
+        has_signature = False
+
+        page_width = float(page.mediabox.width)
+        page_height = float(page.mediabox.height)
+
+        for sig in doc.pdf_signatures:
+            if int (sig.get("page", 0)) == page_num:
+                x = sig.get("x", 0.5) * page_width
+                y = sig.get("y", 0.5) * page_height
+
+                y = page_height - y
+
+                raw = sig.get("html", "")
+                text = re.sub('<[^<]+?>', '', raw)
+                can.setFont("Helvetica", 10)
+                can.drawString(x, y, text)
+
+                has_signature = True
+
+        can.save()
+        packet.seek(0)
+
+        overlay = PdfReader(packet)
+
+        if has_signature and len(overlay.pages) > 0:
+            page.merge_page(overlay.pages[0])
+        writer.add_page(page)
+
+    output = BytesIO()
+    writer.write(output)
+    output.seek(0)
+
+    return HttpResponse(output, content_type="application/pdf")
+
+from django.http import JsonResponse
+from django.shortcuts import get_object_or_404
+from django.contrib.auth.decorators import login_required
+
+@login_required
+def delete_documents(request, doc_id):
+    if request.method == "POST":
+        doc = get_object_or_404(QMSDocument, id=doc_id)
+        doc.delete()
+
+        return JsonResponse({
+            "status": "success",
+            "message": "Document deleted"
+        })
+
+    return JsonResponse({"status": "error"}, status=400)
+
 # ========================================================================================
 # ================================= Edit Document ========================================
 # ========================================================================================
+# @login_required
+# def edit_document(request, doc_id):
+
+#     doc = get_object_or_404(QMSDocument, id=doc_id)
+
+#     page_access, _ = UserPageAccess.objects.get_or_create(user=request.user)
+
+#     # Detect file extension
+#     file_ext = os.path.splitext(doc.original_file.name)[1].lower()
+
+
+#     # ================= PDF → NOT EDITABLE ====================
+#     if file_ext == ".pdf":
+#         # PDF should not be edited → redirect to view page
+#         return redirect("view_document", doc_id=doc.id)
+
+
+#     # ================= DOCX EDIT FLOW ========================
+#     # Fetch the latest saved version
+#     latest_version = doc.versions.order_by('-version_number').first()
+
+#     if latest_version and latest_version.edited_html:
+#         html = latest_version.edited_html
+
+#         # Clean HTML safely
+#         soup = BeautifulSoup(html, 'html.parser')
+
+#         # Split pages
+#         page_divs = html.split('<div class="page-break"></div>')
+#         html_pages = [p.strip() for p in page_divs if p.strip()]
+
+#     else:
+#         # First-time document → convert from DOCX
+#         html_pages = convert_docx_to_html(doc.original_file.path)
+
+#     return render(request, "qms_app/sop/edit_document.html", {
+#         "doc": doc,
+#         "html_pages": html_pages,
+#         "access": page_access
+#     })
+
+from openpyxl import load_workbook
+
 @login_required
 def edit_document(request, doc_id):
 
     doc = get_object_or_404(QMSDocument, id=doc_id)
+    access = UserPageAccess.objects.filter(user=request.user).first()
 
-    # Detect file extension
     file_ext = os.path.splitext(doc.original_file.name)[1].lower()
 
-
-    # ================= PDF → NOT EDITABLE ====================
+    # ================= PDF → VIEW ONLY ====================
     if file_ext == ".pdf":
-        # PDF should not be edited → redirect to view page
-        return redirect("view_document", doc_id=doc.id)
+        return render(request, "qms_app/sop/edit_document.html", {
+            "doc": doc,
+            "html_pages": [],
+            "is_excel": False,
+            "is_image": False,
+            "is_pdf": True   # ✅ NEW FLAG
+        })
+    # ================= IMAGE FILE ====================
+    if file_ext in [".jpg", ".jpeg", ".png", ".webp"]:
 
+        return render(request, "qms_app/sop/edit_document.html", {
+            "doc": doc,
+            "html_pages": [],
+            "is_excel": False,
+            "is_image": True   # ✅ IMPORTANT FLAG
+        })
+    # ================= EXCEL FILE ====================
+    if file_ext in [".xlsx", ".xls"]:
+
+        excel_data = []
+
+        # ✅ If already saved → use DB
+        if doc.excel_data:
+            excel_data = doc.excel_data
+
+        else:
+            try:
+                wb = load_workbook(doc.original_file.path)
+                sheet = wb.active
+
+                # 🔥 FIX: Convert None → ""
+                for row in sheet.iter_rows(values_only=True):
+                    clean_row = [cell if cell is not None else "" for cell in row]
+                    excel_data.append(clean_row)
+
+            except Exception as e:
+                print("EXCEL READ ERROR:", str(e))
+
+        return render(request, "qms_app/sop/edit_document.html", {
+            "doc": doc,
+            "html_pages": [],
+            "is_excel": True,
+            "excel_data": excel_data
+        })
 
     # ================= DOCX EDIT FLOW ========================
-    # Fetch the latest saved version
-    latest_version = doc.versions.order_by('-version_number').first()
+    # ================= DOCX EDIT FLOW ========================
 
-    if latest_version and latest_version.edited_html:
-        html = latest_version.edited_html
+    html_pages = []
+    latest_revision = doc.revisions.order_by('-edited_at').first()
 
-        # Clean HTML safely
-        soup = BeautifulSoup(html, 'html.parser')
+    if doc.status != "completed" and latest_revision and latest_revision.edited_html:
 
-        # Split pages
+        html = latest_revision.edited_html
+
         page_divs = html.split('<div class="page-break"></div>')
         html_pages = [p.strip() for p in page_divs if p.strip()]
 
+
     else:
-        # First-time document → convert from DOCX
-        html_pages = convert_docx_to_html(doc.original_file.path)
+        latest_version = doc.versions.order_by('-version_number').first()
+
+        if latest_version and latest_version.edited_html:
+
+            html = latest_version.edited_html
+
+            page_divs = html.split('<div class="page-break"></div>')
+            html_pages = [p.strip() for p in page_divs if p.strip()]
+
+        else:
+            
+            try:
+    # 🔥 CHECK FILE EXISTS
+                if not doc.original_file or not os.path.exists(doc.original_file.path):
+                    raise Exception("File not found on server")
+
+                print("FILE PATH:", doc.original_file.path)
+
+                html_pages = convert_docx_to_html(doc.original_file.path)
+
+            except Exception as e:
+                import traceback
+                print("DOCX ERROR FULL:")
+                traceback.print_exc()
+
+                return render(request, "qms_app/sop/error.html", {
+                    "message": f"DOCX conversion failed: {str(e)}"
+                })
 
     return render(request, "qms_app/sop/edit_document.html", {
         "doc": doc,
-        "html_pages": html_pages
+        "html_pages": html_pages,
+        "is_excel": False
     })
+
+
+@login_required
+def revise_document(request, doc_id):
+
+    doc = get_object_or_404(QMSDocument, id=doc_id)
+
+    if doc.status != "completed":
+        return JsonResponse({"error": "Only completed docs can be revised"}, status=400)
+
+    from bs4 import BeautifulSoup
+
+    latest_version = doc.versions.order_by('-version_number').first()
+
+    if latest_version:
+        soup = BeautifulSoup(latest_version.edited_html, "html.parser")
+
+        # ❌ remove all signatures
+        for sig in soup.select(".signature-box"):
+            sig.decompose()
+
+        clean_html = str(soup)
+
+        # ✅ save as new draft
+        DocumentRevision.objects.create(
+            document=doc,
+            edited_by=request.user,
+            edited_html=clean_html,
+            change_summary="Revision started (signatures removed)"
+        )
+
+    # 🔄 reset workflow
+    doc.status = "process_owner"
+    doc.assigned_to = doc.created_by
+    doc.last_message = "Document sent for revision"
+    doc.is_read = False
+    doc.save()
+
+    # 📝 log history
+    DocumentWorkflowLog.objects.create(
+        document=doc,
+        stage="process_owner",
+        action="Revision Restarted",
+        user=request.user,
+        message="New revision cycle started"
+    )
+
+    return JsonResponse({"status": "ok"})
 
 
 
 # ========================================================================================
 # ================================= Save Document ========================================
 # ========================================================================================
+# @login_required
+# def save_document(request, doc_id):
+#     if request.method != "POST":
+#         return JsonResponse(
+#             {"status": "error", "message": "Invalid request method"}, 
+#             status=405
+#         )
+
+#     doc = get_object_or_404(QMSDocument, id=doc_id)
+
+#     # ----- Read posted JSON -----
+#     try:
+#         data = json.loads(request.body.decode("utf-8"))
+#         edited_html = data.get("content", "").strip()
+#         change_summary = data.get("summary", "").strip()
+
+#         new_title = data.get("title", "").strip()
+#     except Exception as e:
+#         return JsonResponse(
+#             {"status": "error", "message": f"Invalid JSON: {e}"},
+#             status=400
+#         ) 
+
+#     if not edited_html:
+#         return JsonResponse({"status": "error", "message": "Content cannot be empty"}, status=400)
+
+#     # ----- Get latest revision -----
+#     latest_revision = doc.revisions.order_by("-edited_at").first()
+#     old_html = latest_revision.edited_html if latest_revision else ""
+
+#     # ----- Strip HTML safely using BeautifulSoup -----
+#     def plain_text(html):
+#         return BeautifulSoup(html or "", "html.parser").get_text(separator=" ")
+
+#     old_text = plain_text(old_html)
+#     new_text = plain_text(edited_html)
+
+#     # ----- AUTO DIFF (word-level) -----
+#     if not change_summary:
+#         old_words = old_text.split()
+#         new_words = new_text.split()
+
+#         diff_summary = []
+#         sm = difflib.SequenceMatcher(a=old_words, b=new_words)
+
+#         for tag, a0, a1, b0, b1 in sm.get_opcodes():
+#             if tag == "replace":
+#                 diff_summary.append(
+#                     f"{' '.join(old_words[a0:a1])} → {' '.join(new_words[b0:b1])}"
+#                 )
+#             elif tag == "delete":
+#                 diff_summary.append(
+#                     f"Removed: {' '.join(old_words[a0:a1])}"
+#                 )
+#             elif tag == "insert":
+#                 diff_summary.append(
+#                     f"Added: {' '.join(new_words[b0:b1])}"
+#                 )
+
+#         change_summary = "\n".join(diff_summary) if diff_summary else "No textual changes detected."
+
+#     # ----- Version number -----
+#     version_number = doc.revisions.count() + 1
+#     # version_number = None
+#     # if doc.status == "completed":
+#     #     last_version = doc.version.order_by('-version_number').first()
+#     #     version_number = (last_version.version_number + 1) if last_version else 1
+
+#     # ----- Save DOCX file -----
+#     folder = os.path.join(settings.MEDIA_ROOT, "qms_docs", "versions")
+
+ 
+#     if not os.path.exists(folder):
+#         os.makedirs(folder, exist_ok=True)
+
+#     output_filename = f"{doc.id}_v{version_number}.docx"
+#     output_path = os.path.join(folder, output_filename)
+
+
+#     try:
+#         convert_html_to_docx(edited_html, output_path)
+#     except Exception as e:
+#         return JsonResponse({
+#         "status": "error",
+#         "message": f"DOCX generation failed: {str(e)}"
+#     }, status=500)
+
+#     # Save version entry
+#     version = QMSDocumentVersion.objects.create(
+#         document=doc,
+#         version_number=version_number,
+#         edited_by=request.user,
+#         edited_html=edited_html,
+#         edited_docx=f"qms_docs/versions/{output_filename}",
+#     )
+#     AuditLog.objects.create(
+#         user=request.user,
+#         role=request.user.role,
+#         module="Documents",
+#         action="UPDATE",
+#         model_name="QMSDocument",
+#         object_repr=doc.title,
+#         new_data={"version": version_number},
+#         ip_address=request.META.get("REMOTE_ADDR")
+#     )
+
+
+#     # Save revision entry
+#     DocumentRevision.objects.create(
+#         document=doc,
+#         edited_by=request.user,
+#         edited_html=edited_html,
+#         change_summary=change_summary,
+#         version_number=version_number,
+#     )
+
+#     # doc.status = "process_owner"
+#     # doc.folder = None
+   
+#     if new_title and new_title !=doc.title:
+#         doc.title = new_title
+#     doc.save()
+#     return JsonResponse({"status": "success", "version": version_number})
+
+# @login_required
+# def save_document(request, doc_id):
+
+#     if request.method != "POST":
+#         return JsonResponse(
+#             {"status": "error", "message": "Invalid request method"}, 
+#             status=405
+#         )
+
+#     doc = get_object_or_404(QMSDocument, id=doc_id)
+
+#     # ================= READ DATA =================
+#     try:
+#         data = json.loads(request.body.decode("utf-8"))
+#         edited_html = data.get("content", "").strip()
+#         change_summary = data.get("summary", "").strip()
+#         new_title = data.get("title", "").strip()
+#     except Exception as e:
+#         return JsonResponse(
+#             {"status": "error", "message": f"Invalid JSON: {e}"},
+#             status=400
+#         )
+
+#     if not edited_html:
+#         return JsonResponse({
+#             "status": "error",
+#             "message": "Content cannot be empty"
+#         }, status=400)
+
+#     # ==========================================================
+#     # 🔥 IMPORTANT FIX: BLOCK VERSION DURING WORKFLOW
+#     # ==========================================================
+#     if doc.status != "completed":
+
+#         # 👉 Just update latest revision (NO new version)
+#         latest_revision = doc.revisions.order_by("-edited_at").first()
+
+#         if latest_revision:
+#             latest_revision.edited_html = edited_html
+#             latest_revision.save()
+#         else:
+#             # First time draft
+#             DocumentRevision.objects.create(
+#                 document=doc,
+#                 edited_by=request.user,
+#                 edited_html=edited_html,
+#                 change_summary="Draft saved (no version)"
+#             )
+
+#         # Update title if needed
+#         if new_title and new_title != doc.title:
+#             doc.title = new_title
+#             doc.save()
+
+#         return JsonResponse({
+#             "status": "success",
+#             "message": "Draft saved (no version created)"
+#         })
+
+#     # ==========================================================
+#     # ✅ VERSION CREATION (ONLY AFTER COMPLETED)
+#     # ==========================================================
+
+#     # ----- Get latest revision -----
+#     latest_revision = doc.revisions.order_by("-edited_at").first()
+#     old_html = latest_revision.edited_html if latest_revision else ""
+
+#     def plain_text(html):
+#         return BeautifulSoup(html or "", "html.parser").get_text(separator=" ")
+
+#     old_text = plain_text(old_html)
+#     new_text = plain_text(edited_html)
+
+#     # ----- AUTO DIFF -----
+#     if not change_summary:
+#         old_words = old_text.split()
+#         new_words = new_text.split()
+
+#         diff_summary = []
+#         sm = difflib.SequenceMatcher(a=old_words, b=new_words)
+
+#         for tag, a0, a1, b0, b1 in sm.get_opcodes():
+#             if tag == "replace":
+#                 diff_summary.append(
+#                     f"{' '.join(old_words[a0:a1])} → {' '.join(new_words[b0:b1])}"
+#                 )
+#             elif tag == "delete":
+#                 diff_summary.append(
+#                     f"Removed: {' '.join(old_words[a0:a1])}"
+#                 )
+#             elif tag == "insert":
+#                 diff_summary.append(
+#                     f"Added: {' '.join(new_words[b0:b1])}"
+#                 )
+
+#         change_summary = "\n".join(diff_summary) if diff_summary else "No textual changes detected."
+
+#     # ----- Version number -----
+#     version_number = doc.revisions.count() + 1
+
+#     # ----- Save DOCX -----
+#     folder = os.path.join(settings.MEDIA_ROOT, "qms_docs", "versions")
+#     os.makedirs(folder, exist_ok=True)
+
+#     output_filename = f"{doc.id}_v{version_number}.docx"
+#     output_path = os.path.join(folder, output_filename)
+
+#     try:
+#         convert_html_to_docx(edited_html, output_path)
+#     except Exception as e:
+#         return JsonResponse({
+#             "status": "error",
+#             "message": f"DOCX generation failed: {str(e)}"
+#         }, status=500)
+
+#     # ----- Save Version -----
+#     version = QMSDocumentVersion.objects.create(
+#         document=doc,
+#         version_number=version_number,
+#         edited_by=request.user,
+#         edited_html=edited_html,
+#         edited_docx=f"qms_docs/versions/{output_filename}",
+#     )
+
+#     # ----- Audit -----
+#     AuditLog.objects.create(
+#         user=request.user,
+#         role=request.user.role,
+#         module="Documents",
+#         action="UPDATE",
+#         model_name="QMSDocument",
+#         object_repr=doc.title,
+#         new_data={"version": version_number},
+#         ip_address=request.META.get("REMOTE_ADDR")
+#     )
+
+#     # ----- Save Revision -----
+#     DocumentRevision.objects.create(
+#         document=doc,
+#         edited_by=request.user,
+#         edited_html=edited_html,
+#         change_summary=change_summary,
+#         version_number=version_number
+#     )
+
+#     # Update title
+#     if new_title and new_title != doc.title:
+#         doc.title = new_title
+
+#     doc.save()
+
+#     return JsonResponse({
+#         "status": "success",
+#         "version": version_number
+#     })
+def generate_diff(old_html, new_html):
+    from bs4 import BeautifulSoup
+    import difflib
+
+    def extract_text(html):
+        return BeautifulSoup(html or "", "html.parser").get_text(separator=" ")
+
+    old_text = extract_text(old_html)
+    new_text = extract_text(new_html)
+
+    old_words = old_text.split()
+    new_words = new_text.split()
+
+    changes = []
+
+    sm = difflib.SequenceMatcher(None, old_words, new_words)
+
+    for tag, i1, i2, j1, j2 in sm.get_opcodes():
+
+        # 🔁 REPLACED (KEY FIX)
+        if tag == "replace":
+            old = " ".join(old_words[i1:i2]).strip()
+            new = " ".join(new_words[j1:j2]).strip()
+
+            if old and new and old != new:
+                # avoid very large noisy output
+                if len(old) < 100 and len(new) < 100:
+                    changes.append(f"{old} → {new}")
+                else:
+                    changes.append("Content updated")
+
+        # ➕ INSERT
+        elif tag == "insert":
+            new = " ".join(new_words[j1:j2]).strip()
+            if new:
+                if len(new) < 100:
+                    changes.append(f"Added: {new}")
+                else:
+                    changes.append("Added content")
+
+        # ❌ DELETE
+        elif tag == "delete":
+            old = " ".join(old_words[i1:i2]).strip()
+            if old:
+                if len(old) < 100:
+                    changes.append(f"Removed: {old}")
+                else:
+                    changes.append("Removed content")
+
+    # ✅ REMOVE DUPLICATES
+    unique_changes = []
+    for c in changes:
+        if c not in unique_changes:
+            unique_changes.append(c)
+
+    return "\n".join(unique_changes) if unique_changes else "No changes detected"
+
+
+
+from django.http import JsonResponse
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import get_object_or_404
+from django.conf import settings
+from django.core.files import File
+from django.utils import timezone
+import json
+import os
+
+
 @login_required
 def save_document(request, doc_id):
+
     if request.method != "POST":
         return JsonResponse(
-            {"status": "error", "message": "Invalid request method"}, 
+            {"status": "error", "message": "Invalid request method"},
             status=405
         )
 
     doc = get_object_or_404(QMSDocument, id=doc_id)
 
-    # ----- Read posted JSON -----
-    try:
-        data = json.loads(request.body.decode("utf-8"))
-        edited_html = data.get("content", "").strip()
-        change_summary = data.get("summary", "").strip()
-    except Exception as e:
-        return JsonResponse(
-            {"status": "error", "message": f"Invalid JSON: {e}"},
-            status=400
-        ) 
+    # ================= READ DATA =================
+    data = json.loads(request.body.decode("utf-8"))
+    new_title = data.get("title", "").strip()
+
+    # 🔥 DETECT FILE TYPE
+    file_ext = os.path.splitext(doc.original_file.name)[1].lower()
+
+    # ==========================================================
+    # ✅ PDF FLOW (NO HTML REQUIRED)
+    # ==========================================================
+    if file_ext == ".pdf":
+
+        signatures = data.get("pdf_signatures", [])
+        new_title = data.get("title", "").strip()
+
+        # ✅ Prevent accidental overwrite
+        if signatures is None:
+            signatures = []
+
+        # ✅ Save signatures properly (MATCH FRONTEND)
+        doc.pdf_signatures = signatures
+
+        # ✅ Update title also
+        if new_title and new_title != doc.title:
+            doc.title = new_title
+
+        doc.save()
+
+        return JsonResponse({
+            "status": "success",
+            "message": "PDF signatures saved"
+        })
+
+    # ==========================================================
+    # ✅ DOCX / HTML FLOW (OLD LOGIC CONTINUES)
+    # ==========================================================
+    edited_html = data.get("content", "").strip()
 
     if not edited_html:
-        return JsonResponse({"status": "error", "message": "Content cannot be empty"}, status=400)
+        return JsonResponse({
+            "status": "error",
+            "message": "Content cannot be empty"
+        }, status=400)
+    # ==========================================================
+    # 🔥 DRAFT MODE (ONLY REVISION, NO VERSION)
+    # ==========================================================
+    if doc.status != "completed":
 
-    # ----- Get latest revision -----
+        latest_revision = doc.revisions.order_by("-edited_at").first()
+
+        if latest_revision and latest_revision.edited_html:
+            old_html = latest_revision.edited_html
+        else:
+            latest_version = doc.versions.order_by("-version_number").first()
+            old_html = latest_version.edited_html if latest_version else ""
+
+        change_summary = generate_diff(old_html, edited_html)
+
+        # ✅ Always create new revision
+        DocumentRevision.objects.create(
+            document=doc,
+            edited_by=request.user,
+            edited_html=edited_html,
+            change_summary=change_summary
+        )
+
+        # ✅ Update title if changed
+        if new_title and new_title != doc.title:
+            doc.title = new_title
+            doc.save()
+
+        return JsonResponse({
+            "status": "success",
+            "message": "Draft saved (no version created)"
+        })
+
+    # ==========================================================
+    # ✅ VERSION CREATION (COMPLETED DOCUMENT)
+    # ==========================================================
+
+    current_version = doc.versions.count()
+    version_number = current_version + 1
+
+    # ==========================================================
+    # 🔥 ARCHIVE OLD VERSION (ONLY OLD, NOT NEW)
+    # ==========================================================
+    archive_path = os.path.join(settings.MEDIA_ROOT, "qms_docs", "archive")
+    os.makedirs(archive_path, exist_ok=True)
+
+    if current_version > 0 and doc.original_file:
+        try:
+            file_path = doc.original_file.path
+
+            if os.path.exists(file_path):
+                with open(file_path, "rb") as f:
+                    file_content = f.read()
+
+                if file_content:
+                    timestamp = timezone.now().strftime("%Y%m%d_%H%M%S")
+
+                    archive_filename = (
+                        f"{doc.id}v{current_version}{timestamp}_"
+                        f"{os.path.basename(file_path)}"
+                    )
+
+                    full_archive_path = os.path.join(archive_path, archive_filename)
+
+                    with open(full_archive_path, "wb") as f:
+                        f.write(file_content)
+
+                    print("✅ ARCHIVED OLD VERSION:", archive_filename)
+
+        except Exception as e:
+            print("❌ ARCHIVE ERROR:", str(e))
+
+    # ==========================================================
+    # 🔥 GET OLD HTML (FOR DIFF)
+    # ==========================================================
     latest_revision = doc.revisions.order_by("-edited_at").first()
-    old_html = latest_revision.edited_html if latest_revision else ""
 
-    # ----- Strip HTML safely using BeautifulSoup -----
-    def plain_text(html):
-        return BeautifulSoup(html or "", "html.parser").get_text(separator=" ")
+    if latest_revision and latest_revision.edited_html:
+        old_html = latest_revision.edited_html
+    else:
+        latest_version = doc.versions.order_by("-version_number").first()
+        old_html = latest_version.edited_html if latest_version else ""
 
-    old_text = plain_text(old_html)
-    new_text = plain_text(edited_html)
+    change_summary = generate_diff(old_html, edited_html)
 
-    # ----- AUTO DIFF (word-level) -----
-    if not change_summary:
-        old_words = old_text.split()
-        new_words = new_text.split()
+    # ==========================================================
+    # 🔥 SAVE DOCX FILE
+    # ==========================================================
+    versions_path = os.path.join(settings.MEDIA_ROOT, "qms_docs", "versions")
+    os.makedirs(versions_path, exist_ok=True)
 
-        diff_summary = []
-        sm = difflib.SequenceMatcher(a=old_words, b=new_words)
-
-        for tag, a0, a1, b0, b1 in sm.get_opcodes():
-            if tag == "replace":
-                diff_summary.append(
-                    f"{' '.join(old_words[a0:a1])} → {' '.join(new_words[b0:b1])}"
-                )
-            elif tag == "delete":
-                diff_summary.append(
-                    f"Removed: {' '.join(old_words[a0:a1])}"
-                )
-            elif tag == "insert":
-                diff_summary.append(
-                    f"Added: {' '.join(new_words[b0:b1])}"
-                )
-
-        change_summary = "\n".join(diff_summary) if diff_summary else "No textual changes detected."
-
-    # ----- Version number -----
-    version_number = doc.revisions.count() + 1
-
-    # ----- Save DOCX file -----
     output_filename = f"{doc.id}_v{version_number}.docx"
-    output_path = os.path.join("media/qms_docs/versions", output_filename)
+    output_path = os.path.join(versions_path, output_filename)
 
-    convert_html_to_docx(edited_html, output_path)
+    try:
+        convert_html_to_docx(edited_html, output_path)
+    except Exception as e:
+        return JsonResponse({
+            "status": "error",
+            "message": f"DOCX generation failed: {str(e)}"
+        }, status=500)
 
-    # Save version entry
+    # ==========================================================
+    # 🔥 SAVE VERSION ENTRY
+    # ==========================================================
     version = QMSDocumentVersion.objects.create(
         document=doc,
         version_number=version_number,
@@ -762,6 +1668,30 @@ def save_document(request, doc_id):
         edited_html=edited_html,
         edited_docx=f"qms_docs/versions/{output_filename}",
     )
+
+    # ==========================================================
+    # 🔥 UPDATE CURRENT FILE
+    # ==========================================================
+    try:
+        with open(output_path, "rb") as f:
+            doc.original_file.save(output_filename, File(f), save=False)
+    except Exception as e:
+        return JsonResponse({
+            "status": "error",
+            "message": f"File save failed: {str(e)}"
+        }, status=500)
+
+    # ==========================================================
+    # 🔥 UPDATE DOCUMENT
+    # ==========================================================
+    if new_title and new_title != doc.title:
+        doc.title = new_title
+
+    doc.save()
+
+    # ==========================================================
+    # 🔥 AUDIT LOG
+    # ==========================================================
     AuditLog.objects.create(
         user=request.user,
         role=request.user.role,
@@ -773,8 +1703,9 @@ def save_document(request, doc_id):
         ip_address=request.META.get("REMOTE_ADDR")
     )
 
-
-    # Save revision entry
+    # ==========================================================
+    # 🔥 SAVE REVISION (FOR HISTORY)
+    # ==========================================================
     DocumentRevision.objects.create(
         document=doc,
         edited_by=request.user,
@@ -783,9 +1714,490 @@ def save_document(request, doc_id):
         version_number=version_number
     )
 
-    return JsonResponse({"status": "success", "version": version_number})
+    return JsonResponse({
+        "status": "success",
+        "version": version_number
+    })
+
+@login_required
+def archive_list(request):
+    import os
+    import re
+    from django.conf import settings
+    from django.urls import reverse
+
+    archive_dir = os.path.join(settings.MEDIA_ROOT, "qms_docs", "archive")
+
+    files = []
+
+    if os.path.exists(archive_dir):
+        for f in sorted(os.listdir(archive_dir), reverse=True):
+
+            # Skip hidden + non-docx
+            if f.startswith(".") or not f.endswith(".docx"):
+                continue
+
+            # ✅ Extract doc_id (only numbers at start)
+            doc_match = re.match(r"(\d+)", f)
+            doc_id = doc_match.group(1) if doc_match else "-"
+
+            # ✅ Extract version (v5 → 5)
+            version_match = re.search(r"_v(\d+)", f)
+            version = version_match.group(1) if version_match else "-"
+
+            # ✅ Extract timestamp (HHMMSS or similar)
+            time_match = re.search(r"(\d{6})", f)
+            timestamp = time_match.group(1) if time_match else "-"
+            title = "-"
+            if doc_id:
+                doc = QMSDocument.objects.filter(id=doc_id).first()
+                if doc:
+                    title = doc.title
+            files.append({
+                "name": f,
+                "title":title,
+                "url": settings.MEDIA_URL + "qms_docs/archive/" + f,
+                "view_url": reverse("view_archive_document", args=[f]),
+                "doc_id": doc_id,
+                "version": version,
+                "timestamp": timestamp,
+            })
+
+    return render(request, "qms_app/sop/archive_list.html", {
+        "files": files
+    })
+@login_required
+def view_archive_document(request, filename):
+
+    import re
+    from .models import QMSDocumentVersion
+
+    # ✅ Extract doc_id safely
+    doc_match = re.match(r"(\d+)", filename)
+    doc_id = doc_match.group(1) if doc_match else None
+
+    # ✅ Extract version safely
+    version_match = re.search(r"_v(\d+)", filename)
+    version_no = version_match.group(1) if version_match else None
+
+    if not doc_id or not version_no:
+        return render(request, "qms_app/sop/error.html", {
+            "message": "Invalid file format"
+        })
+
+    version = QMSDocumentVersion.objects.filter(
+        document_id=int(doc_id),
+        version_number=int(version_no)
+    ).first()
+
+    if not version:
+        return render(request, "qms_app/sop/error.html", {
+            "message": "Version not found"
+        })
+
+    html = version.edited_html
+
+    page_divs = html.split('<div class="page-break"></div>')
+    html_pages = [p.strip() for p in page_divs if p.strip()]
+
+    return render(request, "qms_app/sop/view_archive.html", {
+        "doc": {"title": filename},
+        "html_pages": html_pages,
+        "version": version_no
+    })
 
 
+
+@login_required
+def document_workflow(request):
+    access = UserPageAccess.objects.filter(user=request.user).first()
+    return render(request, "qms_app/sop/document_workflow.html", {
+        "process_docs": QMSDocument.objects.filter(status="process_owner"),
+        "reviewed_docs": QMSDocument.objects.filter(status="reviewed"),
+        "approved_docs": QMSDocument.objects.filter(status="approved"),
+        "access": access,
+    })
+    
+    
+@login_required
+def update_document_status(request, doc_id):
+
+    doc = get_object_or_404(QMSDocument, id=doc_id)
+    data = json.loads(request.body)
+
+    new_status = data.get("status")
+    user_id = data.get("user_id")
+    message = data.get("message")
+
+    doc.status = new_status
+
+    # ✅ FIX: SET TARGET FOLDER
+    if new_status == "approved":
+        if not doc.target_folder:
+            doc.target_folder = doc.folder
+
+    # ================= ASSIGN USER =================
+    if new_status in ["reviewed", "approved"]:
+
+        if user_id:
+            user = get_object_or_404(User, id=user_id)
+            doc.assigned_to = user
+        else:
+            return JsonResponse({"error": "User required"}, status=400)
+
+    elif new_status == "process_owner":
+        doc.assigned_to = doc.created_by
+
+    # ================= MESSAGE =================
+    if message:
+        doc.last_message = message
+    else:
+        if new_status == "reviewed":
+            doc.last_message = "Sent for review"
+        elif new_status == "approved":
+            doc.last_message = "Sent for approval"
+        elif new_status == "process_owner":
+            doc.last_message = "Sent back for update"
+
+    # ================= NOTIFICATION =================
+    doc.is_read = False
+
+    doc.save()
+    DocumentWorkflowLog.objects.create(
+        document=doc,
+        stage=new_status,
+        action="Moved",
+        user=request.user,
+        message=doc.last_message
+    )
+    return JsonResponse({"status": "ok"})
+
+
+from django.contrib.auth import get_user_model
+User = get_user_model()
+
+@login_required
+def send_back(request, doc_id):
+
+    data = json.loads(request.body)
+    msg = data.get("message")
+    user_id = data.get("user_id")
+
+    doc = get_object_or_404(QMSDocument, id=doc_id)
+    user = get_object_or_404(User, id=user_id)
+
+    doc.status = "process_owner"
+    doc.assigned_to = user
+    doc.last_message = msg or "Sent back for update"
+    doc.is_read = False
+    doc.save()
+
+    return JsonResponse({"status": "ok"})
+
+
+from django.utils.timezone import localtime
+
+@login_required
+def workflow_notifications(request):
+
+    docs = QMSDocument.objects.filter(
+        assigned_to=request.user,
+        is_read=False
+    )
+
+    data = []
+
+    for d in docs:
+        data.append({
+            "id": d.id,
+            "title": d.title,
+            "last_message": d.last_message,
+            
+            # ✅ ADD THESE
+            "sender": d.created_by.email if d.created_by else "System",
+            "time": localtime(d.created_at).strftime("%d %b %Y %I:%M %p")
+        })
+
+    return JsonResponse({"notifications": data})
+    
+    
+# @login_required
+# @require_POST
+# def finalize_document(request, doc_id):
+
+#     doc = get_object_or_404(QMSDocument, id=doc_id)
+
+#     # ✅ AUTO FIX instead of error
+#     if not doc.target_folder:
+#         doc.target_folder = doc.folder
+
+#     doc.folder = doc.target_folder
+#     doc.status = "completed"
+#     doc.assigned_to = None
+#     doc.is_read = True
+#     doc.save()
+
+#     return JsonResponse({"success": True})
+# @login_required
+# @require_POST
+# def finalize_document(request, doc_id):
+
+#     doc = get_object_or_404(QMSDocument, id=doc_id)
+
+#     if not doc.target_folder:
+#         return JsonResponse({"error": "No target folder"}, status=400)
+
+#     # ==========================================================
+#     # 🔥 STEP 1: GET LATEST DRAFT (REVISION)
+#     # ==========================================================
+#     latest_revision = doc.revisions.order_by("-edited_at").first()
+
+#     if latest_revision and latest_revision.edited_html:
+
+#         edited_html = latest_revision.edited_html
+
+#         # 🔢 Version number
+#         version_number = doc.versions.count() + 1
+
+#         # 📁 Save DOCX file
+#         folder = os.path.join(settings.MEDIA_ROOT, "qms_docs", "versions")
+#         os.makedirs(folder, exist_ok=True)
+
+#         output_filename = f"{doc.id}_v{version_number}.docx"
+#         output_path = os.path.join(folder, output_filename)
+
+#         try:
+#             convert_html_to_docx(edited_html, output_path)
+#         except Exception as e:
+#             print("DOCX ERROR:", str(e))
+
+#         # 💾 CREATE VERSION
+#         QMSDocumentVersion.objects.create(
+#             document=doc,
+#             version_number=version_number,
+#             edited_by=request.user,
+#             edited_html=edited_html,
+#             edited_docx=f"qms_docs/versions/{output_filename}",
+#         )
+
+#     # ==========================================================
+#     # 🔥 STEP 2: UPDATE DOCUMENT STATUS
+#     # ==========================================================
+#     doc.folder = doc.target_folder
+#     doc.status = "completed"
+#     doc.assigned_to = None
+#     doc.is_read = True
+#     doc.save()
+
+#     return JsonResponse({"success": True})
+from django.http import JsonResponse
+from django.views.decorators.http import require_POST
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import get_object_or_404
+from django.conf import settings
+from django.core.files import File
+from django.utils import timezone
+import os
+
+
+@login_required
+@require_POST
+def finalize_document(request, doc_id):
+
+    import os
+    from django.conf import settings
+    from django.shortcuts import get_object_or_404
+    from django.http import JsonResponse
+    from django.utils import timezone
+    from django.core.files import File
+
+    doc = get_object_or_404(QMSDocument, id=doc_id)
+
+    if not doc.target_folder:
+        return JsonResponse({"error": "No target folder"}, status=400)
+
+    # ==========================================================
+    # 🔥 STEP 0: ARCHIVE OLD VERSION
+    # ==========================================================
+    archive_path = os.path.join(settings.MEDIA_ROOT, "qms_docs", "archive")
+    os.makedirs(archive_path, exist_ok=True)
+
+    current_version = doc.versions.count()
+
+    if current_version > 0 and doc.original_file:
+        try:
+            file_path = doc.original_file.path
+
+            if os.path.exists(file_path):
+                with open(file_path, "rb") as f:
+                    file_content = f.read()
+
+                if file_content:
+                    timestamp = timezone.now().strftime("%Y%m%d_%H%M%S")
+
+                    archive_filename = (
+                        f"{doc.id}v{current_version}{timestamp}_"
+                        f"{os.path.basename(file_path)}"
+                    )
+
+                    full_archive_path = os.path.join(archive_path, archive_filename)
+
+                    with open(full_archive_path, "wb") as f:
+                        f.write(file_content)
+
+                    print("✅ ARCHIVED FILE:", archive_filename)
+
+                    # ✅ ALSO SAVE HTML (ONLY IF EXISTS)
+                    latest_revision = doc.revisions.order_by("-edited_at").first()
+
+                    if latest_revision and latest_revision.edited_html:
+                        archive_html_filename = archive_filename.replace(".docx", ".html")
+                        archive_html_path = os.path.join(archive_path, archive_html_filename)
+
+                        with open(archive_html_path, "w", encoding="utf-8") as f:
+                            f.write(latest_revision.edited_html)
+
+                        print("✅ ARCHIVED HTML:", archive_html_filename)
+
+        except Exception as e:
+            print("❌ ARCHIVE ERROR:", str(e))
+
+    # ==========================================================
+    # 🔥 STEP 1: DETERMINE DOCUMENT TYPE
+    # ==========================================================
+    latest_revision = doc.revisions.order_by("-edited_at").first()
+
+    has_html = latest_revision and latest_revision.edited_html
+    has_pdf = doc.pdf_signatures and len(doc.pdf_signatures) > 0
+
+    if not has_html and not has_pdf:
+        return JsonResponse({"error": "No draft content found"}, status=400)
+
+    edited_html = latest_revision.edited_html if latest_revision else ""
+    version_number = current_version + 1
+
+    versions_path = os.path.join(settings.MEDIA_ROOT, "qms_docs", "versions")
+    os.makedirs(versions_path, exist_ok=True)
+
+    # ==========================================================
+    # 🔥 STEP 2: HANDLE DOCX vs PDF
+    # ==========================================================
+    if has_html:
+        # ✅ DOCX FLOW
+        output_filename = f"{doc.id}_v{version_number}.docx"
+        output_path = os.path.join(versions_path, output_filename)
+
+        try:
+            convert_html_to_docx(edited_html, output_path)
+        except Exception as e:
+            return JsonResponse({
+                "error": f"DOCX generation failed: {str(e)}"
+            }, status=500)
+
+    else:
+        # ✅ PDF FLOW (NO CONVERSION)
+        output_filename = os.path.basename(doc.original_file.name)
+        output_path = doc.original_file.path
+
+    # ==========================================================
+    # 🔥 STEP 3: SAVE VERSION ENTRY
+    # ==========================================================
+    version = QMSDocumentVersion.objects.create(
+        document=doc,
+        version_number=version_number,
+        edited_by=request.user,
+        edited_html=edited_html,
+        edited_docx=(
+            f"qms_docs/versions/{output_filename}"
+            if has_html else doc.original_file.name
+        )
+    )
+
+    # ==========================================================
+    # 🔥 STEP 4: UPDATE CURRENT FILE (ONLY FOR DOCX)
+    # ==========================================================
+    if has_html:
+        try:
+            with open(output_path, "rb") as f:
+                doc.original_file.save(output_filename, File(f), save=False)
+        except Exception as e:
+            return JsonResponse({
+                "error": f"File save failed: {str(e)}"
+            }, status=500)
+
+    # ==========================================================
+    # 🔥 STEP 5: UPDATE DOCUMENT STATUS
+    # ==========================================================
+    doc.folder = doc.target_folder
+    doc.status = "completed"
+    doc.assigned_to = None
+    doc.is_read = True
+    doc.save()
+
+    return JsonResponse({
+        "success": True,
+        "version": version_number
+    })
+
+@login_required
+def workflow_data(request):
+
+    def serialize(doc):
+        return {
+            "id": doc.id,
+            "title": doc.title,
+            "certificates": list(set(
+                [c.name for c in doc.certificate.all()] +
+                [cat.certificate.name for cat in doc.certificate_category.all() if cat.certificate]
+            )),
+            "categories": [c.name for c in doc.certificate_category.all()],
+
+            "clause": doc.clause,
+
+            "created_by": doc.created_by.email if doc.created_by else "Unknown",
+
+            "folder": (
+                doc.target_folder.name if doc.target_folder
+                else doc.folder.name if doc.folder else "No Folder"
+            ),
+
+            "last_message": doc.last_message,
+        }
+
+    return JsonResponse({
+        "process": [serialize(d) for d in QMSDocument.objects.filter(status="process_owner")],
+        "reviewed": [serialize(d) for d in QMSDocument.objects.filter(status="reviewed")],
+        "approved": [serialize(d) for d in QMSDocument.objects.filter(status="approved")],
+    })
+    
+from django.contrib.auth import get_user_model
+from django.contrib.auth.decorators import login_required
+from django.http import JsonResponse
+
+User = get_user_model()
+
+@login_required
+def users_list(request):
+
+    users = User.objects.all()
+
+    data = []
+    for u in users:
+        data.append({
+            "id": u.id,
+            "name": u.email,
+            "role": getattr(u, "role", "user")  # 🔥 SAFE fallback
+        })
+
+    return JsonResponse({"users": data})
+
+
+@login_required
+def mark_as_read(request, doc_id):
+    doc = get_object_or_404(QMSDocument, id=doc_id)
+    doc.is_read = True
+    doc.save()
+    return JsonResponse({"status": "ok"})
 # ========================================================================================
 # ================================ Delete Document =======================================
 # ========================================================================================
@@ -815,20 +2227,71 @@ def generate_sign_code():
 
 
 # ---------------- verify signature --------------------- 
+from qms_app.models import UserPageAccess
+
 @login_required
 def verify_signature_password(request):
 
     if request.method != "POST":
         return JsonResponse({"status": "invalid"}, status=400)
 
-    data = json.loads(request.body.decode())
-    password = data.get("password")
+    try:
+        data = json.loads(request.body.decode())
+    except:
+        return JsonResponse({"status": "fail", "message": "Invalid data"}, status=400)
 
+    password = data.get("password")
+    sign_type = data.get("type")   # prepared / reviewed / approved / general
+
+    # 🔐 Authenticate user
     user = authenticate(request, username=request.user.email, password=password)
 
     if not user:
-        return JsonResponse({"status": "fail"}, status=403)
+        return JsonResponse({
+            "status": "fail",
+            "message": "Incorrect password"
+        }, status=403)
 
+    # ✅ AUTO CREATE ACCESS (FIX)
+    access, created = UserPageAccess.objects.get_or_create(user=user)
+
+    # 🔥 OPTIONAL: SUPERUSER FULL ACCESS
+    if user.is_superuser:
+        return JsonResponse({
+            "status": "ok",
+            "code": generate_sign_code(),
+            "time": timezone.now().strftime("%d %b %Y %I:%M %p"),
+            "user": request.user.get_display_name()
+        })
+
+    # 🔒 PERMISSION CHECK
+    if sign_type == "prepared" and not access.can_sign_prepared:
+        return JsonResponse({
+            "status": "fail",
+            "message": "You are not allowed to sign as Prepared By"
+        }, status=403)
+
+    if sign_type == "reviewed" and not access.can_sign_reviewed:
+        return JsonResponse({
+            "status": "fail",
+            "message": "You are not allowed to sign as Reviewed By"
+        }, status=403)
+
+    if sign_type == "approved" and not access.can_sign_approved:
+        return JsonResponse({
+            "status": "fail",
+            "message": "You are not allowed to sign as Approved By"
+        }, status=403)
+
+    # 🔥 GENERAL SIGN (TEXT DOCS) → allow if any permission
+    if sign_type == "general":
+        if not (access.can_sign_prepared or access.can_sign_reviewed or access.can_sign_approved):
+            return JsonResponse({
+                "status": "fail",
+                "message": "You are not allowed to sign this document"
+            }, status=403)
+
+    # ✅ SUCCESS
     return JsonResponse({
         "status": "ok",
         "code": generate_sign_code(),
@@ -1025,13 +2488,28 @@ def form_list(request):
     if not page_access.can_forms:
         return redirect("denied")
 
-    allowed_folders = page_access.allowed_folders.all()
+    selected_folders = page_access.allowed_folders.all()
 
-    root_folders = (
-        allowed_folders
-        .filter(parent__isnull=True)
-        .prefetch_related("children")
+    def get_all_descendants(folder):
+        children = list(folder.children.all())
+        for child in folder.children.all():
+            children += get_all_descendants(child)
+        return children
+
+    all_allowed = []
+
+    for folder in selected_folders:
+        all_allowed.append(folder)
+        all_allowed += get_all_descendants(folder)
+
+    allowed_folders = FormFolder.objects.filter(
+        id__in=[f.id for f in all_allowed]
     )
+
+    root_folders = FormFolder.objects.filter(
+        id__in=[f.id for f in all_allowed],
+        parent__isnull=True
+    ).prefetch_related("children")
 
     if folder_id:
 
@@ -1040,13 +2518,11 @@ def form_list(request):
         if not selected_folder:
             return redirect("denied")
 
-        # Build breadcrumb path
         current = selected_folder
         while current:
             folder_path.insert(0, current)
             current = current.parent
 
-        # Show only forms inside this folder
         forms = Form.objects.filter(folder=selected_folder)
 
     else:
@@ -1115,26 +2591,11 @@ class FormCreateForm(forms.ModelForm):
 @login_required
 def create_form(request):
 
-    #  Superuser bypass
-    if not request.user.is_superuser:
-
-        page_access, created = UserPageAccess.objects.get_or_create(
-            user=request.user
-        )
-
-        if not page_access.can_forms:
-            return redirect("denied")
-
     folder_id = request.GET.get("folder")
     selected_folder = None
 
     if folder_id:
         selected_folder = FormFolder.objects.filter(id=folder_id).first()
-
-        #  If not superuser, validate folder access
-        if not request.user.is_superuser:
-            if selected_folder not in page_access.allowed_folders.all():
-                return redirect("denied")
 
     if request.method == "POST":
         form = FormCreateForm(request.POST)
@@ -1174,24 +2635,34 @@ def create_form(request):
 
 
 # ------------------------- create form folder ----------------------------
+import json
+from django.http import JsonResponse
+from django.contrib.auth.decorators import login_required
+from .models import FormFolder   # ✅ correct model
+
 @login_required
 def create_form_folder(request):
     if request.method == "POST":
-        name = request.POST.get("name")
-        parent_id = request.GET.get("parent")
+        data = json.loads(request.body)
 
-        parent = None
-        if parent_id:
-            parent = FormFolder.objects.filter(id=parent_id).first()
+        name = data.get('name')
+        parent_id = data.get('parent')
+
+        if parent_id in ["", None, "null"]:
+            parent = None
+        else:
+            parent = FormFolder.objects.get(id=int(parent_id))  # ✅ correct model
 
         if name:
             FormFolder.objects.create(
                 name=name,
-                parent=parent,
-                created_by=request.user
+                created_by=request.user,
+                parent=parent
             )
 
-    return redirect(request.META.get("HTTP_REFERER", "form_list"))
+        return JsonResponse({"success": True})
+
+    return JsonResponse({"success": False})
 
 # ------------------------- delete form folder -----------------------------
 @login_required
@@ -2508,7 +3979,7 @@ def kanban_board(request, form_id):
         "batch",
         "batch__material_batch",
         "created_by",
-        "moved_by"
+        "moved_by",
     ).order_by("-created_at")
 
     # =====================================================
@@ -2523,7 +3994,7 @@ def kanban_board(request, form_id):
         "batch",
         "batch__material_batch",
         "created_by",
-        "moved_by"
+        "moved_by",
     ).prefetch_related(
         "ncr_records"
     ).order_by("-created_at")
@@ -2601,6 +4072,8 @@ def kanban_board(request, form_id):
 def redirect_to_first_stage(request, form_id, batch_id):
 
     form_obj = get_object_or_404(Form, id=form_id)
+    existing_batch = FormBatch.objects.filter(batch_id=batch_id).first()
+    company_name = existing_batch.company_name if existing_batch else "UNKNOWN"
 
     #  Check if batch already exists for this form
     batch = FormBatch.objects.filter(
@@ -2619,6 +4092,7 @@ def redirect_to_first_stage(request, form_id, batch_id):
         batch = FormBatch.objects.create(
             form=form_obj,
             batch_id=batch_id,
+            company_name=company_name,
             current_stage=first_stage,
             created_by=request.user
         )
@@ -3353,6 +4827,7 @@ def delete_form_batch(request):
 #             "can_submit": can_submit,
 #         }
 #     )
+
 @login_required
 def fill_stage(request, form_id, stage_id, part_id=None):
 
@@ -3527,27 +5002,26 @@ def fill_stage(request, form_id, stage_id, part_id=None):
                 try:
                     new_data = json.loads(raw_json) if raw_json else []
 
-                    old_data = []
-                    if existing_submission and name in existing_submission.data:
-                        old_data = existing_submission.data.get(name, [])
-
-                    for row_index, row in enumerate(new_data):
-                        for cell_index, cell in enumerate(row.get("cells", [])):
+                    for row in new_data:
+                        for cell in row.get("cells", []):
 
                             if cell.get("type") == "signature":
 
-                                new_value = cell.get("value")
+                                sig_value = cell.get("value", {})
 
-                                if not (isinstance(new_value, dict) and new_value.get("reference_code")):
+                                if isinstance(sig_value, dict):
 
-                                    if (
-                                        row_index < len(old_data)
-                                        and cell_index < len(old_data[row_index].get("cells", []))
-                                    ):
-                                        old_cell = old_data[row_index]["cells"][cell_index]
+                                    signed_by = sig_value.get("signed_by")
 
-                                        if old_cell.get("type") == "signature":
-                                            cell["value"] = old_cell.get("value", {})
+                                    if signed_by and "@" in signed_by:
+
+                                        user = User.objects.filter(email=signed_by).first()
+
+                                        if user:
+                                            sig_value["signed_by"] = user.get_display_name()
+
+                      
+                                    cell["value"] = sig_value
 
                     submission_data[name] = new_data
 
@@ -3593,38 +5067,235 @@ def fill_stage(request, form_id, stage_id, part_id=None):
                                 part_obj.part_id = new_part_id
                                 part_obj.save(update_fields=["part_id"])
         # -------------------------
-        # Save Submission
+        # UPDATE EXISTING SUBMISSION
         # -------------------------
+
         if existing_submission:
-            
+
             old_stage_name = "-"
 
             if existing_submission.stage:
-                old_stage_name = existing_submission.stage.name
-                
-            existing_submission.data = submission_data
-            existing_submission.submitted_by = request.user
-            existing_submission.submitted_at = timezone.now()
+
+                old_stage_name = (
+                    existing_submission.stage.name
+                )
+
+            # =====================================
+            # GET OLD SAVED DATA
+            # =====================================
+
+            old_data = (
+                existing_submission.data
+                or {}
+            )
+
+            # =====================================
+            # COPY OLD DATA
+            # =====================================
+
+            merged_data = old_data.copy()
+
+            # =====================================
+            # MERGE NEW DATA
+            # =====================================
+
+            for key, value in submission_data.items():
+
+                # =================================
+                # TABLE FIELD
+                # =================================
+
+                if isinstance(value, list):
+
+                    old_table = old_data.get(
+                        key,
+                        []
+                    )
+
+                    merged_rows = []
+
+                    # =============================
+                    # OLD ROW MAP
+                    # =============================
+
+                    old_row_map = {
+
+                        str(row.get("_row_id")): row
+
+                        for row in old_table
+
+                        if isinstance(row, dict)
+                    }
+
+                    current_row_ids = set()
+
+                    # =============================
+                    # LOOP NEW ROWS
+                    # =============================
+
+                    for new_row in value:
+
+                        if not isinstance(new_row, dict):
+
+                            merged_rows.append(new_row)
+
+                            continue
+
+                        row_id = str(
+                            new_row.get("_row_id")
+                        )
+
+                        current_row_ids.add(row_id)
+
+                        old_row = old_row_map.get(
+                            row_id,
+                            {}
+                        )
+
+                        merged_row = old_row.copy()
+
+                        # =========================
+                        # MERGE CELLS
+                        # =========================
+
+                        for col, cell_value in new_row.items():
+
+                            # preserve row id
+                            if col == "_row_id":
+
+                                merged_row[col] = cell_value
+
+                                continue
+
+                            # preserve old value
+                            if cell_value in [
+                                None,
+                                ""
+                            ]:
+
+                                continue
+
+                            # update new value
+                            merged_row[col] = cell_value
+
+                        merged_rows.append(
+                            merged_row
+                        )
+
+                    # =============================
+                    # REMOVE DELETED ROWS
+                    # =============================
+
+                    final_rows = []
+
+                    for row in merged_rows:
+
+                        row_id = str(
+                            row.get("_row_id")
+                        )
+
+                        if row_id in current_row_ids:
+
+                            final_rows.append(row)
+
+                    merged_data[key] = final_rows
+
+                # =================================
+                # FILE FIELD
+                # =================================
+
+                elif isinstance(value, str) and (
+
+                    value.startswith(
+                        "stage_uploads/"
+                    )
+
+                ):
+
+                    merged_data[key] = value
+
+                # =================================
+                # NORMAL FIELD
+                # =================================
+
+                else:
+
+                    if value not in [
+                        None,
+                        "",
+                        []
+                    ]:
+
+                        merged_data[key] = value
+            # =====================================
+            # SAVE FINAL MERGED DATA
+            # =====================================
+
+            existing_submission.data = merged_data
+
+            existing_submission.submitted_by = (
+                request.user
+            )
+
+            existing_submission.submitted_at = (
+                timezone.now()
+            )
+
             existing_submission.save()
-            
+
+            # =====================================
+            # AUDIT LOG
+            # =====================================
+
             AuditLog.objects.create(
+
                 user=request.user,
+
                 role=request.user.role,
+
                 module="Form Submission",
+
                 action="STAGE_SUBMITTED",
+
                 model_name="FormSubmission",
+
                 object_id=str(part_obj.id),
+
                 object_repr=f"{part_obj.batch.batch_id} - {part_obj.part_id}",
+
                 old_data={
+
                     "form": form_obj.name,
+
                     "stage": old_stage_name
                 },
+
                 new_data={
-                    "folder": form_obj.folder.name if form_obj.folder else "-",
+
+                    "folder": (
+                        form_obj.folder.name
+                        if form_obj.folder
+                        else "-"
+                    ),
+
                     "form": form_obj.name,
+
                     "stage": stage.name
                 },
-                ip_address=request.META.get("REMOTE_ADDR")
+
+                ip_address=request.META.get(
+                    "REMOTE_ADDR"
+                )
+            )
+
+            messages.success(
+                request,
+                "Stage updated successfully."
+            )
+
+            return redirect(
+                "kanban_board",
+                form_id=form_obj.id
             )
             
         else:
@@ -3901,8 +5572,9 @@ def verify_signature(request):
     # ---------------------------------------------------------
     # Generate display name
     # ---------------------------------------------------------
-    display_name = user.get_display_name()
-
+    display_name = f"{user.first_name}{user.last_name}".strip()
+    if not display_name:
+        display_name = user.email.split("@")[0]
     # ---------------------------------------------------------
     # Generate unique reference code
     # ---------------------------------------------------------
@@ -3927,9 +5599,9 @@ def verify_signature(request):
 
     return JsonResponse({
         "ok": True,
-        "name": sig.display_name,
+        "user": display_name,
         "time": timezone.localtime(sig.verified_at).strftime("%d %b %Y %H:%M"),
-        "code": sig.reference_code
+        "code": ref_code
     })
 # @login_required
 # @csrf_exempt
@@ -4353,13 +6025,21 @@ def delete_submission(request, flow_id):
 # Delete Stage
 # -----------------------------
 
-@login_required
 def delete_stage(request, stage_id):
-    stage = get_object_or_404(Stage, id=stage_id)
-    form_id = stage.form.id
-    stage.delete()
-    messages.success(request, "Stage deleted successfully!")
-    return redirect('add_stage', form_id=form_id)
+    try:
+        stage = get_object_or_404(Stage, id=stage_id)
+
+        stage.fields.all().delete()
+        stage.sub_stages.all().delete()
+        stage.delete()
+
+        return JsonResponse({"status": "success"})
+
+    except Exception as e:
+        return JsonResponse({
+            "status": "error",
+            "message": str(e)
+        })
 
 
 
@@ -4456,7 +6136,9 @@ def page_settings(request):
             access.can_userdetail = f"userdetail_{user.id}" in request.POST
             access.can_materialBatch = f"materialBatch_{user.id}" in request.POST
             access.can_form_build = f"form_build_{user.id}" in request.POST
+            access.can_fm = f"fm_{user.id}" in request.POST
             access.can_costing_dashboard = f"costing_dash_{user.id}" in request.POST
+            access.can_workflow_access = f"dworkflow_{user.id}" in request.POST
             # ================= MODULE ACCESS =================
             access.can_goods_entry = f"goods_{user.id}" in request.POST
             access.can_tests = f"tests_{user.id}" in request.POST
@@ -4464,6 +6146,12 @@ def page_settings(request):
             access.can_add = f"add_{user.id}" in request.POST
             access.can_edit = f"edit_{user.id}" in request.POST
             access.can_delete = f"delete_{user.id}" in request.POST
+            access.can_signature_btn = f"sbtn_{user.id}" in request.POST
+            access.can_approved_document = f"ad_{user.id}" in request.POST
+            
+            access.can_sign_prepared = f"sign_prepared_{user.id}" in request.POST
+            access.can_sign_reviewed = f"sign_reviewed_{user.id}" in request.POST
+            access.can_sign_approved = f"sign_approved_{user.id}" in request.POST
             
             access.save()
 
@@ -5512,3 +7200,1222 @@ def machine_dashboard(request):
         "selected_machine": selected_machine,
         "active_sessions": active_sessions
     })
+
+
+
+
+
+# ==========================================================
+# ======================================================
+# =========================================================
+
+
+from form_builder.models import FormResponse
+
+@login_required
+def rfq_to_workorder_list(request):
+
+    rfqs = (
+        FormResponse.objects
+        .filter(
+            ref_id__startswith="RFQ",
+            status="WON"
+        )
+        .exclude(company__isnull=True)
+        .exclude(company="")
+        .select_related("form")
+        .order_by("-created_at")
+    )
+
+    return render(
+        request,
+        "qms_app/work_order/rfq_to_workorder_list.html",
+        {
+            "rfqs": rfqs
+        }
+    )
+from django.contrib import messages
+from django.contrib.auth import get_user_model
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import get_object_or_404, redirect, render
+
+from form_builder.models import FormResponse
+from po_qu.models import WorkOrder
+
+
+User = get_user_model()
+
+
+# ==========================================================
+# RFQ → WORKORDER LIST
+# ==========================================================
+
+@login_required
+def rfq_to_workorder_list(request):
+
+    rfqs = (
+        FormResponse.objects
+        .filter(
+            ref_id__startswith="RFQ",
+            status__in=["WON", "WORKORDER_CREATED"]
+        )
+        .exclude(company__isnull=True)
+        .exclude(company="")
+        .select_related("form")
+        .order_by("-created_at")
+    )
+
+    converted_rfqs = WorkOrder.objects.values_list(
+        "rfq_ref",
+        flat=True
+    )
+
+    return render(
+        request,
+        "qms_app/work_order/rfq_to_workorder_list.html",
+        {
+            "rfqs": rfqs,
+            "converted_rfqs": converted_rfqs
+        }
+    )
+
+# ==========================================================
+# WORKORDER LIST
+# ==========================================================
+
+# @login_required
+# def workorder_list(request):
+
+#     workorders = (
+#         WorkOrder.objects
+#         .all()
+#         .order_by("-created_at")
+#     )
+
+#     return render(
+#         request,
+#         "qms_app/work_order/workorder_list.html",
+#         {
+#             "workorders": workorders
+#         }
+#     )
+@login_required
+def workorder_list(request):
+
+    # =====================================================
+    # ONLY APPROVED WORKORDERS
+    # =====================================================
+
+    workorders = (
+
+        WorkOrder.objects
+
+        .filter(
+            approved_by__isnull=False
+        )
+
+        .prefetch_related("items")
+
+        .order_by("-id")
+
+    )
+
+    # =====================================================
+    # STATS
+    # =====================================================
+
+    total_workorders = workorders.count()
+
+    total_parts = sum(
+        wo.items.count()
+        for wo in workorders
+    )
+
+    total_customers = len(
+
+        set(
+            wo.customer_name
+            for wo in workorders
+        )
+
+    )
+
+    # =====================================================
+    # PAGE
+    # =====================================================
+
+    return render(
+
+        request,
+
+        "qms_app/work_order/workorder_list.html",
+
+        {
+
+            "workorders": workorders,
+
+            "total_workorders": total_workorders,
+
+            "total_parts": total_parts,
+
+            "total_customers": total_customers,
+
+        }
+
+    )
+
+
+
+
+
+from po_qu.models import (WorkOrder,WorkOrderItem)
+from qms_app.models import (Form,WorkOrderPartFormSubmission,FormBatch,BatchPart)
+from po_qu.models import RFQ
+from django.shortcuts import (render,get_object_or_404)
+from django.contrib.auth.decorators import (login_required)
+from qms_app.models import FormSubmission
+from django.contrib.auth import get_user_model
+User = get_user_model()
+
+@login_required
+def workorder_kanban(request, wo_id):
+
+    # =====================================================
+    # GET WORK ORDER
+    # =====================================================
+
+    wo = get_object_or_404(
+
+        WorkOrder,
+
+        id=wo_id
+
+    )
+
+    # =====================================================
+    # GET ITEMS
+    # =====================================================
+
+    items = (
+
+        wo.items
+
+        .all()
+
+        .select_related(
+
+            "assigned_to",
+
+            "stage_folder"
+
+        )
+
+    )
+
+    # =====================================================
+    # STAGE COLUMNS
+    # =====================================================
+
+    stages = {
+
+        "INTERNAL_WORKORDER": [],
+
+        "RFQ_PREP": [],
+
+        "RAW_MATERIAL_PO": [],
+
+        "RAW_MATERIAL_RECEIVED": [],
+
+        "PRODUCTION": [],
+
+        "FINAL_INSPECTION": [],
+
+        "DISPATCH": [],
+
+        "POST_DISPATCH": [],
+
+    }
+
+    # =====================================================
+    # PROCESS ITEMS
+    # =====================================================
+
+    for item in items:
+        # =================================================
+        # RFQ DETAILS
+        # =================================================
+
+        item.rfq = None
+
+        if item.rfq_id:
+
+            try:
+
+                item.rfq = RFQ.objects.prefetch_related(
+                    "attachments"
+                ).get(
+
+                    rfq_number=item.rfq_id
+                )
+
+            except RFQ.DoesNotExist:
+
+                pass
+        # =================================================
+        # GET FORMS
+        # =================================================
+
+        forms = Form.objects.filter(
+            folder=item.stage_folder
+        ).distinct()
+
+        # =================================================
+        # GET COMPLETED FORM IDS
+        # =================================================
+
+        completed_form_ids = []
+
+        for form_obj in forms:
+
+            # =========================================
+            # TOTAL STAGES IN FORM
+            # =========================================
+
+            total_stages = (
+                form_obj.stages.count()
+            )
+
+            # =========================================
+            # COMPLETED STAGES
+            # =========================================
+
+            completed_stages = (
+
+                FormSubmission.objects.filter(
+
+                    form=form_obj,
+
+                    part__part_id=item.product_code
+
+                )
+
+                .values("stage")
+
+                .distinct()
+
+                .count()
+
+            )
+            # =========================================
+            # STORE COUNTS FOR TEMPLATE
+            # =========================================
+
+            form_obj.total_stages = (
+                total_stages
+            )
+
+            form_obj.completed_stages = (
+                completed_stages
+            )
+            # =========================================
+            # FULLY COMPLETED
+            # =========================================
+
+            if (
+
+                total_stages > 0
+
+                and
+
+                completed_stages >= total_stages
+
+            ):
+
+                completed_form_ids.append(
+                    form_obj.id
+                )
+        # =================================================
+        # COUNTS
+        # =================================================
+
+        completed_forms = len(
+            completed_form_ids
+        )
+
+        required_forms = forms.count()
+
+        pending_forms = (
+            required_forms - completed_forms
+        )
+
+        # =================================================
+        # CAN MOVE
+        # =================================================
+
+        can_move = (
+
+            required_forms > 0
+
+            and
+
+            completed_forms >= required_forms
+
+        )
+
+        # =================================================
+        # TEMPLATE VALUES
+        # =================================================
+
+        item.forms_list = forms
+
+        item.completed_form_ids = (
+            completed_form_ids
+        )
+
+        item.completed_forms = (
+            completed_forms
+        )
+
+        item.required_forms = (
+            required_forms
+        )
+
+        item.pending_forms = (
+            pending_forms
+        )
+
+        item.can_move = (
+            can_move
+        )
+
+        # =================================================
+        # ADD TO STAGE COLUMN
+        # =================================================
+
+        stages[item.status].append(item)
+
+    # =====================================================
+    # RENDER PAGE
+    # =====================================================
+
+    return render(
+
+        request,
+
+        "qms_app/work_order/workorder_kanban.html",
+
+        {
+
+            "wo": wo,
+
+            "stages": stages,
+            "users": User.objects.all(),
+
+        }
+
+    )
+
+
+
+
+# ================================================================================
+# RFQ ATTACHMENT UPLOAD( if we get any quotation for that rfq it will added here )
+# =========================================================
+
+@login_required
+def upload_rfq_attachment(request, rfq_id):
+
+    rfq = get_object_or_404(
+
+        RFQ,
+
+        id=rfq_id
+    )
+
+    if request.method == "POST":
+
+        uploaded_file = request.FILES.get(
+            "attachment"
+        )
+
+        if uploaded_file:
+
+            RFQAttachment.objects.create(
+
+                rfq=rfq,
+
+                file=uploaded_file,
+
+                uploaded_by=request.user
+
+            )
+
+            messages.success(
+
+                request,
+
+                "Attachment Uploaded Successfully"
+            )
+
+        else:
+
+            messages.error(
+
+                request,
+
+                "No File Selected"
+            )
+
+    return redirect(
+
+        request.META.get(
+            "HTTP_REFERER",
+            "/"
+        )
+
+    )
+
+
+@login_required
+def create_rfq_from_workorder(request, item_id):
+
+    item = get_object_or_404(
+        WorkOrderItem,
+        id=item_id
+    )
+
+    # STORE ITEM ID IN SESSION
+
+    request.session["rfq_workorder_item_id"] = item.id
+
+    # REDIRECT TO REAL RFQ CREATE PAGE
+
+    return redirect("create_rfq")
+
+
+from po_qu.models import RFQ
+
+
+@login_required
+def rfq_detail(request, rfq_id):
+
+    rfq = get_object_or_404(
+        RFQ,
+        id=rfq_id
+    )
+
+    return render(
+        request,
+        "qms_app/work_order/rfq_detail.html",
+        {
+            "rfq": rfq
+        }
+    )
+
+@login_required
+def assign_workorder_user(request):
+
+    if request.method != "POST":
+
+        return JsonResponse({
+
+            "status": "error"
+
+        })
+
+    data = json.loads(request.body)
+
+    item_id = data.get("item_id")
+
+    user_id = data.get("user_id")
+
+    item = get_object_or_404(
+
+        WorkOrderItem,
+
+        id=item_id
+
+    )
+
+    # ============================================
+    # ASSIGN USER
+    # ============================================
+
+    if user_id:
+
+        item.assigned_to = (
+            User.objects.get(id=user_id)
+        )
+
+    else:
+
+        item.assigned_to = None
+
+    item.save()
+
+    return JsonResponse({
+
+        "status": "success"
+
+    })
+
+
+@login_required
+def stage_forms(request, item_id):
+
+    item = get_object_or_404(
+        WorkOrderItem,
+        id=item_id
+    )
+
+    forms = Form.objects.filter(
+        folder=item.stage_folder
+    ).distinct()
+
+    completed_form_ids = (
+        WorkOrderPartFormSubmission.objects.filter(
+            workorder_item=item
+        ).values_list(
+            "form_id",
+            flat=True
+        )
+    )
+
+    return render(
+
+        request,
+
+        "qms_app/work_order/stage_forms.html",
+
+        {
+
+            "item": item,
+
+            "forms": forms,
+
+            "completed_form_ids": completed_form_ids,
+
+        }
+
+    )
+
+
+import json
+
+from django.http import JsonResponse
+
+from qms_app.models import FormFolder
+
+
+@login_required
+def update_workorder_stage(request):
+
+    if request.method == "POST":
+
+        try:
+
+            # =====================================
+            # LOAD JSON DATA
+            # =====================================
+
+            data = json.loads(
+                request.body
+            )
+
+            item_id = data.get(
+                "item_id"
+            )
+
+            new_stage = data.get(
+                "stage"
+            )
+
+            print(
+                "ITEM ID:",
+                item_id
+            )
+
+            print(
+                "NEW STAGE:",
+                new_stage
+            )
+
+            # =====================================
+            # GET ITEM
+            # =====================================
+
+            item = get_object_or_404(
+
+                WorkOrderItem,
+
+                id=item_id
+
+            )
+
+            # =====================================
+            # VALID STAGES
+            # =====================================
+
+            valid_stages = [
+
+                "INTERNAL_WORKORDER",
+
+                "RFQ_PREP",
+
+                "RAW_MATERIAL_PO",
+
+                "RAW_MATERIAL_RECEIVED",
+
+                "PRODUCTION",
+
+                "FINAL_INSPECTION",
+
+                "DISPATCH",
+
+                "POST_DISPATCH",
+
+            ]
+
+            # =====================================
+            # INVALID STAGE
+            # =====================================
+
+            if new_stage not in valid_stages:
+
+                return JsonResponse({
+
+                    "success": False,
+
+                    "error": "Invalid Stage"
+
+                })
+
+            # =====================================
+            # UPDATE STATUS
+            # =====================================
+
+            item.status = new_stage
+
+            # =====================================
+            # MAP STAGE → FOLDER
+            # =====================================
+
+            folder_mapping = {
+
+                "INTERNAL_WORKORDER":
+                    "Internal Workorder",
+
+                "RFQ_PREP":
+                    "RFQ Preparation",
+
+                "RAW_MATERIAL_PO":
+                    "Raw Material Purchase Order",
+
+                "RAW_MATERIAL_RECEIVED":
+                    "Receive Raw material",
+
+                "PRODUCTION":
+                    "Production",
+
+                "FINAL_INSPECTION":
+                    "Final Inspection",
+
+                "DISPATCH":
+                    "Dispatch",
+
+                "POST_DISPATCH":
+                    "Post dispatch & Feed back",
+
+            }
+
+            # =====================================
+            # GET FOLDER NAME
+            # =====================================
+
+            folder_name = folder_mapping.get(
+                new_stage
+            )
+
+            print(
+                "FOLDER NAME:",
+                folder_name
+            )
+
+            # =====================================
+            # GET FOLDER
+            # =====================================
+
+            folder = FormFolder.objects.filter(
+
+                name__iexact=folder_name
+
+            ).first()
+
+            print(
+                "FOUND FOLDER:",
+                folder
+            )
+
+            # =====================================
+            # UPDATE STAGE FOLDER
+            # =====================================
+
+            item.status = new_stage
+            item.stage_folder = folder
+            item.save()
+
+            item.refresh_from_db()
+
+            print(
+                "UPDATED STATUS:",
+                item.status
+            )
+
+            return JsonResponse({
+
+                "success": True,
+
+                "stage": item.status,
+
+                "folder":
+                    folder.name if folder else None
+
+            })
+
+        except Exception as e:
+
+            print(
+                "STAGE UPDATE ERROR:",
+                str(e)
+            )
+
+            return JsonResponse({
+
+                "success": False,
+
+                "error": str(e)
+
+            })
+
+    return JsonResponse({
+
+        "success": False,
+
+        "error": "Invalid Request"
+
+    })
+
+
+
+
+
+
+import uuid
+
+from django.shortcuts import (
+    redirect,
+    get_object_or_404
+)
+
+from django.contrib.auth.decorators import (
+    login_required
+)
+
+from po_qu.models import (
+    WorkOrderItem
+)
+
+from qms_app.models import (
+
+    Form,
+
+    FormBatch,
+
+    BatchPart
+
+)
+
+
+
+# @login_required
+# def start_workorder_form(
+
+#     request,
+
+#     form_id,
+
+#     item_id
+
+# ):
+
+#     # =====================================
+#     # GET FORM
+#     # =====================================
+
+#     form_obj = get_object_or_404(
+
+#         Form,
+
+#         id=form_id
+
+#     )
+
+#     # =====================================
+#     # GET WORKORDER ITEM
+#     # =====================================
+
+#     item = get_object_or_404(
+
+#         WorkOrderItem,
+
+#         id=item_id
+
+#     )
+
+#     # =====================================
+#     # GET FIRST STAGE
+#     # =====================================
+
+#     first_stage = (
+
+#         form_obj.stages
+
+#         .order_by("order")
+
+#         .first()
+
+#     )
+
+#     # =====================================
+#     # NO STAGE
+#     # =====================================
+
+#     if not first_stage:
+
+#         return redirect(
+   
+#             "workorder_kanban",
+
+#             wo_id=item.work_order.id
+
+#         )
+
+#     # =====================================
+#     # PART DISPLAY
+#     # =====================================
+
+#     part_display = item.product_code
+
+#     # =====================================
+#     # CREATE / GET FORM BATCH
+#     # =====================================
+
+#     form_batch, created = (
+
+#         FormBatch.objects.get_or_create(
+
+#             form=form_obj,
+
+#             batch_id=item.work_order.wo_number,
+
+#             defaults={
+
+#                 "company_name":
+#                     item.work_order.customer_name,
+
+#                 "flow_id":
+#                     uuid.uuid4(),
+
+#                 "created_by":
+#                     request.user,
+
+#                 "current_stage":
+#                     first_stage
+
+#             }
+
+#         )
+
+#     )
+
+#     # =====================================
+#     # ALWAYS UPDATE COMPANY NAME
+#     # =====================================
+
+#     form_batch.company_name = (
+#         item.work_order.customer_name
+#     )
+
+#     form_batch.current_stage = (
+#         first_stage
+#     )
+
+#     form_batch.save()
+
+#     # =====================================
+#     # GET EXISTING BATCH PART
+#     # =====================================
+
+#     batch_part = BatchPart.objects.filter(
+
+#         batch=form_batch,
+
+#         part_id=part_display
+
+#     ).first()
+
+#     # =====================================
+#     # CREATE IF NOT EXISTS
+#     # =====================================
+
+#     if not batch_part:
+
+#         batch_part = BatchPart.objects.create(
+
+#             batch=form_batch,
+
+#             part_id=part_display,
+
+#             current_stage=first_stage
+
+#         )
+
+#     # =====================================
+#     # UPDATE IF EXISTS
+#     # =====================================
+
+#     else:
+
+#         batch_part.batch = form_batch
+
+#         batch_part.current_stage = first_stage
+
+#         batch_part.save()
+
+#     # =====================================
+#     # REDIRECT TO fill_stage
+#     # =====================================
+
+#     return redirect(
+
+#         "fill_stage",
+
+#         form_id=form_obj.id,
+
+#         stage_id=first_stage.id,
+
+#         part_id=batch_part.id
+
+#     )
+
+@login_required
+def start_workorder_form(
+
+    request,
+
+    form_id,
+
+    item_id
+
+):
+
+    try:
+
+        import uuid
+
+        # =====================================
+        # GET FORM
+        # =====================================
+
+        form_obj = get_object_or_404(
+
+            Form,
+
+            id=form_id
+
+        )
+
+        # =====================================
+        # GET WORKORDER ITEM
+        # =====================================
+
+        item = get_object_or_404(
+
+            WorkOrderItem,
+
+            id=item_id
+
+        )
+
+        # =====================================
+        # GET FIRST STAGE
+        # =====================================
+
+        first_stage = (
+
+            form_obj.stages
+
+            .order_by("order")
+
+            .first()
+
+        )
+
+        # =====================================
+        # NO STAGE FOUND
+        # =====================================
+
+        if not first_stage:
+
+            messages.error(
+
+                request,
+
+                "No stages found for this form."
+
+            )
+
+            return redirect(
+
+                "workorder_kanban",
+
+                wo_id=item.work_order.id
+
+            )
+
+        # =====================================
+        # PART DISPLAY
+        # =====================================
+
+        part_display = item.product_code
+
+        # =====================================
+        # CREATE / GET FORM BATCH
+        # =====================================
+
+        form_batch, created = (
+
+            FormBatch.objects.get_or_create(
+
+                form=form_obj,
+
+                batch_id=item.work_order.wo_number,
+
+                defaults={
+
+                    "company_name":
+                        item.work_order.customer_name,
+
+                    "flow_id":
+                        uuid.uuid4(),
+
+                    "created_by":
+                        request.user,
+
+                    "current_stage":
+                        first_stage
+
+                }
+
+            )
+
+        )
+
+        # =====================================
+        # UPDATE COMPANY NAME
+        # =====================================
+
+        form_batch.company_name = (
+            item.work_order.customer_name
+        )
+
+        # =====================================
+        # DO NOT RESET CURRENT STAGE
+        # =====================================
+
+        if not form_batch.current_stage:
+
+            form_batch.current_stage = first_stage
+
+        form_batch.save()
+
+        # =====================================
+        # GET EXISTING BATCH PART
+        # =====================================
+
+        batch_part = BatchPart.objects.filter(
+
+            batch=form_batch,
+
+            part_id=part_display
+
+        ).first()
+
+        # =====================================
+        # CREATE NEW PART
+        # =====================================
+
+        if not batch_part:
+
+            batch_part = BatchPart.objects.create(
+
+                batch=form_batch,
+
+                part_id=part_display,
+
+                current_stage=first_stage
+
+            )
+
+        # =====================================
+        # UPDATE EXISTING PART
+        # =====================================
+
+        else:
+
+            batch_part.batch = form_batch
+
+            if not batch_part.current_stage:
+
+                batch_part.current_stage = first_stage
+
+            batch_part.save()
+
+        # =====================================
+        # FINAL SAFETY CHECK
+        # =====================================
+
+        if not batch_part.current_stage:
+
+            batch_part.current_stage = first_stage
+
+            batch_part.save()
+
+        # =====================================
+        # REDIRECT
+        # =====================================
+
+        return redirect(
+
+            "fill_stage",
+
+            form_id=form_obj.id,
+
+            stage_id=batch_part.current_stage.id,
+
+            part_id=batch_part.id
+
+        )
+
+    except Exception as e:
+
+        import traceback
+
+        return HttpResponse(
+
+            f"<h1>ERROR:</h1>"
+            f"<pre>{str(e)}</pre>"
+            f"<hr>"
+            f"<pre>{traceback.format_exc()}</pre>"
+
+        )

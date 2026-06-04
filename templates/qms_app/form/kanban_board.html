@@ -321,7 +321,8 @@ Part ID : {{ part.part_id }}<br>
 {% endif %}
 
 Created By: {{ part.created_by.email }}<br>
-
+Assigned Operator:
+{{ part.workorder_item.assigned_to }}<br>
 {% if part.moved_by %}
 Sent By: {{ part.moved_by.email }}<br>
 {% endif %}

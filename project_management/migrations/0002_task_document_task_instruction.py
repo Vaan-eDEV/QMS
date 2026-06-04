@@ -11,14 +11,5 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.AddField(
-            model_name='task',
-            name='document',
-            field=models.FileField(blank=True, null=True, upload_to=project_management.models.task_document_upload_path),
-        ),
-        migrations.AddField(
-            model_name='task',
-            name='instruction',
-            field=models.TextField(blank=True, null=True),
-        ),
+       
     ]

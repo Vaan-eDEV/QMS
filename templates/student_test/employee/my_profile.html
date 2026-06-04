@@ -1,0 +1,893 @@
+{% extends "base.html" %}
+{% block content %}
+{% load custom_tags %}
+
+<style>
+
+.dashboard-card {
+    border-radius: 14px;
+    background: #fff;
+    padding: 18px;
+    box-shadow: 0 4px 18px rgba(0,0,0,0.06);
+    transition: 0.2s;
+    border:none;
+}
+
+.dashboard-card:hover {
+    transform: translateY(-2px);
+}
+
+.profile-box {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.avatar {
+    width: 55px;
+    height: 55px;
+    border-radius: 50%;
+    background: #eef2ff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+}
+
+.avatar-img {
+    width: 55px;
+    height: 55px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.stat-box {
+    border-radius: 10px;
+    padding: 10px;
+    background: #f8f9fa;
+}
+
+.clean-table td,
+.clean-table th {
+    padding: 12px;
+    font-size: 14px;
+    vertical-align: middle;
+}
+
+.clean-table thead th{
+    background:#f8fafc;
+    border:none;
+    font-weight:600;
+    color:#555;
+}
+
+.clean-table tbody tr{
+    border-bottom:1px solid #f1f1f1;
+}
+
+.clean-table tbody tr:last-child{
+    border-bottom:none;
+}
+
+.badge-soft-success {
+    background:#d1e7dd;
+    color:#0f5132;
+}
+
+.badge-soft-warning {
+    background:#fff3cd;
+    color:#856404;
+}
+
+.badge-soft-primary {
+    background:#cfe2ff;
+    color:#084298;
+}
+
+.badge-soft-danger {
+    background:#f8d7da;
+    color:#842029;
+}
+
+.progress{
+    border-radius:20px;
+    overflow:hidden;
+}
+
+.nav-pills .nav-link{
+    border-radius:30px;
+    font-size:13px;
+    padding:8px 16px;
+    border:none;
+}
+
+.module-title{
+    font-weight:600;
+}
+
+.score-box{
+    font-weight:600;
+    color:#111827;
+}
+
+.result-pass{
+    background:#dcfce7;
+    color:#166534;
+    padding:5px 10px;
+    border-radius:20px;
+    font-size:12px;
+    font-weight:600;
+}
+
+.result-fail{
+    background:#fee2e2;
+    color:#991b1b;
+    padding:5px 10px;
+    border-radius:20px;
+    font-size:12px;
+    font-weight:600;
+}
+
+.deadline{
+    font-size:13px;
+    color:#666;
+}
+
+.training-scroll-box{
+    max-height: 500px;
+    overflow-y: auto;
+    overflow-x: auto;
+    border-radius: 12px;
+}
+
+/* Nice scrollbar */
+
+.training-scroll-box::-webkit-scrollbar{
+    width:8px;
+    height:8px;
+}
+
+.training-scroll-box::-webkit-scrollbar-thumb{
+    background:#cbd5e1;
+    border-radius:10px;
+}
+
+.training-scroll-box::-webkit-scrollbar-track{
+    background:#f8fafc;
+}
+
+.empty-state{
+    padding:40px;
+    text-align:center;
+    color:#888;
+}
+
+</style>
+
+<div class="container-fluid">
+
+<!-- ================= HEADER ================= -->
+
+<div class="dashboard-card mb-3">
+
+    <div class="profile-box">
+
+        <div class="d-flex align-items-center gap-3">
+
+            {% if emp.profile_image %}
+
+                <img src="{{ emp.profile_image.url }}"
+                     class="avatar-img">
+
+            {% else %}
+
+                <div class="avatar">
+
+                    👤
+
+                </div>
+
+            {% endif %}
+
+            <div>
+
+                <h5 class="mb-0">
+
+                    {{ emp.name }}
+
+                </h5>
+
+                <small class="text-muted">
+
+                    {{ emp.emp_id }}
+                    •
+                    {{ emp.department }}
+                    •
+                    {{ emp.role }}
+
+                </small>
+
+            </div>
+
+        </div>
+
+        <span class="badge badge-soft-success px-3 py-2">
+
+            Active
+
+        </span>
+
+    </div>
+
+</div>
+
+<!-- ================= DETAILS ================= -->
+
+<div class="dashboard-card mb-3">
+
+    <h6 class="mb-3">
+
+        My Details
+
+    </h6>
+
+    <div class="row">
+
+        <div class="col-md-3">
+
+            <small class="text-muted">
+
+                Email
+
+            </small>
+
+            <div>
+
+                {{ emp.email }}
+
+            </div>
+
+        </div>
+
+        <div class="col-md-3">
+
+            <small class="text-muted">
+
+                Mobile
+
+            </small>
+
+            <div>
+
+                {{ emp.mobile_number }}
+
+            </div>
+
+        </div>
+
+        <div class="col-md-3">
+
+            <small class="text-muted">
+
+                DOB
+
+            </small>
+
+            <div>
+
+                {{ emp.dob }}
+
+            </div>
+
+        </div>
+
+        <div class="col-md-3">
+
+            <small class="text-muted">
+
+                Joining Date
+
+            </small>
+
+            <div>
+
+                {{ emp.date_of_joining }}
+
+            </div>
+
+        </div>
+
+        <div class="col-md-3 mt-3">
+
+            <small class="text-muted">
+
+                Department
+
+            </small>
+
+            <div>
+
+                {{ emp.department }}
+
+            </div>
+
+        </div>
+
+        <div class="col-md-3 mt-3">
+
+            <small class="text-muted">
+
+                Role
+
+            </small>
+
+            <div>
+
+                {{ emp.role }}
+
+            </div>
+
+        </div>
+
+        <div class="col-md-3 mt-3">
+
+            <small class="text-muted">
+
+                Location
+
+            </small>
+
+            <div>
+
+                {{ emp.work_location }}
+
+            </div>
+
+        </div>
+
+        <div class="col-md-3 mt-3">
+
+            <small class="text-muted">
+
+                Manager
+
+            </small>
+
+            <div>
+
+                {{ emp.reporting_manager }}
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- ================= ADDRESS ================= -->
+
+<div class="dashboard-card mb-3">
+
+    <h6 class="mb-3">
+
+        Address
+
+    </h6>
+
+    <small class="text-muted">
+
+        Current
+
+    </small>
+
+    <div>
+
+        {{ emp.current_address }}
+
+    </div>
+
+    <small class="text-muted mt-3 d-block">
+
+        Permanent
+
+    </small>
+
+    <div>
+
+        {{ emp.permanent_address }}
+
+    </div>
+
+</div>
+
+<!-- ================= CERTIFICATES ================= -->
+
+<div class="dashboard-card mb-3">
+
+    <h6 class="mb-3">
+
+        Certificates
+
+    </h6>
+
+    {% for cert in certificates %}
+
+    <div class="d-flex justify-content-between align-items-center border-bottom py-2">
+
+        <span>
+
+            {{ cert.certificate_name }}
+
+        </span>
+
+        {% if cert.pdf_file %}
+
+            <a href="{{ cert.pdf_file.url }}"
+               target="_blank"
+               class="btn btn-sm btn-outline-primary">
+
+                View
+
+            </a>
+
+        {% elif ".docx" in cert.file.url|lower %}
+
+            <a href="https://view.officeapps.live.com/op/view.aspx?src={{ cert.file.url }}"
+               target="_blank"
+               class="btn btn-sm btn-outline-primary">
+
+                View
+
+            </a>
+
+        {% else %}
+
+            <a href="{{ cert.file.url }}"
+               target="_blank"
+               class="btn btn-sm btn-outline-secondary">
+
+                View
+
+            </a>
+
+        {% endif %}
+
+    </div>
+
+    {% empty %}
+
+    <div class="text-muted text-center py-3">
+
+        No certificates
+
+    </div>
+
+    {% endfor %}
+
+</div>
+
+<!-- ================= TRAINING + RESULTS ================= -->
+
+<div class="dashboard-card mb-3">
+
+    <!-- HEADER -->
+
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-3">
+
+        <div>
+
+            <h5 class="mb-1">
+
+                Training & Results
+
+            </h5>
+
+            <small class="text-muted">
+
+                Employee learning progress and assessments
+
+            </small>
+
+        </div>
+
+        <div style="min-width:220px;">
+
+            <div class="d-flex justify-content-between mb-1">
+
+                <small class="text-muted">
+
+                    Progress
+
+                </small>
+
+                <strong>
+
+                    {{ progress }}%
+
+                </strong>
+
+            </div>
+
+            <div class="progress"
+                 style="height:10px;">
+
+                <div class="progress-bar bg-primary"
+                     style="width:{{ progress }}%">
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- CATEGORY FILTER -->
+
+    <ul class="nav nav-pills mb-4 gap-2">
+
+        <li class="nav-item">
+
+            <button class="nav-link active"
+                    onclick="filterModules('ALL', this)">
+
+                All
+
+            </button>
+
+        </li>
+
+        <li class="nav-item">
+
+            <button class="nav-link"
+                    onclick="filterModules('INDUCTION_TRAINING', this)">
+
+                Induction
+
+            </button>
+
+        </li>
+
+        <li class="nav-item">
+
+            <button class="nav-link"
+                    onclick="filterModules('ROLE_BASED_TRAINING', this)">
+
+                Role Based
+
+            </button>
+
+        </li>
+
+        <li class="nav-item">
+
+            <button class="nav-link"
+                    onclick="filterModules('EXTERNAL_TRAINING', this)">
+
+                External
+
+            </button>
+
+        </li>
+
+    </ul>
+
+    <!-- TABLE -->
+
+   <div class="table-responsive training-scroll-box">
+
+        <table class="table clean-table align-middle">
+
+            <thead>
+
+                <tr>
+
+                    <th>#</th>
+                    <th>Category</th>
+                    <th>Module</th>
+                    <th>Training Type</th>
+                    <th>Status</th>
+                    <th>Score</th>
+                    <th>Result</th>
+                    <th>Deadline</th>
+                    <th>Action</th>
+
+                </tr>
+
+            </thead>
+
+            <tbody>
+
+            {% for m in materials %}
+
+            {% with progress=progress_map|get_item:m.id %}
+
+            <tr class="module-row"
+                data-category="{{ m.test.category }}">
+
+                <!-- INDEX -->
+
+                <td>
+
+                    {{ forloop.counter }}
+
+                </td>
+
+                <!-- CATEGORY -->
+
+                <td>
+
+                    {% if m.test.category == "INDUCTION_TRAINING" %}
+
+                        <span class="badge bg-primary">
+
+                            Induction
+
+                        </span>
+
+                    {% elif m.test.category == "ROLE_BASED_TRAINING" %}
+
+                        <span class="badge bg-success">
+
+                            Role Based
+
+                        </span>
+
+                    {% elif m.test.category == "EXTERNAL_TRAINING" %}
+
+                        <span class="badge bg-warning text-dark">
+
+                            External
+
+                        </span>
+
+                    {% endif %}
+
+                </td>
+
+                
+
+                <!-- MODULE -->
+
+                <td>
+
+                    <div class="module-title">
+
+                        {{ m.title }}
+
+                    </div>
+
+                </td>
+
+                <!-- TRAINING TYPE -->
+
+                <td>
+
+                    <span class="badge bg-dark">
+
+                         {{ m.test.get_training_type_display }}
+
+                    </span>
+
+                </td>
+
+                
+
+                <!-- STATUS -->
+
+                <td>
+
+                    {% if progress and progress.completed %}
+
+                        <span class="badge badge-soft-success">
+
+                            Completed
+
+                        </span>
+
+                    {% elif progress %}
+
+                        <span class="badge badge-soft-primary">
+
+                            In Progress
+
+                        </span>
+
+                    {% else %}
+
+                        <span class="badge badge-soft-warning">
+
+                            Pending
+
+                        </span>
+
+                    {% endif %}
+
+                </td>
+
+                <!-- SCORE -->
+
+                <td>
+
+                    {% with found=0 %}
+
+                    {% for r in results %}
+
+                        {% if r.test.id == m.test.id %}
+
+                            <div class="score-box">
+
+                                {{ r.score }}/{{ r.total }}
+
+                            </div>
+
+                        {% endif %}
+
+                    {% empty %}
+
+                        —
+
+                    {% endfor %}
+
+                    {% endwith %}
+
+                </td>
+
+                <!-- RESULT -->
+
+                <td>
+
+                    {% for r in results %}
+
+                        {% if r.test.id == m.test.id %}
+
+                            {% if r.status == "PASS" %}
+
+                                <span class="result-pass">
+
+                                    PASS
+
+                                </span>
+
+                            {% else %}
+
+                                <span class="result-fail">
+
+                                    FAIL
+
+                                </span>
+
+                            {% endif %}
+
+                        {% endif %}
+
+                    {% empty %}
+
+                        —
+
+                    {% endfor %}
+
+                </td>
+
+                <!-- DEADLINE -->
+
+                <td>
+
+                    <div class="deadline">
+
+                        {{ m.end_date|date:"d M Y" }}
+
+                    </div>
+
+                </td>
+
+                <!-- ACTION -->
+
+                <td>
+
+                    {% if progress and progress.completed %}
+
+                        <button class="btn btn-sm btn-outline-success">
+
+                            Completed
+
+                        </button>
+
+                    {% elif progress %}
+
+                        <a href="{% url 'study_material_view' m.test.id %}"
+                           class="btn btn-sm btn-primary">
+
+                            Continue
+
+                        </a>
+
+                    {% else %}
+
+                        <a href="{% url 'study_material_view' m.test.id %}"
+                           class="btn btn-sm btn-warning">
+
+                            Start
+
+                        </a>
+
+                    {% endif %}
+
+                </td>
+
+            </tr>
+
+            {% endwith %}
+
+            {% empty %}
+
+            <tr>
+
+                <td colspan="9"
+                    class="empty-state">
+
+                    No training modules available
+
+                </td>
+
+            </tr>
+
+            {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+</div>
+
+</div>
+
+<!-- ================= FILTER SCRIPT ================= -->
+
+<script>
+
+function filterModules(category, btn){
+
+    // REMOVE ACTIVE
+
+    document.querySelectorAll(".nav-link")
+    .forEach(tab => {
+
+        tab.classList.remove("active");
+
+    });
+
+    // ADD ACTIVE
+
+    btn.classList.add("active");
+
+    // FILTER ROWS
+
+    let rows = document.querySelectorAll(".module-row");
+
+    rows.forEach(row => {
+
+        if(
+            category === "ALL"
+            ||
+            row.dataset.category === category
+        ){
+
+            row.style.display = "";
+
+        }else{
+
+            row.style.display = "none";
+
+        }
+
+    });
+
+}
+
+</script>
+
+{% endblock %}

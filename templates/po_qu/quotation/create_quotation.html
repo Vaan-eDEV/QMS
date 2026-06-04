@@ -1,0 +1,276 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<div class="container-fluid">
+
+    <h3 class="mb-3">
+        {% if edit_mode %} Edit Quotation {% else %} Create Quotation {% endif %}
+    </h3>
+
+    <form method="POST">
+        {% csrf_token %}
+
+        <!-- ================= DROPDOWN ================= -->
+        <div class="card mb-3 p-3">
+            <label><b>Select Costing (Company + RFQ)</b></label>
+
+            <select id="rfqSelect" class="form-control">
+                <option value="">-- Select --</option>
+
+                {% for item in rfq_list %}
+                <option value="{{ item.ref_id }}|{{ item.company }}"
+                    {% if item.ref_id == selected_ref and item.company == selected_company %}selected{% endif %}>
+                    {{ item.company }} - {{ item.ref_id }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <!-- ================= BASIC ================= -->
+        <div class="card mb-3 p-3">
+            <div class="row">
+
+                <div class="col-md-4">
+                    <label>Date</label>
+                    <input type="date" name="date" class="form-control"
+                        value="{% if quotation %}{{ quotation.date|date:'Y-m-d' }}{% endif %}">
+                </div>
+
+                <div class="col-md-4">
+                    <label>Reference</label>
+                    <input type="text" name="reference" class="form-control"
+                        value="{% if quotation %}{{ quotation.reference }}{% else %}{{ prefill.reference }}{% endif %}">
+                </div>
+
+                <div class="col-md-4">
+                    <label>Subject</label>
+                    <input type="text" name="subject" class="form-control"
+                        value="{% if quotation %}{{ quotation.subject }}{% else %}{{ prefill.subject }}{% endif %}">
+                </div>
+
+            </div>
+        </div>
+
+        <!-- ================= CUSTOMER ================= -->
+        <div class="card mb-3 p-3">
+            <h5>Customer Details</h5>
+
+            <input name="customer_name" class="form-control mb-2"
+                placeholder="Customer Name"
+                value="{% if quotation %}{{ quotation.customer_name }}{% else %}{{ prefill.customer_name }}{% endif %}">
+
+            <input name="customer_email" class="form-control mb-2"
+                placeholder="Email"
+                value="{% if quotation %}{{ quotation.customer_email }}{% else %}{{ prefill.customer_email }}{% endif %}">
+
+            <input name="customer_phone" class="form-control mb-2"
+                placeholder="Phone"
+                value="{% if quotation %}{{ quotation.customer_phone }}{% else %}{{ prefill.customer_phone }}{% endif %}">
+
+            <textarea name="customer_address" class="form-control mb-2"
+                placeholder="Address">{% if quotation %}{{ quotation.customer_address }}{% else %}{{ prefill.customer_address }}{% endif %}</textarea>
+
+            <input name="customer_gstin" class="form-control"
+                placeholder="GSTIN"
+                value="{% if quotation %}{{ quotation.customer_gstin }}{% else %}{{ prefill.customer_gstin }}{% endif %}">
+        </div>
+
+        <!-- ================= ITEMS ================= -->
+        <div class="card mb-3 p-3">
+            <h5>Items</h5>
+
+            <table class="table table-bordered" id="itemsTable">
+                <thead class="table-light">
+                    <tr>
+                        <th>Part Id</th>
+                        <th>Part Name</th>
+                        <th>Qty</th>
+                        <th>UOM</th>
+                        <th>Rate</th>
+                        <th>Amount</th>
+                        <th></th>
+                    </tr>
+                </thead>
+
+                <tbody>
+
+                {% if prefill.items %}
+                    {% for item in prefill.items %}
+                    <tr>
+                        <td><input name="part_id[]" value="{{ item.part_id }}" class="form-control"></td>
+                        <td><input name="part_name[]" value="{{ item.part_name }}" class="form-control"></td>
+                        <td><input type="number" name="quantity[]" value="{{ item.quantity }}" class="form-control"></td>
+                        <td><input name="unit[]" value="{{ item.unit }}" class="form-control"></td>
+                        <td><input type="number" step="0.01" name="rate[]" value="{{ item.rate }}" class="form-control"></td>
+                        <td><input name="amount[]" class="form-control" readonly></td>
+                        <td><button type="button" class="btn btn-danger btn-sm" onclick="removeRow(this)">X</button></td>
+                    </tr>
+                    {% endfor %}
+
+                {% elif quotation and quotation.items.all %}
+                    {% for item in quotation.items.all %}
+                    <tr>
+                        <td><input name="part_id[]" value="{{ item.part_id }}" class="form-control"></td>
+                        <td><input name="part_name[]" value="{{ item.part_name }}" class="form-control"></td>
+                        <td><input type="number" name="quantity[]" value="{{ item.quantity }}" class="form-control"></td>
+                        <td><input name="unit[]" value="{{ item.unit }}" class="form-control"></td>
+                        <td><input type="number" step="0.01" name="rate[]" value="{{ item.rate }}" class="form-control"></td>
+                        <td><input name="amount[]" value="{{ item.amount }}" class="form-control" readonly></td>
+                        <td><button type="button" class="btn btn-danger btn-sm" onclick="removeRow(this)">X</button></td>
+                    </tr>
+                    {% endfor %}
+
+                {% else %}
+                    <tr>
+                        <td><input name="part_id[]" class="form-control"></td>
+                        <td><input name="part_name[]" class="form-control"></td>
+                        <td><input type="number" name="quantity[]" class="form-control"></td>
+                        <td><input name="unit[]" class="form-control"></td>
+                        <td><input type="number" step="0.01" name="rate[]" class="form-control"></td>
+                        <td><input name="amount[]" class="form-control" readonly></td>
+                        <td><button type="button" class="btn btn-danger btn-sm" onclick="removeRow(this)">X</button></td>
+                    </tr>
+                {% endif %}
+
+                </tbody>
+            </table>
+
+            <button type="button" class="btn btn-primary btn-sm" onclick="addRow()">+ Add Item</button>
+        </div>
+
+        <!-- ================= TAX ================= -->
+        <div class="card p-3 mb-3">
+            <div class="row">
+                <div class="col-md-3">
+                    <label>Discount %</label>
+                    <input name="discount" class="form-control"
+                        value="{% if quotation %}{{ quotation.discount_percentage }}{% else %}0{% endif %}">
+                </div>
+                <div class="col-md-3">
+                    <label>CGST %</label>
+                    <input name="cgst" class="form-control"
+                        value="{% if quotation %}{{ quotation.cgst_percentage }}{% else %}0{% endif %}">
+                </div>
+                <div class="col-md-3">
+                    <label>SGST %</label>
+                    <input name="sgst" class="form-control"
+                        value="{% if quotation %}{{ quotation.sgst_percentage }}{% else %}0{% endif %}">
+                </div>
+                <div class="col-md-3">
+                    <label>IGST %</label>
+                    <input name="igst" class="form-control"
+                        value="{% if quotation %}{{ quotation.igst_percentage }}{% else %}0{% endif %}">
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= TOTAL ================= -->
+        <div class="card p-3 mb-3">
+            <h5>Totals</h5>
+            <p><strong>Subtotal:</strong> ₹ <span id="subtotal">0.00</span></p>
+            <p><strong>Discount:</strong> ₹ <span id="discount_amount">0.00</span></p>
+            <p><strong>CGST:</strong> ₹ <span id="cgst_amount">0.00</span></p>
+            <p><strong>SGST:</strong> ₹ <span id="sgst_amount">0.00</span></p>
+            <p><strong>IGST:</strong> ₹ <span id="igst_amount">0.00</span></p>
+            <hr>
+            <p><strong>Grand Total:</strong> ₹ <span id="grand_total">0.00</span></p>
+        </div>
+
+        <button class="btn btn-success">
+            {% if edit_mode %} Update Quotation {% else %} Save {% endif %}
+        </button>
+
+    </form>
+
+</div>
+
+<!-- ================= DROPDOWN SCRIPT ================= -->
+<script>
+document.getElementById("rfqSelect").addEventListener("change", function(){
+
+    let val = this.value;
+    if(!val) return;
+
+    let [ref, company] = val.split("|");
+
+    let url = "{% url 'po_qu:create_quotation' %}";
+
+    window.location.href = `${url}?ref_id=${ref}&company=${company}`;
+});
+</script>
+
+<!-- ================= CALCULATION SCRIPT ================= -->
+<script>
+
+function calcRow(row){
+    let q = parseFloat(row.querySelector('[name="quantity[]"]').value) || 0;
+    let r = parseFloat(row.querySelector('[name="rate[]"]').value) || 0;
+    row.querySelector('[name="amount[]"]').value = (q * r).toFixed(2);
+}
+
+function calcTotal(){
+    let subtotal = 0;
+
+    document.querySelectorAll('[name="amount[]"]').forEach(i=>{
+        subtotal += parseFloat(i.value) || 0;
+    });
+
+    let discount = parseFloat(document.querySelector('[name="discount"]').value) || 0;
+    let cgst = parseFloat(document.querySelector('[name="cgst"]').value) || 0;
+    let sgst = parseFloat(document.querySelector('[name="sgst"]').value) || 0;
+    let igst = parseFloat(document.querySelector('[name="igst"]').value) || 0;
+
+    let discount_amount = subtotal * (discount / 100);
+    let taxable = subtotal - discount_amount;
+
+    let cgst_amount = taxable * (cgst / 100);
+    let sgst_amount = taxable * (sgst / 100);
+    let igst_amount = taxable * (igst / 100);
+
+    let grand_total = taxable + cgst_amount + sgst_amount + igst_amount;
+
+    document.getElementById("subtotal").innerText = subtotal.toFixed(2);
+    document.getElementById("discount_amount").innerText = discount_amount.toFixed(2);
+    document.getElementById("cgst_amount").innerText = cgst_amount.toFixed(2);
+    document.getElementById("sgst_amount").innerText = sgst_amount.toFixed(2);
+    document.getElementById("igst_amount").innerText = igst_amount.toFixed(2);
+    document.getElementById("grand_total").innerText = grand_total.toFixed(2);
+}
+
+function addRow(){
+    let table = document.querySelector("#itemsTable tbody");
+    let row = table.insertRow();
+
+    row.innerHTML = `
+        <td><input name="part_id[]" class="form-control"></td>
+        <td><input name="part_name[]" class="form-control"></td>
+        <td><input type="number" name="quantity[]" class="form-control"></td>
+        <td><input name="unit[]" class="form-control"></td>
+        <td><input type="number" name="rate[]" class="form-control"></td>
+        <td><input name="amount[]" class="form-control" readonly></td>
+        <td><button type="button" class="btn btn-danger btn-sm" onclick="removeRow(this)">X</button></td>
+    `;
+}
+
+function removeRow(btn){
+    btn.closest("tr").remove();
+    calcTotal();
+}
+
+document.addEventListener("input", function(e){
+    if (e.target.name === "quantity[]" || e.target.name === "rate[]") {
+        calcRow(e.target.closest("tr"));
+    }
+    calcTotal();
+});
+
+document.addEventListener("DOMContentLoaded", function(){
+    document.querySelectorAll("#itemsTable tbody tr").forEach(row=>{
+        calcRow(row);
+    });
+    calcTotal();
+});
+
+</script>
+
+{% endblock %}

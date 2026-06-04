@@ -97,8 +97,6 @@ body {
 
         <div class="col"><div class="kpi"><div class="kpi-title">Documents</div><div class="kpi-value">{{ total_documents }}</div></div></div>
 
-        <div class="col"><div class="kpi"><div class="kpi-title">Revisions</div><div class="kpi-value">{{ revised_this_month }}</div></div></div>
-
         <div class="col"><div class="kpi risk-low"><div class="kpi-title">Training</div><div class="kpi-value">{{ training_compliance }}%</div></div></div>
 
     </div>
@@ -151,6 +149,9 @@ body {
                     <input type="text" name="user" class="form-control mb-2"
                            placeholder="User email">
 
+                    <input type="text" name="company" class="form-control mb-2"
+                            placeholder="Company Name"> 
+
                     <input type="text" name="batch_id" class="form-control mb-2"
                            placeholder="Batch ID">
 
@@ -166,6 +167,8 @@ body {
                 <div class="search-result-container">
                     {% if search_result %}
                         <strong>Company:</strong> {{ search_result.company_name }}<br>
+                        <strong>Folder:</strong>{{ search_result.folder_name }}<br>
+                        <strong>form:</strong>{{ search_result.form_name }}
                         <strong>Stage:</strong> {{ search_result.stage_name }} <br>
                         <strong>Status:</strong> {{ search_result.status }} <br>
                         <strong>Created By:</strong> {{ search_result.created_by }} <br>

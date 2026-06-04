@@ -1,0 +1,380 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="container mt-4">
+
+    <h2>
+        Edit Question
+    </h2>
+
+    <form method="POST"
+          enctype="multipart/form-data"
+          class="card p-4 shadow-sm">
+
+        {% csrf_token %}
+
+        <!-- QUESTION -->
+        <div class="mb-3">
+
+            <label class="form-label">
+                Question
+            </label>
+
+            <input type="text"
+                   name="question_text"
+                   class="form-control"
+                   value="{{ question.question_text }}"
+                   required>
+
+        </div>
+
+        <!-- QUESTION TYPE -->
+        <div class="mb-3">
+
+            <label class="form-label">
+                Question Type
+            </label>
+
+            <select name="question_type"
+                    class="form-select"
+                    id="questionType">
+
+                <option value="MCQ"
+                    {% if question.question_type == "MCQ" %}
+                    selected
+                    {% endif %}>
+                    Choose the Best Answer
+                </option>
+
+                <option value="FILL"
+                    {% if question.question_type == "FILL" %}
+                    selected
+                    {% endif %}>
+                    Fill in the Blank
+                </option>
+
+                <option value="BOOL"
+                    {% if question.question_type == "BOOL" %}
+                    selected
+                    {% endif %}>
+                    Yes / No
+                </option>
+
+            </select>
+
+        </div>
+
+        <!-- ================= MCQ ================= -->
+
+        <div id="mcqSection">
+
+            <!-- OPTION A -->
+            <div class="mb-3">
+
+                <label>Option A</label>
+
+                <input type="text"
+                       name="option_a"
+                       class="form-control"
+                       value="{{ question.option_a }}">
+
+                <input type="file"
+                       name="option_a_image"
+                       class="form-control mt-1"
+                       onchange="previewImage(event,'previewA')">
+
+                {% if question.option_a_image %}
+                    <img src="{{ question.option_a_image.url }}"
+                         id="previewA"
+                         style="max-width:100px; margin-top:10px;">
+                {% else %}
+                    <img id="previewA"
+                         style="max-width:100px; margin-top:10px; display:none;">
+                {% endif %}
+
+            </div>
+
+            <!-- OPTION B -->
+            <div class="mb-3">
+
+                <label>Option B</label>
+
+                <input type="text"
+                       name="option_b"
+                       class="form-control"
+                       value="{{ question.option_b }}">
+
+                <input type="file"
+                       name="option_b_image"
+                       class="form-control mt-1"
+                       onchange="previewImage(event,'previewB')">
+
+                {% if question.option_b_image %}
+                    <img src="{{ question.option_b_image.url }}"
+                         id="previewB"
+                         style="max-width:100px; margin-top:10px;">
+                {% else %}
+                    <img id="previewB"
+                         style="max-width:100px; margin-top:10px; display:none;">
+                {% endif %}
+
+            </div>
+
+            <!-- OPTION C -->
+            <div class="mb-3">
+
+                <label>Option C</label>
+
+                <input type="text"
+                       name="option_c"
+                       class="form-control"
+                       value="{{ question.option_c }}">
+
+                <input type="file"
+                       name="option_c_image"
+                       class="form-control mt-1"
+                       onchange="previewImage(event,'previewC')">
+
+                {% if question.option_c_image %}
+                    <img src="{{ question.option_c_image.url }}"
+                         id="previewC"
+                         style="max-width:100px; margin-top:10px;">
+                {% else %}
+                    <img id="previewC"
+                         style="max-width:100px; margin-top:10px; display:none;">
+                {% endif %}
+
+            </div>
+
+            <!-- OPTION D -->
+            <div class="mb-3">
+
+                <label>Option D</label>
+
+                <input type="text"
+                       name="option_d"
+                       class="form-control"
+                       value="{{ question.option_d }}">
+
+                <input type="file"
+                       name="option_d_image"
+                       class="form-control mt-1"
+                       onchange="previewImage(event,'previewD')">
+
+                {% if question.option_d_image %}
+                    <img src="{{ question.option_d_image.url }}"
+                         id="previewD"
+                         style="max-width:100px; margin-top:10px;">
+                {% else %}
+                    <img id="previewD"
+                         style="max-width:100px; margin-top:10px; display:none;">
+                {% endif %}
+
+            </div>
+
+            <!-- CORRECT OPTION -->
+            <div class="mb-3">
+
+                <label>
+                    Correct Option
+                </label>
+
+                <select name="correct_option"
+                        class="form-select">
+
+                    <option value="A"
+                        {% if question.correct_option == "A" %}
+                        selected
+                        {% endif %}>
+                        Correct A
+                    </option>
+
+                    <option value="B"
+                        {% if question.correct_option == "B" %}
+                        selected
+                        {% endif %}>
+                        Correct B
+                    </option>
+
+                    <option value="C"
+                        {% if question.correct_option == "C" %}
+                        selected
+                        {% endif %}>
+                        Correct C
+                    </option>
+
+                    <option value="D"
+                        {% if question.correct_option == "D" %}
+                        selected
+                        {% endif %}>
+                        Correct D
+                    </option>
+
+                </select>
+
+            </div>
+
+        </div>
+
+        <!-- ================= FILL ================= -->
+
+        <div id="fillSection"
+             style="display:none;">
+
+            <div class="mb-3">
+
+                <label>
+                    Correct Answer
+                </label>
+
+                <input type="text"
+                       name="correct_answer_text"
+                       class="form-control"
+                       value="{{ question.correct_answer_text }}">
+
+            </div>
+
+        </div>
+
+        <!-- ================= BOOL ================= -->
+
+        <div id="boolSection"
+             style="display:none;">
+
+            <div class="mb-3">
+
+                <label>
+                    Correct Answer
+                </label>
+
+                <select name="correct_boolean"
+                        class="form-select">
+
+                    <option value="True"
+                        {% if question.correct_boolean %}
+                        selected
+                        {% endif %}>
+                        Yes
+                    </option>
+
+                    <option value="False"
+                        {% if not question.correct_boolean %}
+                        selected
+                        {% endif %}>
+                        No
+                    </option>
+
+                </select>
+
+            </div>
+
+        </div>
+
+        <!-- ACTIONS -->
+
+        <div class="d-flex gap-2">
+
+            <button type="submit"
+                    class="btn btn-success">
+
+                Update Question
+
+            </button>
+
+            <a href="{% url 'edit_test' question.test.id %}"
+               class="btn btn-secondary">
+
+                Cancel
+
+            </a>
+
+        </div>
+
+    </form>
+
+</div>
+
+<!-- ================= JS ================= -->
+
+<script>
+
+// ================= TOGGLE =================
+
+function toggleSections(){
+
+    let type =
+        document.getElementById(
+            "questionType"
+        ).value;
+
+    document.getElementById(
+        "mcqSection"
+    ).style.display = "none";
+
+    document.getElementById(
+        "fillSection"
+    ).style.display = "none";
+
+    document.getElementById(
+        "boolSection"
+    ).style.display = "none";
+
+    if(type === "MCQ"){
+
+        document.getElementById(
+            "mcqSection"
+        ).style.display = "block";
+    }
+
+    else if(type === "FILL"){
+
+        document.getElementById(
+            "fillSection"
+        ).style.display = "block";
+    }
+
+    else if(type === "BOOL"){
+
+        document.getElementById(
+            "boolSection"
+        ).style.display = "block";
+    }
+}
+
+document.getElementById(
+    "questionType"
+).addEventListener(
+    "change",
+    toggleSections
+);
+
+toggleSections();
+
+// ================= IMAGE PREVIEW =================
+
+function previewImage(
+    event,
+    previewId
+){
+
+    const file =
+        event.target.files[0];
+
+    const preview =
+        document.getElementById(
+            previewId
+        );
+
+    if(file){
+
+        preview.src =
+            URL.createObjectURL(file);
+
+        preview.style.display =
+            "block";
+    }
+}
+
+</script>
+
+{% endblock %}

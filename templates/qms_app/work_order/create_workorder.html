@@ -1,0 +1,286 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="container-fluid py-4">
+
+    <!-- PAGE HEADER -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+
+        <div>
+
+            <h2 class="fw-bold mb-1">
+                Create Work Order
+            </h2>
+
+            <p class="text-muted mb-0">
+                Convert RFQ into Manufacturing Work Order
+            </p>
+
+        </div>
+
+        <a href="{% url 'rfq_to_workorder_list' %}"
+           class="btn btn-outline-dark rounded-3">
+
+            ← Back
+
+        </a>
+
+    </div>
+
+
+    <!-- FORM -->
+    <form method="POST">
+
+        {% csrf_token %}
+
+        <div class="row g-4">
+
+            <!-- LEFT SIDE -->
+            <div class="col-lg-4">
+
+                <!-- RFQ DETAILS -->
+                <div class="card border-0 shadow-sm rounded-4 mb-4">
+
+                    <div class="card-body p-4">
+
+                        <h5 class="fw-bold mb-4">
+                            RFQ Details
+                        </h5>
+
+                        <div class="mb-4">
+
+                            <label class="text-muted small d-block mb-1">
+                                RFQ ID
+                            </label>
+
+                            <div class="fs-5 fw-semibold">
+                                {{ rfq.ref_id }}
+                            </div>
+
+                        </div>
+
+                        <div class="mb-4">
+
+                            <label class="text-muted small d-block mb-1">
+                                Company
+                            </label>
+
+                            <div class="fs-5 fw-semibold">
+                                {{ rfq.company }}
+                            </div>
+
+                        </div>
+
+                        <div>
+
+                            <label class="text-muted small d-block mb-1">
+                                Created Date
+                            </label>
+
+                            <div>
+                                {{ rfq.created_at }}
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <!-- INFO CARD -->
+                <div class="card border-0 shadow-sm rounded-4">
+
+                    <div class="card-body p-4">
+
+                        <div class="d-flex align-items-start">
+
+                            <div class="me-3">
+
+                                <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center"
+                                     style="width:50px;height:50px;">
+
+                                    <i class="fas fa-info"></i>
+
+                                </div>
+
+                            </div>
+
+                            <div>
+
+                                <h6 class="fw-bold">
+                                    Next Step
+                                </h6>
+
+                                <p class="text-muted mb-0">
+
+                                    After creating the Work Order,
+                                    you can add unlimited Part IDs
+                                    and assign operators individually.
+
+                                </p>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- RIGHT SIDE -->
+            <div class="col-lg-8">
+
+                <div class="card border-0 shadow-sm rounded-4">
+
+                    <div class="card-body p-4">
+
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+
+                            <div>
+
+                                <h4 class="fw-bold mb-1">
+                                    Work Order Details
+                                </h4>
+
+                                <p class="text-muted mb-0">
+                                    Create production work order header
+                                </p>
+
+                            </div>
+
+                            <span class="badge bg-success fs-6 px-3 py-2">
+
+                                RFQ WON
+
+                            </span>
+
+                        </div>
+
+
+                        <div class="row g-4">
+
+                            <!-- WORKORDER ID -->
+                            <div class="col-md-6">
+
+                                <label class="form-label fw-semibold">
+                                    Work Order ID
+                                </label>
+
+                                <input type="text"
+                                       name="workorder_id"
+                                       value="{{ auto_workorder_id }}"
+                                       class="form-control form-control-lg rounded-3"
+                                       required>
+
+                            </div>
+
+
+                            <!-- PRIORITY -->
+                            <div class="col-md-6">
+
+                                <label class="form-label fw-semibold">
+                                    Priority
+                                </label>
+
+                                <select name="priority"
+                                        class="form-select form-select-lg rounded-3">
+
+                                    <option value="LOW">
+                                        Low
+                                    </option>
+
+                                    <option value="MEDIUM" selected>
+                                        Medium
+                                    </option>
+
+                                    <option value="HIGH">
+                                        High
+                                    </option>
+
+                                </select>
+
+                            </div>
+
+
+                            <!-- DELIVERY DATE -->
+                            <div class="col-md-6">
+
+                                <label class="form-label fw-semibold">
+                                    Delivery Date
+                                </label>
+
+                                <input type="date"
+                                       name="delivery_date"
+                                       class="form-control form-control-lg rounded-3">
+
+                            </div>
+
+
+                            <!-- STATUS -->
+                            <div class="col-md-6">
+
+                                <label class="form-label fw-semibold">
+                                    Work Order Status
+                                </label>
+
+                                <input type="text"
+                                       class="form-control form-control-lg rounded-3"
+                                       value="OPEN"
+                                       readonly>
+
+                            </div>
+
+
+                            <!-- REMARKS -->
+                            <div class="col-12">
+
+                                <label class="form-label fw-semibold">
+                                    Remarks
+                                </label>
+
+                                <textarea name="remarks"
+                                          rows="5"
+                                          class="form-control rounded-3"
+                                          placeholder="Production notes, customer remarks, special instructions..."></textarea>
+
+                            </div>
+
+                        </div>
+
+
+                        <!-- ACTIONS -->
+                        <div class="d-flex justify-content-end gap-3 mt-5">
+
+                            <a href="{% url 'rfq_to_workorder_list' %}"
+                               class="btn btn-light border px-4 py-2 rounded-3">
+
+                                Cancel
+
+                            </a>
+
+                            <button class="btn btn-success px-5 py-2 rounded-3">
+
+                                Create Work Order
+
+                            </button>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </form>
+
+</div>
+
+{% endblock %}

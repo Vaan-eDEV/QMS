@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="container mt-5 text-center">
+
+    <div class="card p-4 shadow-sm" style="max-width: 500px; margin:auto;">
+
+        <h4 class="mb-3 text-warning">⏳ Waiting for Approval</h4>
+
+        <p class="text-muted">
+            Your employee profile is created but not approved yet.
+        </p>
+
+        <p class="text-muted">
+            Please wait for admin approval.
+        </p>
+
+        <hr>
+
+        <a href="{% url 'logout' %}" class="btn btn-danger">
+            Logout
+        </a>
+
+    </div>
+
+</div>
+
+{% endblock %}

@@ -1,19 +1,136 @@
 {% extends "base.html" %}
 {% block content %}
+{% load custom_tags %}
+
+<style>
+.table-scroll {
+    overflow-x: auto;
+    width: 100%;
+}
+.table-scroll table {
+    min-width: 1600px;
+}
+
+.dynamic-table input,
+.dynamic-table select,
+.dynamic-table textarea {
+    width: 100%;
+    min-width: 130px;
+    height: 40px;
+    font-size: 14px;
+    padding: 6px 8px;
+}
+
+.dynamic-table th {
+    white-space: nowrap;
+}
+
+.dynamic-table thead th {
+    position: sticky;
+    top: 0;
+    background: #f8fafc;
+    z-index: 2;
+}
+.signature-box {
+    margin-top: 8px;
+}
+
+/* MAIN SIGNATURE CARD */
+/* MAIN SIGNATURE CARD */
+.signature-ui {
+    position: relative;
+    padding: 10px;
+    background: #f8f9fb;
+ 
+    border-radius: 8px;
+    font-size: 13px;
+    overflow: hidden;
+
+    /* 🔥 WIDTH CONTROL */
+    width: 260px;
+    max-width: 100%;
+}
+
+/* CONTAINER FIX (IMPORTANT) */
+.signature-container {
+    display: flex;
+    align-items: flex-start;
+    justify-content: flex-start;
+}
+.img-preview{
+    border-radius: 6px;
+    margin-top: 6px;
+    display: block;
+}
+.img-preview.small { width: 80px;}
+.img-preview.medium { width: 150px;}
+.img-preview.large { width: 300px;}
+
+
+/* PREVENT FULL WIDTH */
+.signature-box {
+    display: inline-block;
+}
+
+/* TEXT */
+.signature-title {
+    font-weight: 600;
+    color: #0f0f0f;
+    margin-bottom: 4px;
+}
+
+.signature-user {
+    font-weight: 500;
+}
+
+.signature-time,
+.signature-ref {
+    font-size: 12px;
+    color: #555;
+}
+
+/* 🔥 LOGO WATERMARK */
+.signature-logo {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 110px;
+    opacity: 0.45;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+}
+
+/* OPTIONAL: NICE SHADOW */
+.signature-ui {
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+}
+</style>
 
 <div class="container">
 
-    <h4 class="mb-4">{{ form.name }}</h4>
+    <!-- <h4 class="mb-4">{{ form.name }}</h4> -->
+     <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4 class="mb-0">{{ form.name }}</h4>
 
-    <form method="POST" action="{% url 'save_response' form.id %}">
+        {% if ref_id %}
+            <div class="badge bg-primary p-2" style="font-size: 14px">
+                RFQ No: {{ ref_id }}
+            </div>
+        {% endif %}
+     </div>
+
+
+    <form method="POST" action="{% url 'save_response' form.id %}" enctype="multipart/form-data">
         {% csrf_token %}
 
-        <!-- ✅ RFQ ID (IMPORTANT) -->
-        <!-- <input type="hidden" name="rfq_id" value="{{ request.GET.rfq_id }}"> -->
+        
         <input type="hidden" name="rfq_id" value="{{ ref_id }}">
-
+        <input type="hidden" name="company" value="{{ company }}">
+        <input type="hidden" name="doc_name" value="{{ request.GET.doc_name }}">
+        <input type="hidden" name="doc_number" value="{{ request.GET.doc_number }}">
+        <input type="hidden" name="revision" value="{{ request.GET.revision }}">
+        
         {% for stage in stages %}
-
         <div class="card mb-4">
 
             <div class="card-header">
@@ -22,412 +139,497 @@
 
             <div class="card-body">
 
-                <!-- ================= FIELDS ================= -->
-
-                {% for field in stage.field_set.all %}
-
+                {% for item in stage.elements %}
+                {% if item.type == "field" %}
+                {% with field=item.data %}
                 <div class="mb-3">
 
                     <label class="form-label">{{ field.label }}</label>
 
+                    {% with value=previous_data|get_item:field.label %}
+
+                    <!-- TEXT -->
                     {% if field.field_type == "text" %}
+                    <input type="text"
+                           name="{{ field.label }}"
+                           class="form-control"
+                           value="{% if field.label == 'RFQ No' %}{{ ref_id }}{% else %}{{ value }}{% endif %}"
+                           {% if field.label == "RFQ No" %}readonly{% endif %}>
 
-                    {% if field.label == "RFQ No" %}
-                    <input type="text" name="{{ field.label }}" class="form-control" value="{{ ref_id }}" readonly>
-                    {% else %}
-                    <input type="text" name="{{ field.label }}" class="form-control" data-colname="{{ field.label }}"
-                        data-type="text">
-                    {% endif %}
-
+                    <!-- TEXTAREA -->
                     {% elif field.field_type == "textarea" %}
+                    <textarea name="{{ field.label }}" class="form-control">{{ value }}</textarea>
 
-                    <textarea name="{{ field.label }}" class="form-control" data-colname="{{ field.label }}"
-                        data-type="text"></textarea>
-
+                    <!-- NUMBER -->
                     {% elif field.field_type == "number" %}
+                    <input type="number" step="any"
+                           name="{{ field.label }}"
+                           class="form-control"
+                           value="{{ value }}">
 
-                    <input type="number" step="any" name="{{ field.label }}" class="form-control"
-                        data-colname="{{ field.label }}" data-type="number">
-
+                    <!-- DATE -->
                     {% elif field.field_type == "date" %}
+                    <input type="date"
+                           name="{{ field.label }}"
+                           class="form-control"
+                           value="{{ value }}">
 
-                    <input type="date" name="{{ field.label }}" class="form-control">
-
-                    {% elif field.field_type == "percentage" %}
-
-                    <input type="number" step="any" name="{{ field.label }}" class="form-control"
-                        data-colname="{{ field.label }}" data-type="percentage">
-
+                    <!-- SELECT -->
                     {% elif field.field_type == "select" %}
-
                     <select name="{{ field.label }}" class="form-control">
                         {% for opt in field.option_list %}
-                        <option value="{{ opt }}">{{ opt }}</option>
+                        <option value="{{ opt }}" {% if opt == value %}selected{% endif %}>
+                            {{ opt }}
+                        </option>
                         {% endfor %}
                     </select>
 
+                    <!-- CHECKBOX -->
                     {% elif field.field_type == "checkbox" %}
+                    <input type="checkbox"
+                           name="{{ field.label }}"
+                           value="1"
+                           {% if value %}checked{% endif %}>
 
-                    <input type="checkbox" name="{{ field.label }}" value="1">
+                    <!-- SIGNATURE -->
+                    {% elif field.field_type == "signature" %}
+                    <div class="signature-container">
+                        <input type="hidden"
+                               name="{{ field.label }}"
+                               class="signature-input"
+                               value="{{ value }}">
+                        <button type="button" class="btn btn-primary btn-sm sign-btn">
+                            Sign
+                        </button>
+                    </div>
+                    <!-- LINK -->
+                    {% elif field.field_type == "link" %}
 
-                    {% elif field.field_type == "formula" %}
+                    <select name="{{ field.label }}" class="form-control link-dropdown">
 
-                    <input type="number" step="any" name="{{ field.label }}" class="form-control"
-                        data-colname="{{ field.label }}" data-type="formula" data-formula="{{ field.formula }}"
-                        readonly>
+                        <option value="">-- Select Document --</option>
+
+                        {% for doc in documents %}
+                            <option value="{{ doc.id }}"
+                                {% if value == doc.id|stringformat:"s" %}selected{% endif %}>
+                                    {{ doc.title }}
+                            </option>
+                        {% endfor %}
+
+                    </select>
+                    {% elif field.field_type == "file" %}
+
+                    <input type="file"
+                        name="{{ field.label }}"
+                        class="form-control"
+                        multiple>
+
+                    {% if value %}
+                        <a href="{{ value }}" target="_blank" class="btn btn-sm btn-info mt-1">
+                            View File
+                        </a>
+                    {% endif %}
+                    {% elif field.field_type == "image" %}
+
+                        <input type="file"
+                            name="{{ field.label }}"
+                            class="form-control"
+                            accept="image/*"
+                            multiple>
+
+                        {% if value %}
+                            <div class="mt-2">
+                                <img src="{{ value }}" class="img-preview medium">
+
+                            <div>
+                                <button type="button" onclick="resizeImg(this,'small')">S</button>
+                                <button type="button" onclick="resizeImg(this,'medium')">M</button>
+                                <button type="button" onclick="resizeImg(this,'large')">L</button>
+                            </div>
+                            </div>
+                        {% endif %}
 
                     {% endif %}
 
-
+                    {% endwith %}
                 </div>
+                {% endwith %}
+<!-- ================= TABLE ================= -->
+{% elif item.type == "table" %}
+{% with table=item.data %}
+
+<div class="table-wrapper">
+
+    <h5 class="mt-4">
+        {{ table.name }}
+    </h5>
+
+    <div class="table-scroll">
+
+        <table class="table table-bordered dynamic-table">
+
+            <!-- ===================================== -->
+            <!-- TABLE HEADER -->
+            <!-- ===================================== -->
+
+            <thead>
+
+                <tr>
+
+                    <th style="min-width:180px;">
+                        {{ table.row_header_name|default:"Row Name" }}
+                    </th>
+
+                    {% for col in table.tablecolumn_set.all|dictsort:"order" %}
+
+<th
+    {% if col.is_total %}
+        class="bg-warning"
+    {% endif %}
+>
+
+    {{ col.name }}
+
+    {% if col.is_total %}
+        <br>
+        <small>Total</small>
+    {% endif %}
+
+</th>
+
+{% endfor %}
+
+                    <th>
+                        Action
+                    </th>
+
+                </tr>
+
+            </thead>
+
+            <!-- ===================================== -->
+            <!-- TABLE BODY -->
+            <!-- ===================================== -->
+
+            <tbody class="table-body">
+
+                {% for row in table.tablerow_set.all|dictsort:"order" %}
+
+                <tr>
+
+                    <!-- ================= ROW NAME ================= -->
+
+                    <td class="fw-bold bg-light">
+
+                        <!-- {{ row.name }} -->
+                          <input type="text"
+                                class="form-control row-name-input"
+                                value="{{ row.name }}"
+                                name="row_name__{{ table.id }}__{{ row.id }}">
+
+                    </td>
+
+                    <!-- ================= CELL LOOP ================= -->
+
+                    {% for col in table.tablecolumn_set.all|dictsort:"order" %}
+
+                    {% with row.id|stringformat:"s" as row_id %}
+                    {% with col.id|stringformat:"s" as col_id %}
+                    {% with row_id|add:"_"|add:col_id as key %}
+
+                    {% with config=cell_configs|get_item:key %}
+
+                    <td>
+
+                        <!-- ================= SIGNATURE ================= -->
+
+                        {% if config.cell_type == "signature" %}
+
+                        <div class="signature-container">
+
+                            <input type="hidden"
+                                   name="{{ table.id }}__{{ row.id }}__{{ col.id }}"
+                                   class="signature-input">
+
+                            <button type="button"
+                                    class="btn btn-primary btn-sm sign-btn">
+
+                                Sign
+
+                            </button>
+
+                        </div>
+
+                        <!-- ================= DATE ================= -->
+
+                        {% elif config.cell_type == "date" %}
+
+                        <input type="date"
+                               name="{{ table.id }}__{{ row.id }}__{{ col.id }}"
+                               class="form-control calc-input"
+                               data-col="{{ col.name|lower|cut:' '|cut:'-'|cut:'/'|cut:'%'|cut:'&'|cut:'('|cut:')'|cut:'.'|cut:',' }}"
+                               data-type="{{ config.cell_type }}"
+                               data-formula="{{ config.formula }}">
+
+                        <!-- ================= CHECKBOX ================= -->
+
+                        {% elif config.cell_type == "checkbox" %}
+
+                            {% for opt in config.option_list %}
+
+                            <label style="margin-right:10px; cursor:pointer;">
+
+                                <input type="checkbox"
+                                       name="{{ table.id }}__{{ row.id }}__{{ col.id }}"
+                                       value="{{ opt }}"
+                                       style="margin-right:3px;">
+
+                                {{ opt }}
+
+                            </label>
+
+                            {% endfor %}
+
+                        <!-- ================= SELECT ================= -->
+
+                        {% elif config.cell_type == "select" %}
+
+                        <select name="{{ table.id }}__{{ row.id }}__{{ col.id }}"
+                                class="form-control">
+
+                            <option value="">
+                                -- Select --
+                            </option>
+
+                            {% for opt in config.option_list %}
+
+                            <option value="{{ opt }}">
+                                {{ opt }}
+                            </option>
+
+                            {% endfor %}
+
+                        </select>
+
+                        <!-- ================= NUMBER ================= -->
+
+                        {% elif config.cell_type == "number" or config.cell_type == "percentage" %}
+
+                        <input type="number"
+                               step="any"
+                               name="{{ table.id }}__{{ row.id }}__{{ col.id }}"
+                               class="form-control calc-input"
+                               data-col="{{ col.name|lower|cut:' '|cut:'-'|cut:'/'|cut:'%'|cut:'&'|cut:'('|cut:')'|cut:'.'|cut:',' }}"
+                               data-type="{{ config.cell_type }}"
+                               data-formula="{{ config.formula }}">
+
+                        <!-- ================= LINK ================= -->
+
+                        {% elif config.cell_type == "link" %}
+
+                        <select name="{{ table.id }}__{{ row.id }}__{{ col.id }}"
+                                class="form-control link-dropdown">
+
+                            <option value="">
+                                -- Select Document --
+                            </option>
+
+                            {% for doc in documents %}
+
+                            <option value="{{ doc.id }}">
+                                {{ doc.title }}
+                            </option>
+
+                            {% endfor %}
+
+                        </select>
+
+                        <!-- ================= FILE ================= -->
+
+                        {% elif config.cell_type == "file" %}
+
+                        <input type="file"
+                               name="{{ table.id }}__{{ row.id }}__{{ col.id }}"
+                               class="form-control"
+                               multiple>
+
+                        <!-- ================= IMAGE ================= -->
+
+                        {% elif config.cell_type == "image" %}
+
+                        <input type="file"
+                               name="{{ table.id }}__{{ row.id }}__{{ col.id }}"
+                               class="form-control"
+                               accept="image/*"
+                               multiple>
+
+                        <!-- ================= FORMULA ================= -->
+
+                        {% elif config.cell_type == "formula" %}
+
+                        <input type="text"
+                               name="{{ table.id }}__{{ row.id }}__{{ col.id }}"
+                               class="form-control calc-input"
+                               readonly
+                               data-col="{{ col.name|lower|cut:' '|cut:'-'|cut:'/'|cut:'%'|cut:'&'|cut:'('|cut:')'|cut:'.'|cut:',' }}"
+                               data-type="{{ config.cell_type }}"
+                               data-formula="{{ config.formula }}">
+
+                        <!-- ================= TEXTAREA ================= -->
+
+                        {% elif config.cell_type == "textarea" %}
+
+                        <textarea name="{{ table.id }}__{{ row.id }}__{{ col.id }}"
+                                  class="form-control calc-input"
+                                  data-col="{{ col.name|lower|cut:' '|cut:'-'|cut:'/'|cut:'%'|cut:'&'|cut:'('|cut:')'|cut:'.'|cut:',' }}"
+                                  data-type="{{ config.cell_type }}"
+                                  data-formula="{{ config.formula }}"></textarea>
+
+                        <!-- ================= DEFAULT TEXT ================= -->
+
+                        {% else %}
+
+                        <input type="text"
+                               name="{{ table.id }}__{{ row.id }}__{{ col.id }}"
+                               class="form-control calc-input"
+                               data-col="{{ col.name|lower|cut:' '|cut:'-'|cut:'/'|cut:'%'|cut:'&'|cut:'('|cut:')'|cut:'.'|cut:',' }}"
+                               data-type="{{ config.cell_type }}"
+                               data-formula="{{ config.formula }}">
+
+                        {% endif %}
+
+                    </td>
+
+                    {% endwith %}
+                    {% endwith %}
+                    {% endwith %}
+                    {% endwith %}
+
+                    {% endfor %}
+
+                    <!-- ================= DELETE ================= -->
+
+                    <td>
+
+                        <button type="button"
+                                class="btn btn-danger btn-sm"
+                                onclick="deleteRow(this)">
+
+                            Delete
+
+                        </button>
+
+                    </td>
+
+                </tr>
+
                 {% endfor %}
 
+</tbody>
 
-                <!-- ================= TABLES ================= -->
+<tfoot>
 
-                {% for table in stage.table_set.all %}
+<tr class="table-light">
 
-                <h5 class="mt-4">{{ table.name }}</h5>
+    <td>
+        <strong>Total</strong>
+    </td>
 
-                <table class="table table-bordered dynamic-table" data-table="{{ table.name }}">
+    {% for col in table.tablecolumn_set.all|dictsort:"order" %}
 
-                    <thead class="table-light">
-                        <tr>
-                            {% for col in table.tablecolumn_set.all %}
-                            <th>{{ col.name }}</th>
-                            {% endfor %}
-                            <th>Action</th>
-                        </tr>
-                    </thead>
+    <td>
 
-                    <tbody class="table-body">
+       {% if col.is_total %}
 
-                        <tr>
+<input type="text"
+       class="form-control total-field"
+       data-total-col="{{ col.name|lower|cut:' '|cut:'-'|cut:'/'|cut:'%'|cut:'&'|cut:'('|cut:')'|cut:'.'|cut:',' }}"
+       readonly>
 
-                            {% for col in table.tablecolumn_set.all %}
-                            <td>
+{% endif %}
 
-                                {% if col.column_type == "text" %}
-                                <input type="text" name="{{ table.name }}__{{ col.name }}__0" class="form-control"
-                                    data-colname="{{ col.name|slugify|cut:'-' }}" data-type="text">
+    </td>
 
-                                {% elif col.column_type == "number" %}
-                                <input type="number" step="any" name="{{ table.name }}__{{ col.name }}__0"
-                                    class="form-control" data-colname="{{ col.name|slugify|cut:'-' }}"
-                                    data-type="number">
+    {% endfor %}
 
-                                {% elif col.column_type == "percentage" %}
-                                <input type="number" step="any" name="{{ table.name }}__{{ col.name }}__0"
-                                    class="form-control" data-colname="{{ col.name|slugify|cut:'-' }}"
-                                    data-type="percentage">
+    <td></td>
 
-                                {% elif col.column_type == "formula" %}
-                                <input type="number" step="any" name="{{ table.name }}__{{ col.name }}__0"
-                                    class="form-control" data-colname="{{ col.name|slugify|cut:'-' }}"
-                                    data-type="formula" data-formula="{{ col.formula }}" readonly>
+</tr>
 
-                                {% elif col.column_type == "signature" %}
+</tfoot>
+</table>
 
-                                <input type="hidden" name="{{ table.name }}__{{ col.name }}__0" class="signature-input">
+    </div>
 
-                                <button type="button" class="btn btn-primary btn-sm sign-btn">
-                                    Sign
-                                </button>
+    <!-- ================= ADD ROW ================= -->
 
-                                {% endif %}
+    <button type="button"
+            class="btn btn-success btn-sm mb-3"
+            onclick="addRow(this)">
 
-                            </td>
-                            {% endfor %}
-                            <td>
-                                
-                                <button type="button" class="btn btn-danger btn-sm" onclick="deleteRow(this)">
-                                    Delete
-                                </button>
-                            </td>
+        + Add Row
 
-                        </tr>
+    </button>
 
-                    </tbody>
+</div>
 
-                    <!-- ================= TOTAL ================= -->
-
-                    <tfoot>
-                        <tr>
-
-                            {% for col in table.tablecolumn_set.all %}
-                            {% if col.is_total %}
-                            <td>
-                                <input type="text" class="form-control total-column"
-                                    data-colname="{{ col.name|slugify|cut:'-' }}" readonly>
-                            </td>
-                            {% else %}
-                            <td></td>
-                            {% endif %}
-                            {% endfor %}
-
-                            <td><strong>Total</strong></td>
-
-                        </tr>
-                    </tfoot>
-
-                </table>
-
-                <button type="button" class="btn btn-success btn-sm mb-3" onclick="addRow(this)">
-                    + Add Row
-                </button>
-
+{% endwith %}
+{% endif %}
                 {% endfor %}
 
             </div>
-
         </div>
-
         {% endfor %}
 
         <button class="btn btn-success">Submit Form</button>
 
     </form>
-<!-- SIGNATURE MODAL -->
-<div class="modal fade" id="signatureModal" tabindex="-1">
-  <div class="modal-dialog">
-    <div class="modal-content">
+</div>
 
-      <div class="modal-header">
-        <h5 class="modal-title">Verify Signature</h5>
-      </div>
+<!-- ================= SIGNATURE MODAL ================= -->
+<div class="modal fade" id="signatureModal">
+    <div class="modal-dialog">
+        <div class="modal-content">
 
-      <div class="modal-body">
-        <input type="password"
-               id="signaturePassword"
-               class="form-control"
-               placeholder="Enter your password">
-      </div>
+            <div class="modal-header">
+                <h5>Verify Signature</h5>
+            </div>
 
-      <div class="modal-footer">
-        <button class="btn btn-secondary"
-                data-bs-dismiss="modal">Cancel</button>
+            <div class="modal-body">
+                <input type="password"
+                       id="signaturePassword"
+                       class="form-control"
+                       placeholder="Enter password">
+            </div>
 
-        <button class="btn btn-primary"
-                id="confirmSignature">
-            Confirm
-        </button>
-      </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button class="btn btn-primary" id="confirmSignature">Confirm</button>
+            </div>
 
+        </div>
     </div>
-  </div>
 </div>
-</div>
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0/dist/css/select2.min.css" rel="stylesheet" />
 
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0/dist/js/select2.min.js"></script>
 
 <script>
-    function getCSRFToken() {
-        return document.cookie
-            .split('; ')
-            .find(row => row.startsWith('csrftoken='))
-            ?.split('=')[1];
-    }
 
-    /* ================= NORMALIZE KEY ================= */
+let activeSignatureCell = null;
 
-
-    function normalizeKey(name) {
-        return name
-            .toLowerCase()
-            .replace(/\s+/g, "")
-            .replace(/[^a-z0-9]/g, "");
-    }
-
-    function calculateFormulas() {
-
-        document.querySelectorAll(".dynamic-table").forEach(table => {
-
-            table.querySelectorAll("tbody tr").forEach(row => {
-
-                let inputs = {};
-
-                // collect values
-                row.querySelectorAll("input[data-colname]").forEach(input => {
-
-                    let key = normalizeKey(input.dataset.colname);
-                    let value = parseFloat(input.value) || 0;
-
-                    if (input.dataset.type === "percentage") {
-                        value = value / 100;
-                    }
-
-                    inputs[key] = value;
-
-                });
-
-                // apply formula
-                row.querySelectorAll("[data-type='formula']").forEach(field => {
-
-                    let expression = field.dataset.formula;
-
-                    if (!expression) return;
-
-                    // 🔥 REPLACE FULL WORD MATCH ONLY
-                    Object.keys(inputs).forEach(key => {
-
-                        let regex = new RegExp("\\b" + key + "\\b", "g");
-
-                        expression = expression.replace(regex, inputs[key]);
-
-                    });
-
-                    try {
-                        console.log("FINAL:", expression);
-
-                        let result = Function("return " + expression)();
-
-                        field.value = isNaN(result) ? "" : result.toFixed(2);
-
-                    } catch (e) {
-                        console.error("ERROR:", expression);
-                        field.value = "";
-                    }
-
-                });
-
-            });
-
-        });
-
-    }
-
-    document.addEventListener("input", function () {
-        calculateFormulas();
-        calculateDynamicTotal();
-    });
-
-    window.onload = function () {
-        calculateFormulas();
-        calculateDynamicTotal();
-    }
-
-
-
-    /* ================= TOTAL ================= */
-    function calculateDynamicTotal() {
-
-        document.querySelectorAll(".dynamic-table").forEach(table => {
-
-            let rows = table.querySelectorAll("tbody tr");
-
-            table.querySelectorAll(".total-column").forEach(totalField => {
-
-                let totalKey = normalizeKey(totalField.dataset.colname);
-                let total = 0;
-
-                rows.forEach(row => {
-
-                    row.querySelectorAll("input[data-colname]").forEach(input => {
-
-                        let key = normalizeKey(input.dataset.colname);
-
-                        if (key === totalKey) {
-
-                            let value = parseFloat(input.value) || 0;
-
-                            if (input.dataset.type === "percentage") {
-                                value = value / 100;
-                            }
-
-                            total += value;
-                        }
-
-                    });
-
-                });
-
-                totalField.value = total.toFixed(2);
-
-            });
-
-        });
-
-    }
-
-
-    /* ================= EVENTS ================= */
-    document.addEventListener("input", function () {
-        calculateFormulas();
-        calculateDynamicTotal();
-    });
-
-
-    /* ================= ADD ROW ================= */
-    function addRow(btn) {
-
-        let table = btn.previousElementSibling;
-        let body = table.querySelector(".table-body");
-        let newRow = body.querySelector("tr").cloneNode(true);
-
-        let rowIndex = body.rows.length;
-
-        newRow.querySelectorAll("input").forEach(input => {
-
-            input.value = "";
-
-            let parts = input.name.split("__");
-            input.name = parts[0] + "__" + parts[1] + "__" + rowIndex;
-
-        });
-
-        body.appendChild(newRow);
-
-    }
-
-
-    /* ================= DELETE ROW ================= */
-    function deleteRow(btn) {
-
-        let row = btn.closest("tr");
-        let tbody = row.parentElement;
-
-        if (tbody.rows.length > 1) {
-            row.remove();
-        }
-
-        calculateFormulas();
-        calculateDynamicTotal();
-
-    }
-
-
-    /* ================= INITIAL LOAD ================= */
-    window.onload = function () {
-        calculateFormulas();
-        calculateDynamicTotal();
-    }
-
-
-    let activeSignatureCell = null;
-
-// ================= OPEN MODAL =================
+// OPEN SIGN MODAL
 document.addEventListener("click", function(e){
-
     if(e.target.classList.contains("sign-btn")){
-
-        activeSignatureCell = e.target.closest("td");
-
-        let modalEl = document.getElementById("signatureModal");
-
-        let modal = new bootstrap.Modal(modalEl);
-        modal.show();
+        activeSignatureCell = e.target.closest(".signature-container");
+        new bootstrap.Modal(document.getElementById("signatureModal")).show();
     }
 });
 
-
-// ================= CONFIRM SIGN =================
+// CONFIRM SIGNATURE
 document.getElementById("confirmSignature").addEventListener("click", function(){
 
     let password = document.getElementById("signaturePassword").value;
-
-    if(!password){
-        alert("Enter password");
-        return;
-    }
 
     fetch("{% url 'verify_signature' %}", {
         method: "POST",
@@ -435,82 +637,467 @@ document.getElementById("confirmSignature").addEventListener("click", function()
             "Content-Type": "application/json",
             "X-CSRFToken": document.querySelector('[name=csrfmiddlewaretoken]').value
         },
-        body: JSON.stringify({
-            password: password
-        })
+        body: JSON.stringify({ password: password })
     })
     .then(res => res.json())
     .then(data => {
 
         if(data.ok){
 
-            // ================= GET EXISTING INPUT =================
             let hidden = activeSignatureCell.querySelector(".signature-input");
 
-            if(!hidden){
-                console.error("Hidden input not found");
-                return;
-            }
-
-            // ================= CREATE DISPLAY =================
-            let box = document.createElement("div");
-            box.className = "signature-box border p-2 bg-light rounded mt-2";
-
-            box.innerHTML = `
-                <strong>${data.name}</strong><br>
-                <small>${data.time}</small><br>
-                <span class="text-primary">ID-${data.code}</span>
-            `;
-
-            // remove old signature UI
-            let oldBox = activeSignatureCell.querySelector(".signature-box");
-            if(oldBox) oldBox.remove();
-
-            // append UI
-            activeSignatureCell.appendChild(box);
-
-            // ================= SAVE JSON =================
-            let signatureData = {
+            hidden.value = JSON.stringify({
                 signed_by: data.name,
                 signed_at: data.time,
                 reference_code: data.code
-            };
+            });
 
-            hidden.value = JSON.stringify(signatureData);
+            let box = document.createElement("div");
+            box.className = "signature-box";
 
-            // ================= HIDE BUTTON =================
-            let btn = activeSignatureCell.querySelector(".sign-btn");
-            if(btn) btn.style.display = "none";
+            box.innerHTML = `
+                <div class="signature-ui">
 
-            // ================= CLOSE MODAL CLEAN =================
-            let modalEl = document.getElementById("signatureModal");
-            let modal = bootstrap.Modal.getInstance(modalEl);
+                    <div class="signature-title">
+                        ✔ Digitally Signed
+                    </div>
 
-            if(modal){
-                modal.hide();
-            }
+                    <div class="signature-user">
+                        👤 ${data.name}
+                    </div>
 
-            // 🔥 FIX BLACK SCREEN ISSUE
-            setTimeout(() => {
-                document.querySelectorAll(".modal-backdrop").forEach(el => el.remove());
-                document.body.classList.remove("modal-open");
-                document.body.style = "";
-            }, 200);
+                    <div class="signature-time">
+                        🕒 ${data.time}
+                    </div>
 
-            // clear password field
-            document.getElementById("signaturePassword").value = "";
+                    <div class="signature-ref">
+                        ${data.code}
+                    </div>
+
+                    <!-- 🔥 LOGO WATERMARK -->
+                        <img src="/static/admin/img/watermark.jpeg" class="signature-logo">
+
+                </div>
+            `;
+            let old = activeSignatureCell.querySelector(".signature-box");
+            if(old) old.remove();
+
+            
+            activeSignatureCell.querySelector(".sign-btn").style.display = "none";
+            activeSignatureCell.appendChild(box);
+
+            bootstrap.Modal.getInstance(document.getElementById("signatureModal")).hide();
 
         } else {
-            alert(data.error || "Invalid password");
+            alert("Invalid password");
+        }
+    });
+});
+
+// ================= ADD ROW =================
+function addRow(btn){
+
+    // =========================================
+    // GET CURRENT TABLE
+    // =========================================
+
+    const wrapper = btn.closest(".table-wrapper");
+
+    const tbody = wrapper.querySelector(".table-body");
+
+    // =========================================
+    // CLONE LAST ROW
+    // =========================================
+
+    const rows = tbody.querySelectorAll("tr");
+
+    const lastRow =
+        rows[rows.length - 1].cloneNode(true);
+
+    const newRow = lastRow;
+    // =========================================
+    // ROW INDEX
+    // =========================================
+
+    const index = tbody.rows.length;
+
+    // =========================================
+    // DYNAMIC ROW NAME
+    // =========================================
+
+    const dynamicRowName = `Row${index + 1}`;
+
+    // =========================================
+    // UPDATE EDITABLE ROW NAME
+    // =========================================
+
+    let rowInput = newRow.querySelector(".row-name-input");
+
+    if(rowInput){
+
+        rowInput.value = dynamicRowName;
+
+        rowInput.name =
+            `row_name__${dynamicRowName}`;
+    }
+
+    // =========================================
+    // CLEAR INPUTS
+    // =========================================
+
+    newRow.querySelectorAll(
+        "input, textarea, select"
+    ).forEach(input => {
+
+        // =====================================
+        // SKIP ROW NAME INPUT
+        // =====================================
+
+        if(
+            input.classList.contains(
+                "row-name-input"
+            )
+        ){
+            return;
         }
 
-    })
-    .catch(err => {
-        console.error(err);
-        alert("Something went wrong");
+        // =====================================
+        // UPDATE INPUT NAME
+        // =====================================
+
+        if(input.name){
+
+            let parts = input.name.split("__");
+
+            // table__row__column
+
+            if(parts.length >= 3){
+
+                parts[1] = dynamicRowName;
+
+                input.name = parts.join("__");
+            }
+        }
+
+        // =====================================
+        // FILE INPUT
+        // =====================================
+
+        if(input.type === "file"){
+
+            let freshInput =
+                input.cloneNode(false);
+
+            freshInput.name =
+                input.name;
+
+            freshInput.className =
+                input.className;
+
+            freshInput.accept =
+                input.accept;
+
+            freshInput.multiple =
+                input.multiple;
+
+            input.parentNode.replaceChild(
+                freshInput,
+                input
+            );
+
+            return;
+        }
+
+        // =====================================
+        // CHECKBOX
+        // =====================================
+
+        if(input.type === "checkbox"){
+
+            input.checked = false;
+        }
+
+        // =====================================
+        // SELECT
+        // =====================================
+
+        else if(
+            input.tagName === "SELECT"
+        ){
+
+            input.selectedIndex = 0;
+        }
+
+        // =====================================
+        // OTHER INPUTS
+        // =====================================
+
+        else{
+
+            input.value = "";
+        }
+    });
+
+    // =========================================
+    // REMOVE OLD IMAGES
+    // =========================================
+
+    newRow.querySelectorAll("img").forEach(img=>{
+        img.remove();
+    });
+
+    // =========================================
+    // REMOVE OLD FILE LINKS
+    // =========================================
+
+    newRow.querySelectorAll("a").forEach(a=>{
+        if(a.href){
+            a.remove();
+        }
+    });
+
+    // =========================================
+    // RESET SIGNATURE
+    // =========================================
+
+    newRow.querySelectorAll(
+        ".signature-container"
+    ).forEach(container => {
+
+        let hidden = container.querySelector(
+            ".signature-input"
+        );
+
+        if(hidden){
+
+            hidden.value = "";
+        }
+
+        let old = container.querySelector(
+            ".signature-box"
+        );
+
+        if(old){
+
+            old.remove();
+        }
+
+        let signBtn = container.querySelector(
+            ".sign-btn"
+        );
+
+        if(signBtn){
+
+            signBtn.style.display =
+                "inline-block";
+        }
+    });
+
+    // =========================================
+    // RESET FORMULA
+    // =========================================
+
+    newRow.querySelectorAll(
+        ".calc-input"
+    ).forEach(input => {
+
+        if(
+            input.dataset.type ===
+            "formula"
+        ){
+
+            input.value = "";
+        }
+    });
+
+    // =========================================
+    // APPEND ROW
+    // =========================================
+
+    tbody.appendChild(newRow);
+}
+// ================= DELETE ROW =================
+function deleteRow(btn){
+
+    const row = btn.closest("tr");
+
+    if(!row){
+        return;
+    }
+
+    const tbody = row.parentNode;
+
+    // keep minimum one row
+    if(tbody.rows.length <= 1){
+        return;
+    }
+
+    // stable remove
+    tbody.removeChild(row);
+}
+// ================= DYNAMIC FORMULA ENGINE =================
+
+function calculateRow(row){
+
+    // =====================================
+    // GET ALL INPUTS
+    // =====================================
+
+    let inputs = row.querySelectorAll(".calc-input");
+
+    // =====================================
+    // STORE VALUES
+    // =====================================
+
+    let values = {};
+
+    inputs.forEach(input => {
+
+        let key = input.dataset.col;
+
+        values[key] =
+            parseFloat(input.value) || 0;
+    });
+
+    // =====================================
+    // RUN FORMULAS
+    // =====================================
+
+    inputs.forEach(input => {
+
+        if(
+            input.dataset.type === "formula"
+            &&
+            input.dataset.formula
+        ){
+
+            let formula =
+                input.dataset.formula
+                .toLowerCase();
+
+            // =================================
+            // REPLACE VARIABLES
+            // =================================
+
+            Object.keys(values)
+            .sort((a, b) => b.length - a.length)
+            .forEach(key => {
+
+                let regex =
+                    new RegExp(`\\b${key}\\b`, "g");
+
+                formula =
+                    formula.replace(
+                        regex,
+                        values[key]
+                    );
+            });
+
+            try{
+
+                console.log(
+                    "FORMULA:",
+                    formula
+                );
+
+                let result =
+                    eval(formula);
+
+                input.value =
+                    isNaN(result)
+                    ? ""
+                    : result.toFixed(2);
+
+                // =================================
+                // UPDATE VALUES FOR NEXT FORMULAS
+                // =================================
+
+                values[input.dataset.col] =
+                    parseFloat(input.value) || 0;
+
+            }catch(err){
+
+                console.log(
+                    "FORMULA ERROR:",
+                    err
+                );
+
+                input.value = "";
+            }
+        }
+    });
+
+    // =====================================
+    // TOTAL CALCULATION
+    // =====================================
+
+    let table = row.closest("table");
+
+    if(table){
+
+        table.querySelectorAll(
+            ".total-field"
+        ).forEach(totalField => {
+
+            let col =
+                totalField.dataset.totalCol;
+
+            let total = 0;
+
+            table.querySelectorAll(
+                `[data-col="${col}"]`
+            ).forEach(input => {
+
+                total +=
+                    parseFloat(
+                        input.value
+                    ) || 0;
+            });
+
+            totalField.value =
+                total.toFixed(2);
+        });
+    }
+}
+
+document.addEventListener("input", function(e){
+
+    if(e.target.classList.contains("calc-input")){
+
+        let row = e.target.closest("tr");
+
+        calculateRow(row);
+    }
+});
+// =====================================
+// AUTO CALCULATE ON PAGE LOAD
+// =====================================
+
+document.addEventListener("DOMContentLoaded", function(){
+
+    document.querySelectorAll(
+        ".dynamic-table tbody tr"
+    ).forEach(row => {
+
+        calculateRow(row);
+
     });
 
 });
+
+$(document).ready(function() {
+    $('.link-dropdown').select2({
+        placeholder: "Search document...",
+        width: '100%'
+    });
+});
+
+function resizeImg(btn, size){
+    let img = btn.closest("div").querySelector("img");
+
+    img.classList.remove("small","medium","large");
+    img.classList.add(size);
+}
 </script>
 
 {% endblock %}

@@ -1,0 +1,504 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+
+/* ================= PAGE ================= */
+
+.material-page{
+    padding:24px;
+}
+
+/* ================= TOP ================= */
+
+.page-top{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:24px;
+    gap:15px;
+    flex-wrap:wrap;
+}
+
+.page-title{
+    font-size:28px;
+    font-weight:700;
+    color:#0f172a;
+    margin:0;
+}
+
+.back-btn{
+    border:none;
+    background:#f1f5f9;
+    color:#334155;
+    padding:10px 18px;
+    border-radius:12px;
+    text-decoration:none;
+    font-weight:600;
+    transition:.25s;
+}
+
+.back-btn:hover{
+    background:#e2e8f0;
+    color:#0f172a;
+}
+
+/* ================= CARD ================= */
+
+.main-card{
+    border:none;
+    border-radius:22px;
+    overflow:hidden;
+    box-shadow:
+        0 10px 35px rgba(0,0,0,.06);
+    margin-bottom:24px;
+}
+
+/* ================= HEADER ================= */
+
+.card-header-modern{
+    background:
+        linear-gradient(
+            135deg,
+            #2563eb,
+            #1d4ed8
+        );
+
+    color:white;
+    padding:20px 24px;
+    font-size:20px;
+    font-weight:700;
+}
+
+/* ================= BODY ================= */
+
+.card-body-modern{
+    padding:24px;
+    background:white;
+}
+
+/* ================= LABEL ================= */
+
+.form-label{
+    font-weight:600;
+    color:#334155;
+    margin-bottom:8px;
+}
+
+/* ================= INPUT ================= */
+
+.form-control{
+    border-radius:12px;
+    border:1px solid #cbd5e1;
+    padding:12px;
+    box-shadow:none !important;
+}
+
+.form-control:focus{
+    border-color:#2563eb;
+}
+
+/* ================= BUTTON ================= */
+
+.upload-btn{
+    background:
+        linear-gradient(
+            135deg,
+            #2563eb,
+            #1d4ed8
+        );
+
+    border:none;
+    color:white;
+    padding:12px 24px;
+    border-radius:14px;
+    font-weight:700;
+    transition:.25s;
+}
+
+.upload-btn:hover{
+    transform:translateY(-2px);
+}
+
+/* ================= MATERIAL CARD ================= */
+
+.material-card{
+    border:none;
+    border-radius:18px;
+    padding:20px;
+    background:#fff;
+    box-shadow:
+        0 6px 25px rgba(0,0,0,.05);
+    margin-bottom:18px;
+}
+
+/* ================= TITLE ================= */
+
+.material-title{
+    font-size:18px;
+    font-weight:700;
+    color:#0f172a;
+}
+
+/* ================= DATE ================= */
+
+.material-date{
+    color:#64748b;
+    font-size:14px;
+}
+
+/* ================= BADGE ================= */
+
+.file-badge{
+    background:#dbeafe;
+    color:#1d4ed8;
+    padding:8px 14px;
+    border-radius:50px;
+    font-size:12px;
+    font-weight:700;
+}
+
+/* ================= BUTTONS ================= */
+
+.action-wrap{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+    margin-top:16px;
+}
+
+.action-btn{
+    border:none;
+    padding:10px 16px;
+    border-radius:12px;
+    text-decoration:none;
+    font-size:14px;
+    font-weight:700;
+    transition:.25s;
+}
+
+.action-btn:hover{
+    transform:translateY(-2px);
+}
+
+.btn-open{
+    background:#2563eb;
+    color:white;
+}
+
+.btn-preview{
+    background:#f1f5f9;
+    color:#334155;
+}
+
+.btn-delete{
+    background:#fee2e2;
+    color:#b91c1c;
+}
+
+/* ================= EMPTY ================= */
+
+.empty-box{
+    padding:40px;
+    text-align:center;
+    color:#94a3b8;
+}
+
+/* ================= PREVIEW ================= */
+
+.preview-box{
+    margin-top:18px;
+    border-radius:16px;
+    overflow:hidden;
+    border:1px solid #e2e8f0;
+}
+
+/* ================= MOBILE ================= */
+
+@media(max-width:768px){
+
+    .page-title{
+        font-size:22px;
+    }
+
+    .card-body-modern{
+        padding:18px;
+    }
+
+    .material-card{
+        padding:16px;
+    }
+}
+
+</style>
+
+<div class="container-fluid material-page">
+
+    <!-- ================= TOP ================= -->
+
+    <div class="page-top">
+
+        <h2 class="page-title">
+            📤 Upload Study Material
+        </h2>
+
+        <a href="{% url 'test_list' %}"
+           class="back-btn">
+
+            ← Back to Tests
+
+        </a>
+
+    </div>
+
+    <!-- ================= ERROR ================= -->
+
+    {% if error %}
+        <div class="alert alert-danger">
+            {{ error }}
+        </div>
+    {% endif %}
+
+    <!-- ================= FORM ================= -->
+
+    <div class="main-card">
+
+        <div class="card-header-modern">
+            Upload Materials
+        </div>
+
+        <div class="card-body-modern">
+
+            <h5 class="mb-4">
+                Test :
+                <strong>{{ test.title }}</strong>
+            </h5>
+
+            <form method="POST"
+                  enctype="multipart/form-data">
+
+                {% csrf_token %}
+
+                <div class="row">
+
+                    <div class="col-md-4 mb-3">
+
+                        <label class="form-label">
+                            Title
+                        </label>
+
+                        <input type="text"
+                               name="title"
+                               class="form-control"
+                               required>
+
+                    </div>
+
+                    <div class="col-md-4 mb-3">
+
+                        <label class="form-label">
+                            Start Date
+                        </label>
+
+                        <input type="datetime-local"
+                               name="start_date"
+                               class="form-control">
+
+                    </div>
+
+                    <div class="col-md-4 mb-3">
+
+                        <label class="form-label">
+                            End Date
+                        </label>
+
+                        <input type="datetime-local"
+                               name="end_date"
+                               class="form-control">
+
+                    </div>
+
+                </div>
+
+                <div class="mb-4">
+
+                    <label class="form-label">
+                        Upload Files
+                    </label>
+
+                    <input type="file"
+                           name="file"
+                           multiple
+                           class="form-control"
+                           required>
+
+                    <small class="text-muted">
+                        PDF, PPT, DOC supported
+                    </small>
+
+                </div>
+
+                <button class="upload-btn">
+
+                    Upload Material
+
+                </button>
+
+            </form>
+
+        </div>
+
+    </div>
+
+    <!-- ================= MATERIALS ================= -->
+
+    <div class="main-card">
+
+        <div class="card-header-modern"
+             style="background:linear-gradient(135deg,hwb(160 6% 27%),#059669);">
+
+            📚 Uploaded Materials
+
+        </div>
+
+        <div class="card-body-modern">
+
+            {% if materials %}
+
+                {% for m in materials %}
+
+                <div class="material-card">
+
+                    <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+
+                        <div>
+
+                            <div class="material-title">
+                                {{ m.title }}
+                            </div>
+
+                            <div class="material-date mt-2">
+
+                                {{ m.start_date|date:"d M Y H:i" }}
+                                →
+                                {{ m.end_date|date:"d M Y H:i" }}
+
+                            </div>
+
+                        </div>
+
+                        <div class="file-badge">
+
+                            {{ m.file.name|slice:"-12:" }}
+
+                        </div>
+
+                    </div>
+
+                    <!-- ACTIONS -->
+
+                    <div class="action-wrap">
+
+                        <a href="{{ m.file.url }}"
+                           target="_blank"
+                           class="action-btn btn-open">
+
+                            Open
+
+                        </a>
+
+                        <button type="button"
+                                class="action-btn btn-preview"
+                                onclick="togglePreview('{{ m.id }}')">
+
+                            Preview
+
+                        </button>
+
+                        <a href="{% url 'delete_material' m.id %}"
+                           class="action-btn btn-delete"
+                           onclick="return confirm('Delete this material?')">
+
+                            Delete
+
+                        </a>
+
+                    </div>
+
+                    <!-- PREVIEW -->
+
+                    <div id="preview-{{ m.id }}"
+                         style="display:none;"
+                         class="preview-box">
+
+                        {% with file_url=m.file.url|lower %}
+
+                            {% if file_url|slice:"-4:" == ".pdf" %}
+
+                                <iframe src="{{ m.file.url }}"
+                                        width="100%"
+                                        height="500px"
+                                        style="border:none;">
+                                </iframe>
+
+                            {% else %}
+
+                                <iframe
+                                    src="https://docs.google.com/gview?url={{ m.full_url }}&embedded=true"
+                                    width="100%"
+                                    height="500px"
+                                    style="border:none;">
+                                </iframe>
+
+                                <div class="p-3 text-muted">
+                                    If preview not visible, use Open button.
+                                </div>
+
+                            {% endif %}
+
+                        {% endwith %}
+
+                    </div>
+
+                </div>
+
+                {% endfor %}
+
+            {% else %}
+
+                <div class="empty-box">
+
+                    No materials uploaded yet.
+
+                </div>
+
+            {% endif %}
+
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+
+function togglePreview(id){
+
+    const el =
+        document.getElementById(
+            "preview-" + id
+        );
+
+    if(
+        el.style.display === "none"
+    ){
+        el.style.display = "block";
+    }
+    else{
+        el.style.display = "none";
+    }
+}
+
+</script>
+
+{% endblock %}

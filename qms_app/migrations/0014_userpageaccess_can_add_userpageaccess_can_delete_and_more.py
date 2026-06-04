@@ -10,19 +10,5 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.AddField(
-            model_name='userpageaccess',
-            name='can_add',
-            field=models.BooleanField(default=False),
-        ),
-        migrations.AddField(
-            model_name='userpageaccess',
-            name='can_delete',
-            field=models.BooleanField(default=False),
-        ),
-        migrations.AddField(
-            model_name='userpageaccess',
-            name='can_edit',
-            field=models.BooleanField(default=False),
-        ),
+        
     ]

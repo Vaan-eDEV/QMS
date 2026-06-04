@@ -1,0 +1,204 @@
+<!-- ===================================== -->
+<!-- EVALUATION SUMMARY -->
+<!-- ===================================== -->
+
+<div class="card border-0 shadow-sm mb-4">
+
+    <div class="card-header bg-white">
+
+        <h5 class="mb-0">
+
+            Evaluation Summary
+
+        </h5>
+
+    </div>
+
+    <div class="card-body">
+
+        {% if evaluation %}
+
+            <div class="row g-3">
+
+                <!-- QUALITY -->
+
+                <div class="col-md-4">
+
+                    <div class="border rounded p-3 text-center">
+
+                        <h3 class="text-primary">
+
+                            {{ evaluation.quality_score }}/20
+
+                        </h3>
+
+                        <small>
+
+                            Quality
+
+                        </small>
+
+                    </div>
+
+                </div>
+
+                <!-- DELIVERY -->
+
+                <div class="col-md-4">
+
+                    <div class="border rounded p-3 text-center">
+
+                        <h3 class="text-success">
+
+                            {{ evaluation.delivery_score }}/15
+
+                        </h3>
+
+                        <small>
+
+                            Delivery
+
+                        </small>
+
+                    </div>
+
+                </div>
+
+                <!-- TECHNICAL -->
+
+                <div class="col-md-4">
+
+                    <div class="border rounded p-3 text-center">
+
+                        <h3 class="text-info">
+
+                            {{ evaluation.technical_score }}/15
+
+                        </h3>
+
+                        <small>
+
+                            Technical
+
+                        </small>
+
+                    </div>
+
+                </div>
+
+                <!-- DOCUMENTATION -->
+
+                <div class="col-md-4">
+
+                    <div class="border rounded p-3 text-center">
+
+                        <h3 class="text-warning">
+
+                            {{ evaluation.documentation_score }}/15
+
+                        </h3>
+
+                        <small>
+
+                            Documentation
+
+                        </small>
+
+                    </div>
+
+                </div>
+
+                <!-- COMPLIANCE -->
+
+                <div class="col-md-4">
+
+                    <div class="border rounded p-3 text-center">
+
+                        <h3 class="text-danger">
+
+                            {{ evaluation.compliance_score }}/15
+
+                        </h3>
+
+                        <small>
+
+                            Compliance
+
+                        </small>
+
+                    </div>
+
+                </div>
+
+                <!-- COMMERCIAL -->
+
+                <div class="col-md-4">
+
+                    <div class="border rounded p-3 text-center">
+
+                        <h3 class="text-dark">
+
+                            {{ evaluation.commercial_score }}/10
+
+                        </h3>
+
+                        <small>
+
+                            Commercial
+
+                        </small>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            <!-- TOTAL -->
+
+            <div class="mt-4">
+
+                <div class="border rounded p-4 bg-light text-center">
+
+                    <h1 class="fw-bold text-success">
+
+                        {{ evaluation.total_score }}/90
+
+                    </h1>
+
+                    <p class="mb-0 text-muted">
+
+                        Overall Supplier Score
+
+                    </p>
+
+                </div>
+
+            </div>
+
+        {% else %}
+
+            <div class="text-center py-5">
+
+                <h5 class="text-muted">
+
+                    Supplier Documents.
+
+                </h5>
+
+                <a
+                    href="{% url 'supplier_evaluation' supplier.id %}"
+                    class="btn btn-primary mt-3"
+                >
+
+                    Evalu
+
+                </a>
+
+            </div>
+
+        {% endif %}
+
+    </div>
+
+</div>

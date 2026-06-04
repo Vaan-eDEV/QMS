@@ -1,0 +1,1055 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+
+body{
+    background:#f4f7fb;
+}
+
+/* ========================================= */
+/* MAIN */
+/* ========================================= */
+
+.dashboard-wrapper{
+    padding:20px;
+}
+
+/* ========================================= */
+/* HEADER */
+/* ========================================= */
+
+.dashboard-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:20px;
+}
+
+.dashboard-title{
+    font-size:24px;
+    font-weight:700;
+    margin-bottom:2px;
+    color:#1e293b;
+}
+
+.dashboard-subtitle{
+    color:#64748b;
+    font-size:13px;
+    margin:0;
+}
+
+.new-btn{
+    border:none;
+    background:#2563eb;
+    color:white;
+    padding:10px 18px;
+    border-radius:10px;
+    font-size:14px;
+    font-weight:600;
+}
+
+/* ========================================= */
+/* KPI */
+/* ========================================= */
+
+.kpi-card{
+    background:white;
+    border-radius:16px;
+    padding:18px;
+    box-shadow:0 2px 8px rgba(0,0,0,0.06);
+    height:100%;
+}
+
+.kpi-top{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+}
+
+.kpi-title{
+    font-size:13px;
+    color:#64748b;
+    margin-bottom:5px;
+}
+
+.kpi-value{
+    font-size:28px;
+    font-weight:700;
+    margin:0;
+    color:#111827;
+}
+
+.kpi-icon{
+    width:48px;
+    height:48px;
+    border-radius:12px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:white;
+    font-size:20px;
+}
+
+.bg-blue{
+    background:#2563eb;
+}
+
+.bg-green{
+    background:#16a34a;
+}
+
+.bg-orange{
+    background:#f97316;
+}
+
+.bg-red{
+    background:#dc2626;
+}
+
+/* ========================================= */
+/* CHART */
+/* ========================================= */
+
+.chart-card{
+    background:white;
+    border-radius:16px;
+    padding:18px;
+    box-shadow:0 2px 8px rgba(0,0,0,0.06);
+    height:100%;
+}
+
+.chart-title{
+    font-size:16px;
+    font-weight:700;
+    margin-bottom:16px;
+    color:#111827;
+}
+
+.chart-container{
+    position:relative;
+    height:260px;
+}
+
+/* ========================================= */
+/* TABLE */
+/* ========================================= */
+
+.table-card{
+    background:white;
+    border-radius:16px;
+    padding:18px;
+    box-shadow:0 2px 8px rgba(0,0,0,0.06);
+}
+
+.custom-table{
+    font-size:13px;
+}
+
+.custom-table thead th{
+    background:#f8fafc;
+    color:#475569;
+    border:none;
+    padding:12px;
+    font-weight:600;
+}
+
+.custom-table tbody td{
+    padding:12px;
+    vertical-align:middle;
+    border-color:#f1f5f9;
+}
+
+/* ========================================= */
+/* BADGES */
+/* ========================================= */
+
+.status-badge{
+    padding:6px 10px;
+    border-radius:30px;
+    font-size:11px;
+    font-weight:600;
+}
+
+.status-open{
+    background:#dbeafe;
+    color:#1d4ed8;
+}
+
+.status-closed{
+    background:#dcfce7;
+    color:#15803d;
+}
+
+.status-progress{
+    background:#fef3c7;
+    color:#b45309;
+}
+
+/* ========================================= */
+/* SCORE */
+/* ========================================= */
+
+.score-card{
+    background:white;
+    border-radius:14px;
+    padding:16px;
+    text-align:center;
+    box-shadow:0 2px 8px rgba(0,0,0,0.06);
+}
+
+.score-title{
+    font-size:12px;
+    color:#64748b;
+    margin-bottom:6px;
+}
+
+.score-value{
+    font-size:22px;
+    font-weight:700;
+    color:#111827;
+}
+
+
+.recent-feedback-scroll{
+
+    max-height:320px;
+
+    overflow-y:auto;
+
+    overflow-x:hidden;
+
+    padding-right:4px;
+
+}
+
+/* OPTIONAL SCROLLBAR */
+
+.recent-feedback-scroll::-webkit-scrollbar{
+
+    width:6px;
+
+}
+
+.recent-feedback-scroll::-webkit-scrollbar-thumb{
+
+    background:#cbd5e1;
+
+    border-radius:20px;
+
+}
+
+
+/* ========================================= */
+/* RESPONSIVE */
+/* ========================================= */
+
+@media(max-width:768px){
+
+    .dashboard-header{
+        flex-direction:column;
+        align-items:flex-start;
+        gap:15px;
+    }
+
+}
+
+</style>
+
+<div class="container-fluid dashboard-wrapper">
+
+    <!-- ========================================= -->
+    <!-- HEADER -->
+    <!-- ========================================= -->
+
+    <div class="dashboard-header">
+
+        <div>
+
+            <h2 class="dashboard-title">
+
+                Customer Feedback Dashboard
+
+            </h2>
+
+            <p class="dashboard-subtitle">
+
+                Analytics & Monitoring Overview
+
+            </p>
+
+        </div>
+
+        <a href="{% url 'feedback_form' %}" class="new-btn">
+
+            + New Feedback
+
+        </a>
+
+    </div>
+
+    <!-- ========================================= -->
+    <!-- KPI -->
+    <!-- ========================================= -->
+
+    <div class="row g-3 mb-3">
+
+        <div class="col-lg-3 col-md-6">
+
+            <div class="kpi-card">
+
+                <div class="kpi-top">
+
+                    <div>
+
+                        <div class="kpi-title">
+
+                            Total Feedback
+
+                        </div>
+
+                        <h2 class="kpi-value">
+
+                            {{ total_feedback }}
+
+                        </h2>
+
+                    </div>
+
+                    <div class="kpi-icon bg-blue">
+
+                        📊
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="col-lg-3 col-md-6">
+
+            <div class="kpi-card">
+
+                <div class="kpi-top">
+
+                    <div>
+
+                        <div class="kpi-title">
+
+                            Open Cases
+
+                        </div>
+
+                        <h2 class="kpi-value">
+
+                            {{ open_feedback }}
+
+                        </h2>
+
+                    </div>
+
+                    <div class="kpi-icon bg-green">
+
+                        📂
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="col-lg-3 col-md-6">
+
+            <div class="kpi-card">
+
+                <div class="kpi-top">
+
+                    <div>
+
+                        <div class="kpi-title">
+
+                            Overdue
+
+                        </div>
+
+                        <h2 class="kpi-value">
+
+                            {{ overdue_feedback }}
+
+                        </h2>
+
+                    </div>
+
+                    <div class="kpi-icon bg-orange">
+
+                        ⏰
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="col-lg-3 col-md-6">
+
+            <div class="kpi-card">
+
+                <div class="kpi-top">
+
+                    <div>
+
+                        <div class="kpi-title">
+
+                            Critical
+
+                        </div>
+
+                        <h2 class="kpi-value">
+
+                            {{ critical_feedback }}
+
+                        </h2>
+
+                    </div>
+
+                    <div class="kpi-icon bg-red">
+
+                        ⚠️
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- ========================================= -->
+    <!-- CHARTS -->
+    <!-- ========================================= -->
+
+    <div class="row g-3 mb-3">
+
+        <div class="col-lg-8">
+
+            <div class="chart-card">
+
+                <div class="chart-title">
+
+                    Feedback Trend
+
+                </div>
+
+                <div class="chart-container">
+
+                    <canvas id="trendChart"></canvas>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="col-lg-4">
+
+            <div class="chart-card">
+
+                <div class="chart-title">
+
+                    Feedback Categories
+
+                </div>
+
+                <div class="chart-container">
+
+                    <canvas id="categoryChart"></canvas>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- ========================================= -->
+    <!-- TABLE + CUSTOMER -->
+    <!-- ========================================= -->
+
+    <div class="row g-3 mb-3">
+
+        <div class="col-lg-8">
+
+            <div class="table-card">
+
+                <div class="chart-title">
+
+                    Recent Feedback
+
+                </div>
+
+
+                <div class="table-responsive recent-feedback-scroll">
+
+
+
+                    <table class="table custom-table">
+
+                        <thead>
+
+                            <tr>
+
+                                <th>Feedback No</th>
+                                <th>Customer</th>
+                                <th>Type</th>
+                                <th>Date</th>
+                                <th>Severity</th>
+                                <th>Status</th>
+
+                            </tr>
+
+                        </thead>
+
+                        <tbody>
+
+                            {% for feedback in recent_feedback %}
+
+                            <tr>
+
+                                <td>
+
+                                    {{ feedback.feedback_no }}
+
+                                </td>
+
+                                <td>
+
+                                    {{ feedback.customer_name }}
+
+                                </td>
+
+                                <td>
+
+                                    {{ feedback.feedback_type }}
+
+                                </td>
+
+                                <td>
+
+                                    {{ feedback.date_received }}
+
+                                </td>
+
+                                <td>
+
+                                    {{ feedback.severity }}
+
+                                </td>
+
+                                <td>
+
+                                    {% if feedback.status == "Open" %}
+
+                                        <span class="status-badge status-open">
+
+                                            {{ feedback.status }}
+
+                                        </span>
+
+                                    {% elif feedback.status == "Closed" %}
+
+                                        <span class="status-badge status-closed">
+
+                                            {{ feedback.status }}
+
+                                        </span>
+
+                                    {% else %}
+
+                                        <span class="status-badge status-progress">
+
+                                            {{ feedback.status }}
+
+                                        </span>
+
+                                    {% endif %}
+
+                                </td>
+
+                            </tr>
+
+                            {% endfor %}
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="col-lg-4">
+
+            <div class="chart-card">
+
+                <div class="chart-title">
+
+                    Top Customers
+
+                </div>
+
+                <div class="chart-container">
+
+                    <canvas id="customerChart"></canvas>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- ========================================= -->
+    <!-- SCORE -->
+    <!-- ========================================= -->
+
+    <div class="row g-3">
+
+        <div class="col-lg-2 col-md-4">
+
+            <div class="score-card">
+
+                <div class="score-title">
+
+                    Overall
+
+                </div>
+
+                <div class="score-value">
+
+                    {{ satisfaction_data.overall }}/5
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="col-lg-2 col-md-4">
+
+            <div class="score-card">
+
+                <div class="score-title">
+
+                    Product
+
+                </div>
+
+                <div class="score-value">
+
+                    {{ satisfaction_data.product_quality }}/5
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="col-lg-2 col-md-4">
+
+            <div class="score-card">
+
+                <div class="score-title">
+
+                    Delivery
+
+                </div>
+
+                <div class="score-value">
+
+                    {{ satisfaction_data.delivery }}/5
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="col-lg-2 col-md-4">
+
+            <div class="score-card">
+
+                <div class="score-title">
+
+                    Support
+
+                </div>
+
+                <div class="score-value">
+
+                    {{ satisfaction_data.support }}/5
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="col-lg-2 col-md-4">
+
+            <div class="score-card">
+
+                <div class="score-title">
+
+                    Communication
+
+                </div>
+
+                <div class="score-value">
+
+                    {{ satisfaction_data.communication }}/5
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="col-lg-2 col-md-4">
+
+            <div class="score-card">
+
+                <div class="score-title">
+
+                    Closure Time
+
+                </div>
+
+                <div class="score-value">
+
+                    {{ avg_closure_days }}
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+
+const trendCtx = document.getElementById('trendChart');
+
+new Chart(trendCtx, {
+
+    type: 'line',
+
+    data: {
+
+        labels: [
+
+            'Jan','Feb','Mar','Apr','May','Jun',
+            'Jul','Aug','Sep','Oct','Nov','Dec'
+
+        ],
+
+        datasets: [
+
+            {
+
+                label:'Total',
+
+                data: {{ monthly_total|safe }},
+
+                borderColor:'#2563eb',
+
+                backgroundColor:'#2563eb',
+
+                tension:0.4
+
+            },
+
+            {
+
+                label:'Complaints',
+
+                data: {{ monthly_complaints|safe }},
+
+                borderColor:'#dc2626',
+
+                backgroundColor:'#dc2626',
+
+                tension:0.4
+
+            },
+
+            {
+
+                label:'Suggestions',
+
+                data: {{ monthly_suggestions|safe }},
+
+                borderColor:'#16a34a',
+
+                backgroundColor:'#16a34a',
+
+                tension:0.4
+
+            }
+
+        ]
+
+    },
+
+    options:{
+
+        responsive:true,
+        maintainAspectRatio:false
+
+    }
+
+});
+
+
+const categoryCtx = document.getElementById('categoryChart');
+
+new Chart(categoryCtx, {
+
+    type:'doughnut',
+
+    data:{
+
+        labels:[
+
+            {% for item in category_data %}
+                '{{ item.category }}',
+            {% endfor %}
+
+        ],
+
+        datasets:[{
+
+            data:[
+
+                {% for item in category_data %}
+                    {{ item.total }},
+                {% endfor %}
+
+            ],
+
+            backgroundColor:[
+
+                '#3b82f6',
+                '#84cc16',
+                '#f59e0b',
+                '#8b5cf6',
+                '#06b6d4',
+                '#f472b6'
+
+            ],
+
+            borderWidth:0,
+
+            hoverOffset:8
+
+        }]
+
+    },
+
+    options:{
+
+        responsive:true,
+
+        maintainAspectRatio:false,
+
+        cutout:'65%',
+
+        plugins:{
+
+            legend:{
+
+                position:'right',
+
+                labels:{
+
+                    usePointStyle:true,
+
+                    pointStyle:'circle',
+
+                    padding:18,
+
+                    font:{
+                        size:12
+                    },
+
+                    color:'#475569'
+
+                }
+
+            },
+
+            tooltip:{
+
+                backgroundColor:'#111827',
+
+                padding:12,
+
+                cornerRadius:10
+
+            }
+
+        }
+
+    },
+
+    plugins:[{
+
+        id:'centerText',
+
+        beforeDraw(chart){
+
+            const {width,height,ctx} = chart;
+
+            ctx.restore();
+
+            ctx.font = '700 14px sans-serif';
+
+            ctx.fillStyle = '#111827';
+
+            ctx.textAlign = 'center';
+
+            ctx.textBaseline = 'middle';
+
+            ctx.fillText(
+
+                'Total',
+
+                width / 2,
+
+                height / 2 - 10
+
+            );
+
+            ctx.font = '700 24px sans-serif';
+
+            ctx.fillText(
+
+                '{{ total_feedback }}',
+
+                width / 2,
+
+                height / 2 + 18
+
+            );
+
+            ctx.save();
+
+        }
+
+    }]
+
+});
+
+
+
+
+const customerCtx = document.getElementById('customerChart');
+
+new Chart(customerCtx, {
+
+    type:'bar',
+
+    data:{
+
+        labels:[
+
+            {% for customer in top_customers %}
+                '{{ customer.customer_name }}',
+            {% endfor %}
+
+        ],
+
+        datasets:[{
+
+            label:'Feedback',
+
+            data:[
+
+                {% for customer in top_customers %}
+                    {{ customer.total }},
+                {% endfor %}
+
+            ],
+
+            backgroundColor:'#2563eb',
+
+            borderRadius:8,
+
+            barThickness:18
+
+        }]
+
+    },
+
+    options:{
+
+        indexAxis:'y',
+
+        responsive:true,
+
+        maintainAspectRatio:false,
+
+        plugins:{
+
+            legend:{
+                display:false
+            }
+
+        },
+
+        scales:{
+
+            x:{
+                beginAtZero:true,
+                grid:{
+                    color:'#e2e8f0'
+                }
+            },
+
+            y:{
+                grid:{
+                    display:false
+                }
+            }
+
+        }
+
+    }
+
+});
+
+
+</script>
+
+{% endblock %}
+

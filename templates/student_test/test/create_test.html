@@ -1,0 +1,358 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<style>
+
+.page-card{
+
+    border:none;
+
+    border-radius:24px;
+
+    box-shadow:0 10px 35px rgba(0,0,0,0.06);
+
+    overflow:hidden;
+
+}
+
+.form-control,
+.form-select{
+
+    border-radius:14px;
+
+    min-height:52px;
+
+    border:1px solid #d1d5db;
+
+    font-size:15px;
+
+}
+
+.form-control:focus,
+.form-select:focus{
+
+    box-shadow:none;
+
+    border-color:#2563eb;
+
+}
+
+.page-title{
+
+    font-weight:800;
+
+    color:#111827;
+
+    margin-bottom:6px;
+
+}
+
+.page-sub{
+
+    color:#6b7280;
+
+    font-size:14px;
+
+}
+
+.btn-create{
+
+    border-radius:14px;
+
+    padding:12px 34px;
+
+    font-weight:700;
+
+    font-size:15px;
+
+    box-shadow:0 4px 14px rgba(37,99,235,0.2);
+
+}
+
+.section-title{
+
+    font-size:15px;
+
+    font-weight:700;
+
+    color:#111827;
+
+    margin-bottom:18px;
+
+}
+
+.form-label{
+
+    color:#374151;
+
+    margin-bottom:8px;
+
+}
+
+.form-area{
+
+    background:#f9fafb;
+
+    border-radius:18px;
+
+    padding:24px;
+
+}
+
+.header-strip{
+
+    background:linear-gradient(
+        135deg,
+        #2563eb,
+        #1d4ed8
+    );
+
+    padding:28px;
+
+    color:white;
+
+}
+
+.header-strip h3{
+
+    font-weight:800;
+
+    margin-bottom:6px;
+
+}
+
+.header-strip p{
+
+    margin:0;
+
+    opacity:0.9;
+
+    font-size:14px;
+
+}
+
+</style>
+
+<div class="container py-4">
+
+    <!-- HEADER -->
+
+    <div class="card page-card">
+
+        <div class="header-strip">
+
+            <h3>
+
+                Create Training Test
+
+            </h3>
+
+            <p>
+
+                Create employee training modules and assessment tests
+
+            </p>
+
+        </div>
+
+        <!-- BODY -->
+
+        <div class="card-body p-4 p-lg-5">
+
+            <form method="POST">
+
+                {% csrf_token %}
+
+                <div class="form-area">
+
+                    <div class="section-title">
+
+                        Training Information
+
+                    </div>
+
+                    <!-- CATEGORY -->
+
+                    <div class="mb-4">
+
+                        <label class="form-label fw-semibold">
+
+                            Training Category
+
+                        </label>
+
+                        <select name="category"
+                                class="form-select"
+                                required>
+
+                            <option value="">
+                                Select Category
+                            </option>
+
+                            <option value="INDUCTION_TRAINING">
+                                Induction Training
+                            </option>
+
+                            <option value="ROLE_BASED_TRAINING">
+                                Role Based Training
+                            </option>
+
+                            <option value="EXTERNAL_TRAINING">
+                                External Training
+                            </option>
+
+                        </select>
+
+                    </div>
+
+                    <!-- TRAINING TYPE -->
+
+                    <div class="mb-4">
+
+                        <label class="form-label fw-semibold">
+
+                            Training Type
+
+                        </label>
+
+                        <select name="training_type"
+                                class="form-select"
+                                required>
+
+                            <option value="">
+                                Select Training Type
+                            </option>
+
+                            <option value="CLASSROOM">
+                                Classroom
+                            </option>
+
+                            <option value="ONLINE">
+                                Online
+                            </option>
+
+                            <option value="VIDEO_BASED">
+                                Video Based
+                            </option>
+
+                            <option value="SELF_LEARNING">
+                                Self Learning
+                            </option>
+
+                            <option value="PRESENTATION">
+                                Presentation
+                            </option>
+
+                            <option value="DEMONSTRATION">
+                                Demonstration
+                            </option>
+
+                            <option value="PRACTICAL">
+                                Practical
+                            </option>
+
+                            <option value="ON_THE_JOB">
+                                On The Job
+                            </option>
+
+                            <option value="QUALITY">
+                                Quality
+                            </option>
+
+                            <option value="TECHNICAL_CERTIFICATION">
+                                Technical Certification
+                            </option>
+
+                            <option value="AWARENESS">
+                                Awareness
+                            </option>
+
+                        </select>
+
+                    </div>
+
+                    <!-- TITLE -->
+
+                    <div class="mb-4">
+
+                        <label class="form-label fw-semibold">
+
+                            Test Title
+
+                        </label>
+
+                        <input type="text"
+                               name="title"
+                               class="form-control"
+                               placeholder="Enter training test title"
+                               required>
+
+                    </div>
+
+                    <!-- ROW -->
+
+                    <div class="row">
+
+                        <!-- DURATION -->
+
+                        <div class="col-md-6 mb-4">
+
+                            <label class="form-label fw-semibold">
+
+                                Duration (Minutes)
+
+                            </label>
+
+                            <input type="number"
+                                   name="duration_minutes"
+                                   class="form-control"
+                                   placeholder="Example: 30"
+                                   required>
+
+                        </div>
+
+                        <!-- PASS % -->
+
+                        <div class="col-md-6 mb-4">
+
+                            <label class="form-label fw-semibold">
+
+                                Pass Percentage (%)
+
+                            </label>
+
+                            <input type="number"
+                                   name="pass_percentage"
+                                   class="form-control"
+                                   placeholder="Example: 40"
+                                   required>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <!-- BUTTON -->
+
+                <div class="text-end mt-4">
+
+                    <button type="submit"
+                            class="btn btn-primary btn-create">
+
+                        Create Test
+
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

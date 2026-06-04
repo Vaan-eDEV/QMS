@@ -1,0 +1,259 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+.container-custom { max-width: 1400px; margin: auto; }
+
+.top-card {
+    background: #fff;
+    border-radius: 14px;
+    padding: 18px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+}
+
+.profile-img {
+    width: 90px;
+    height: 90px;
+    border-radius: 10px;
+    object-fit: cover;   /* IMPORTANT */
+}
+
+.badge-id {
+    background: #e7f0ff;
+    color: #0d6efd;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+}
+
+.badge-status {
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+}
+
+.badge-PENDING { background:#fff3cd; color:#856404; }
+.badge-APPROVED { background:#e6f4ea; color:#2e7d32; }
+.badge-REJECTED { background:#fdecea; color:#c62828; }
+
+.info-card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 15px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    margin-bottom: 15px;
+    border-left: 5px solid #369af2;
+}
+
+.label { font-size: 12px; color: #777; }
+.value { font-weight: 500; margin-bottom: 6px; }
+
+.doc-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border: 1px solid #e6ebf0;
+    border-radius: 10px;
+    padding: 10px;
+    margin-bottom: 10px;
+}
+</style>
+
+<div class="container-custom mt-4">
+    <a href="{% url 'edit_employee' emp.id %}" class="btn btn-primary btn-sm">
+        Edit
+    </a>
+<!-- HEADER -->
+<div class="top-card d-flex justify-content-between">
+
+
+    <div class="d-flex gap-3">
+        {% if emp.profile_image %}
+    <img src="{{ emp.profile_image.url }}" class="profile-img">
+{% else %}
+    <img src="https://randomuser.me/api/portraits/men/32.jpg" class="profile-img">
+{% endif %}
+        <div>
+            <h5>{{ emp.name }}</h5>
+
+            <span class="badge-id">{{ emp.emp_id }}</span>
+            <span class="badge-status badge-{{ emp.status }}">
+                {{ emp.status }}
+            </span>
+
+            <div class="text-muted small mt-2">
+                {{ emp.role }} <br>
+                {{ emp.department }}
+            </div>
+        </div>
+    </div>
+
+    <div class="small">
+        <div><b>Email:</b> {{ emp.email }}</div>
+        <div><b>Mobile:</b> {{ emp.mobile_number }}</div>
+        <div><b>DOJ:</b> {{ emp.date_of_joining }}</div>
+        <div><b>Location:</b> {{ emp.work_location }}</div>
+    </div>
+
+</div>
+
+<!-- GRID -->
+<div class="row mt-3">
+
+<!-- PERSONAL -->
+<div class="col-md-4">
+<div class="info-card">
+<h6>Personal</h6>
+
+<div class="label">DOB</div><div class="value">{{ emp.dob }}</div>
+<div class="label">Gender</div><div class="value">{{ emp.gender }}</div>
+<div class="label">Marital Status</div><div class="value">{{ emp.marital_status }}</div>
+<div class="label">Nationality</div><div class="value">{{ emp.nationality }}</div>
+<div class="label">Blood Group</div><div class="value">{{ emp.blood_group }}</div>
+
+</div>
+
+<div class="info-card">
+<h6>Extra</h6>
+
+<div class="label">Qualification</div><div class="value">{{ emp.qualification }}</div>
+<div class="label">Skills</div><div class="value">{{ emp.skills }}</div>
+<div class="label">Experience</div><div class="value">{{ emp.experience }}</div>
+<div class="label">Notes</div><div class="value">{{ emp.notes }}</div>
+
+</div>
+</div>
+
+<!-- GOVT + CONTACT -->
+<div class="col-md-4">
+
+<div class="info-card">
+<h6>Government IDs</h6>
+
+<div class="label">PAN</div><div class="value">{{ emp.pan_number }}</div>
+<div class="label">Aadhar</div><div class="value">{{ emp.aadhar_number }}</div>
+<!-- <div class="label">UAN</div><div class="value">{{ emp.uan_number }}</div> -->
+<div class="label">PF</div><div class="value">{{ emp.pf_number }}</div>
+<div class="label">ESI</div><div class="value">{{ emp.esi_number }}</div>
+
+</div>
+
+<div class="info-card">
+<h6>Contact</h6>
+
+<div class="label">Mobile</div><div class="value">{{ emp.mobile_number }}</div>
+<div class="label">Alternate</div><div class="value">{{ emp.alternate_number }}</div>
+
+</div>
+
+<div class="info-card">
+<h6>Address</h6>
+
+<div class="label">Current</div><div class="value">{{ emp.current_address }}</div>
+<div class="label">Permanent</div><div class="value">{{ emp.permanent_address }}</div>
+
+</div>
+
+</div>
+
+<!-- EMPLOYMENT -->
+<div class="col-md-4">
+
+<div class="info-card">
+<h6>Employment</h6>
+
+<div class="label">Department</div><div class="value">{{ emp.department }}</div>
+<div class="label">Role</div><div class="value">{{ emp.role }}</div>
+<div class="label">Type</div><div class="value">{{ emp.employment_type }}</div>
+<div class="label">Shift</div><div class="value">{{ emp.shift }}</div>
+<div class="label">Cost Center</div><div class="value">{{ emp.cost_center }}</div>
+<div class="label">Manager</div><div class="value">{{ emp.reporting_manager }}</div>
+
+</div>
+
+<div class="info-card">
+<h6>Bank</h6>
+
+<div class="label">Bank</div><div class="value">{{ emp.bank_name }}</div>
+<div class="label">Branch</div><div class="value">{{ emp.branch_name }}</div>
+<div class="label">Account</div><div class="value">{{ emp.account_number }}</div>
+<div class="label">Type</div><div class="value">{{ emp.account_type }}</div>
+<div class="label">IFSC</div><div class="value">{{ emp.ifsc_code }}</div>
+
+</div>
+
+<div class="info-card">
+<h6>Salary</h6>
+
+<div class="label">Grade</div><div class="value">{{ emp.pay_grade }}</div>
+<div class="label">Basic</div><div class="value">{{ emp.basic_salary }}</div>
+<div class="label">Effective</div><div class="value">{{ emp.effective_date }}</div>
+<div class="label">Cycle</div><div class="value">{{ emp.payment_cycle }}</div>
+
+</div>
+
+</div>
+
+</div>
+
+<!-- EMERGENCY -->
+<div class="info-card">
+<h6>Emergency Contact</h6>
+
+<div class="row">
+<div class="col-md-3"><div class="label">Name</div><div class="value">{{ emp.emergency_contact_name }}</div></div>
+<div class="col-md-3"><div class="label">Relation</div><div class="value">{{ emp.emergency_relationship }}</div></div>
+<div class="col-md-3"><div class="label">Mobile</div><div class="value">{{ emp.emergency_mobile }}</div></div>
+<div class="col-md-3"><div class="label">Alt</div><div class="value">{{ emp.emergency_alternate }}</div></div>
+</div>
+
+<div class="label mt-2">Address</div>
+<div class="value">{{ emp.emergency_address }}</div>
+
+</div>
+
+<!-- DOCUMENTS -->
+<div class="info-card">
+<h6>Documents</h6>
+
+{% for c in emp.certificates.all %}
+<div class="doc-card">
+
+    <div>
+        <div class="fw-semibold">{{ c.certificate_name }}</div>
+        <small class="text-muted">
+            {{ c.uploaded_at|date:"d M Y" }}
+        </small>
+    </div>
+
+    {% if c.pdf_file %}
+        <!-- ✅ PDF -->
+        <a href="{{ c.pdf_file.url }}" target="_blank" class="btn btn-sm btn-outline-primary">
+            View
+        </a>
+
+    {% elif ".docx" in c.file.url|lower %}
+        <!-- 🔥 DOCX FIX -->
+        <a href="https://view.officeapps.live.com/op/view.aspx?src={{ c.file.url }}"
+           target="_blank"
+           class="btn btn-sm btn-outline-primary">
+            View
+        </a>
+
+    {% else %}
+        <!-- ✅ Images / others -->
+        <a href="{{ c.file.url }}" target="_blank" class="btn btn-sm btn-outline-secondary">
+            View
+        </a>
+    {% endif %}
+
+</div>
+{% empty %}
+<div class="text-muted">No documents available</div>
+{% endfor %}
+
+</div>
+
+</div>
+
+{% endblock %}

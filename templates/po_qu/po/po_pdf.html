@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Purchase Order {{ po.po_number }}</title>
+
+<style>
+@page {
+    size: A4;
+    margin: 15mm;
+
+    @bottom-center {
+        content: "© VAAN Aerospace — Page " counter(page) " of " counter(pages);
+        font-size: 10px;
+        color: #666;
+    }
+}
+
+body {
+    font-family: Arial, sans-serif;
+    font-size: 11px;
+    color: #222;
+}
+
+/* HEADER */
+.header {
+    text-align: center;
+    margin-bottom: 15px;
+}
+
+.logo-text {
+    font-size: 40px;
+    letter-spacing: 6px;
+    color: #2b7cff;
+}
+
+.company-info {
+    font-size: 10px;
+    margin-top: 5px;
+}
+
+/* TITLE */
+.title {
+    color: #2b7cff;
+    font-size: 20px;
+    font-weight: bold;
+    margin: 20px 0;
+}
+
+/* TOP GRID */
+.top-section {
+    width: 100%;
+}
+
+.top-section td {
+    vertical-align: top;
+}
+
+.qr {
+    text-align: right;
+}
+
+.qr img {
+    width: 100px;
+}
+
+/* ADDRESS BLOCK */
+.block-title {
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.section {
+    margin-top: 10px;
+}
+
+/* TABLE */
+.table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+.table th {
+    background: #2b7cff;
+    color: #fff;
+    padding: 6px;
+    font-size: 10px;
+}
+
+.table td {
+    padding: 6px;
+    border-bottom: 1px solid #ddd;
+}
+
+.num {
+    text-align: right;
+}
+
+/* TOTAL */
+.total {
+    width: 40%;
+    margin-left: auto;
+    margin-top: 10px;
+}
+
+.total td {
+    padding: 4px;
+}
+
+.total .bold {
+    font-weight: bold;
+}
+
+/* SIGNATURE */
+.signature-section {
+    margin-top: 30px;
+    display: flex;
+    justify-content: space-between;
+}
+
+.sign-box {
+    width: 45%;
+    text-align: center;
+}
+
+.sign-line {
+    border-top: 1px dashed #999;
+    margin-top: 25px;
+    padding-top: 5px;
+    font-size: 10px;
+}
+
+.notes-terms {
+    position: fixed;
+    bottom: 40px;   /* 👈 adjust spacing */
+    left: 15mm;
+    right: 15mm;
+    font-size: 10px;
+}
+
+.footer {
+    position: fixed;
+    bottom: 10px;
+    text-align: center;
+    font-size: 10px;
+    color: #666;
+}
+</style>
+</head>
+
+<body>
+
+<!-- HEADER -->
+<div class="header">
+
+    {% if logo_path %}
+    <img src="{{ logo_path }}" style="height:70px;">
+    {% endif %}
+
+    <div class="company-info">
+        183A, Fifth street, Cross Cut Road, Gandhipuram, Coimbatore - 641012<br>
+        GSTIN: 33AACV4149D1ZF | Phone: 7397624456
+    </div>
+</div>
+
+<!-- TITLE -->
+<div class="title">
+    Purchase Order #{{ po.po_number }}
+</div>
+
+<!-- TOP -->
+<table class="top-section">
+<tr>
+
+<td width="60%">
+    <b>Reference:</b> {{ po.reference }}<br>
+    <b>Date:</b> {{ po.date }}
+    
+    <div class="section">
+        <div class="block-title">Supplier</div>
+        {{ po.supplier_name }}<br>
+        {{ po.supplier_address }}<br>
+        Phone: {{ po.supplier_phone }}<br>
+        GSTIN: {{ po.supplier_gstin }}
+    </div>
+</td>
+
+<td width="40%" class="qr">
+    {% if qr_code_path %}
+    <img src="{{ qr_code_path }}">
+    {% endif %}
+</td>
+
+</tr>
+</table>
+
+<!-- BILLING / SHIPPING -->
+<table width="100%" style="margin-top:15px;">
+<tr>
+
+<td width="50%">
+    <div class="block-title">Billing</div>
+    {{ po.billing_name }}<br>
+    {{ po.billing_address }}<br>
+    Phone: {{ po.billing_phone }}<br>
+    GSTIN: {{ po.billing_gstin }}
+</td>
+
+<td width="50%" style="text-align:right;">
+    <div class="block-title">Shipping</div>
+    {{ po.shipping_name }}<br>
+    {{ po.shipping_address }}<br>
+    Phone: {{ po.shipping_phone }}<br>
+    GSTIN: {{ po.shipping_gstin }}
+</td>
+
+</tr>
+</table>
+
+<!-- ITEMS -->
+<table class="table">
+<thead>
+<tr>
+<th>#</th>
+<th>Product</th>
+<th>Description</th>
+<th>Unit</th>
+<th>Qty</th>
+<th>Rate</th>
+<th>Amount</th>
+</tr>
+</thead>
+
+<tbody>
+{% for item in po.items.all %}
+<tr>
+<td>{{ forloop.counter }}</td>
+<td>{{ item.product_code }}</td>
+<td>{{ item.description }}</td>
+<td>{{ item.unit }}</td>
+<td class="num">{{ item.quantity }}</td>
+<td class="num">{{ item.rate }}</td>
+<td class="num">{{ item.amount }}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+
+<!-- TOTAL -->
+<table class="total">
+<tr><td>Subtotal</td><td class="num">₹ {{ po.subtotal }}</td></tr>
+<tr><td>Discount ({{ po.discount_percentage }}%)</td><td class="num">₹ {{ po.discount_amount }}</td></tr>
+<tr><td>CGST ({{ po.cgst_percentage }}%)</td><td class="num">₹ {{ po.cgst_amount }}</td></tr>
+<tr><td>SGST ({{ po.sgst_percentage }}%)</td><td class="num">₹ {{ po.sgst_amount }}</td></tr>
+<tr><td>IGST ({{ po.igst_percentage }}%)</td><td class="num">₹ {{ po.igst_amount }}</td></tr>
+<tr class="bold">
+    <td>Grand Total</td>
+    <td class="num"><b>₹ {{ po.grand_total }}</b></td>
+</tr>
+</table>
+
+<!-- SIGNATURE -->
+<div class="signature-section">
+
+<div class="sign-box">
+    <div class="sign-line">
+        Prepared By<br>
+        {{ po.prepared_by }}<br>
+        {{ po.prepared_at|date:"d M Y H:i" }}<br>
+        {{ po.prepared_signature_id }}
+    </div>
+</div>
+
+<div class="sign-box">
+    <div class="sign-line">
+        Approved By<br>
+        {{ po.approved_by }}<br>
+        {{ po.approved_at|date:"d M Y H:i" }}<br>
+        {{ po.approved_signature_id }}
+    </div>
+</div>
+
+</div>
+
+<!-- NOTES & TERMS FIXED -->
+<div class="notes-terms">
+    <div>
+        <b>Note</b><br>
+        {{ po.note|default:"-" }}
+    </div>
+
+    <div style="margin-top:8px;">
+        <b>Terms</b><br>
+        {{ po.terms|default:"-" }}
+    </div>
+</div>
+
+<!-- FOOTER
+<div class="footer">
+    Created by QMS | Digital ID: {{ po.digital_id }}
+</div> -->
+
+</body>
+</html>

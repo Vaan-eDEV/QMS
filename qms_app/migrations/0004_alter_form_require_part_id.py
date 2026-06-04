@@ -10,9 +10,5 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.AlterField(
-            model_name='form',
-            name='require_part_id',
-            field=models.BooleanField(default=False),
-        ),
+        
     ]

@@ -12,18 +12,5 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.CreateModel(
-            name='MachineSession',
-            fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('machine_id', models.CharField(max_length=100)),
-                ('login_time', models.DateTimeField(auto_now_add=True)),
-                ('logout_time', models.DateTimeField(blank=True, null=True)),
-                ('shift', models.CharField(blank=True, max_length=20)),
-                ('message', models.TextField(blank=True)),
-                ('ip_address', models.GenericIPAddressField(blank=True, null=True)),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('operator', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL)),
-            ],
-        ),
+        
     ]

@@ -1,0 +1,268 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+.container-custom { max-width: 1350px; margin: auto; }
+
+.top-card {
+    background: #fff;
+    border-radius: 14px;
+    padding: 18px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+}
+
+.info-card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 15px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    margin-bottom: 15px;
+}
+
+.label { font-size: 12px; color: #777; }
+.value { font-weight: 500; }
+
+input, textarea {
+    width: 100%;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    padding: 6px;
+}
+
+.doc-card {
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:10px;
+}
+</style>
+
+<div class="container-custom mt-4">
+
+<form method="POST" enctype="multipart/form-data">
+{% csrf_token %}
+
+<!-- HEADER -->
+<div class="top-card d-flex justify-content-between">
+
+    <div>
+        <h5>{{ emp.name }}</h5>
+        <small>{{ emp.emp_id }}</small>
+    </div>
+
+    <div>
+        <button type="button" class="btn btn-primary btn-sm" onclick="toggleEdit()">Edit</button>
+        <button type="submit" name="save_employee" class="btn btn-success btn-sm d-none" id="saveBtn">
+    Save
+</button>
+    </div>
+
+</div>
+
+<div class="row mt-3">
+
+<!-- PERSONAL -->
+<div class="col-md-4">
+<div class="info-card">
+
+<h6>Personal</h6>
+
+<label>Name</label>
+<input name="name" value="{{ emp.name }}" disabled>
+
+<label>DOB</label>
+<input type="date" name="dob" value="{{ emp.dob|date:'Y-m-d' }}" disabled>
+
+<label>Gender</label>
+<input name="gender" value="{{ emp.gender }}" disabled>
+
+<label>Marital</label>
+<input name="marital_status" value="{{ emp.marital_status }}" disabled>
+
+<label>Nationality</label>
+<input name="nationality" value="{{ emp.nationality }}" disabled>
+
+<label>Blood Group</label>
+<input name="blood_group" value="{{ emp.blood_group }}" disabled>
+
+</div>
+
+<div class="info-card">
+
+<h6>Extra</h6>
+
+<label>Qualification</label>
+<textarea name="qualification" disabled>{{ emp.qualification }}</textarea>
+
+<label>Skills</label>
+<textarea name="skills" disabled>{{ emp.skills }}</textarea>
+
+<label>Experience</label>
+<textarea name="experience" disabled>{{ emp.experience }}</textarea>
+
+<label>Notes</label>
+<textarea name="notes" disabled>{{ emp.notes }}</textarea>
+
+</div>
+</div>
+
+<!-- CONTACT -->
+<div class="col-md-4">
+
+<div class="info-card">
+<h6>Contact</h6>
+
+<label>Email</label>
+<input name="email" value="{{ emp.email }}" disabled>
+
+<label>Mobile</label>
+<input name="mobile_number" value="{{ emp.mobile_number }}" disabled>
+
+<label>Alternate</label>
+<input name="alternate_number" value="{{ emp.alternate_number }}" disabled>
+
+</div>
+
+<div class="info-card">
+<h6>Address</h6>
+
+<label>Current</label>
+<textarea name="current_address" disabled>{{ emp.current_address }}</textarea>
+
+<label>Permanent</label>
+<textarea name="permanent_address" disabled>{{ emp.permanent_address }}</textarea>
+
+</div>
+
+<div class="info-card">
+<h6>Govt IDs</h6>
+
+<label>PAN</label>
+<input name="pan_number" value="{{ emp.pan_number }}" disabled>
+
+<label>Aadhar</label>
+<input name="aadhar_number" value="{{ emp.aadhar_number }}" disabled>
+
+<label>UAN</label>
+<input name="uan_number" value="{{ emp.uan_number }}" disabled>
+
+<label>PF</label>
+<input name="pf_number" value="{{ emp.pf_number }}" disabled>
+
+<label>ESI</label>
+<input name="esi_number" value="{{ emp.esi_number }}" disabled>
+
+</div>
+
+</div>
+
+<!-- EMPLOYMENT -->
+<div class="col-md-4">
+
+<div class="info-card">
+<h6>Employment</h6>
+
+<label>Department</label>
+<input name="department" value="{{ emp.department }}" disabled>
+
+<label>Role</label>
+<input name="role" value="{{ emp.role }}" disabled>
+
+<label>Joining</label>
+<input type="date" name="doj" value="{{ emp.date_of_joining|date:'Y-m-d' }}" disabled>
+
+<label>Location</label>
+<input name="work_location" value="{{ emp.work_location }}" disabled>
+
+<label>Manager</label>
+<input name="reporting_manager" value="{{ emp.reporting_manager }}" disabled>
+
+</div>
+
+<div class="info-card">
+<h6>Bank</h6>
+
+<label>Bank</label>
+<input name="bank_name" value="{{ emp.bank_name }}" disabled>
+
+<label>Account</label>
+<input name="account_number" value="{{ emp.account_number }}" disabled>
+
+<label>IFSC</label>
+<input name="ifsc_code" value="{{ emp.ifsc_code }}" disabled>
+
+</div>
+
+<div class="info-card">
+<h6>Salary</h6>
+
+<label>Basic</label>
+<input name="basic_salary" value="{{ emp.basic_salary }}" disabled>
+
+<label>Cycle</label>
+<input name="payment_cycle" value="{{ emp.payment_cycle }}" disabled>
+
+</div>
+
+</div>
+
+</div>
+
+<!-- CERTIFICATES -->
+<div class="info-card">
+<h6>Certificates</h6>
+
+{% for c in emp.certificates.all %}
+<div class="doc-card">
+
+    <div>{{ c.certificate_name }}</div>
+
+    <div class="d-flex gap-2">
+
+        <!-- VIEW -->
+        {% if c.pdf_file %}
+            <a href="{{ c.pdf_file.url }}" target="_blank" class="btn btn-sm btn-outline-primary">View</a>
+        {% elif ".docx" in c.file.url|lower %}
+            <a href="https://view.officeapps.live.com/op/view.aspx?src={{ c.file.url }}"
+               target="_blank"
+               class="btn btn-sm btn-outline-primary">View</a>
+        {% else %}
+            <a href="{{ c.file.url }}" target="_blank" class="btn btn-sm btn-outline-secondary">View</a>
+        {% endif %}
+
+        <!-- 🔥 DELETE BUTTON (IMPORTANT) -->
+        <button type="submit"
+                name="delete_certificate"
+                value="{{ c.id }}"
+                formaction="{% url 'delete_certificates' c.id %}"
+                formmethod="POST"
+                class="btn btn-sm btn-danger"
+                onclick="return confirm('Delete this certificate?');">
+            Delete
+        </button>
+
+    </div>
+
+</div>
+{% endfor %}
+
+<input type="file" name="certificates" multiple class="form-control mt-2 d-none" id="fileInput">
+
+</div>
+
+</form>
+
+</div>
+
+<script>
+function toggleEdit(){
+    document.querySelectorAll("input, textarea").forEach(el=>{
+        el.removeAttribute("disabled");
+    });
+
+    document.getElementById("saveBtn").classList.remove("d-none");
+    document.getElementById("fileInput").classList.remove("d-none");
+}
+</script>
+
+{% endblock %}

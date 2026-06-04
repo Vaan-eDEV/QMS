@@ -1,0 +1,427 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<style>
+
+body{
+    background:#f4f7fb;
+}
+
+.detail-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:25px;
+    flex-wrap:wrap;
+    gap:15px;
+}
+
+.detail-title h2{
+    font-size:30px;
+    font-weight:800;
+    margin-bottom:4px;
+}
+
+.detail-title p{
+    color:#6b7280;
+    margin:0;
+}
+
+.main-grid{
+    display:grid;
+    grid-template-columns:350px 1fr;
+    gap:25px;
+}
+
+.profile-card{
+    background:white;
+    border-radius:22px;
+    overflow:hidden;
+    box-shadow:0 4px 18px rgba(0,0,0,0.05);
+}
+
+.profile-image{
+    height:320px;
+    background:#e5e7eb;
+}
+
+.profile-image img{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+}
+
+.profile-body{
+    padding:22px;
+}
+
+.visitor-name{
+    font-size:24px;
+    font-weight:800;
+    margin-bottom:6px;
+}
+
+.company{
+    color:#6b7280;
+    margin-bottom:20px;
+}
+
+.info-row{
+    display:flex;
+    justify-content:space-between;
+    margin-bottom:12px;
+    font-size:14px;
+}
+
+.status-badge{
+    padding:7px 14px;
+    border-radius:30px;
+    font-size:12px;
+    font-weight:700;
+}
+
+.status-in{
+    background:#d1fae5;
+    color:#065f46;
+}
+
+.status-out{
+    background:#e5e7eb;
+    color:#374151;
+}
+
+.content-card{
+    background:white;
+    border-radius:22px;
+    padding:25px;
+    box-shadow:0 4px 18px rgba(0,0,0,0.05);
+}
+
+.section-title{
+    font-size:20px;
+    font-weight:800;
+    margin-bottom:20px;
+}
+
+.table thead{
+    background:#f9fafb;
+}
+
+.table th{
+    font-size:13px;
+}
+
+.return-badge{
+    background:#d1fae5;
+    color:#065f46;
+    padding:6px 12px;
+    border-radius:20px;
+    font-size:12px;
+    font-weight:700;
+}
+
+.pending-badge{
+    background:#fee2e2;
+    color:#991b1b;
+    padding:6px 12px;
+    border-radius:20px;
+    font-size:12px;
+    font-weight:700;
+}
+
+.checkout-btn{
+    border:none;
+    background:#dc2626;
+    color:white;
+    padding:14px 24px;
+    border-radius:14px;
+    font-weight:700;
+}
+
+@media(max-width:992px){
+
+    .main-grid{
+        grid-template-columns:1fr;
+    }
+
+}
+
+</style>
+
+<div class="container-fluid py-4">
+
+    <!-- HEADER -->
+    <div class="detail-header">
+
+        <div class="detail-title">
+
+            <h2>
+                Visitor Details
+            </h2>
+
+            <p>
+                {{ visitor.visitor_id }}
+            </p>
+
+        </div>
+
+        <a href="{% url 'visitors:visitor_dashboard' %}"
+           class="btn btn-dark rounded-4 px-4">
+
+            ← Back
+
+        </a>
+
+    </div>
+
+    <div class="main-grid">
+
+        <!-- LEFT -->
+        <div class="profile-card">
+
+            <div class="profile-image">
+
+                {% if visitor.visitor_photo %}
+
+                <img src="{{ visitor.visitor_photo.url }}">
+
+                {% else %}
+
+                <div class="d-flex h-100 justify-content-center align-items-center">
+
+                    No Photo
+
+                </div>
+
+                {% endif %}
+
+            </div>
+
+            <div class="profile-body">
+
+                <div class="visitor-name">
+
+                    {{ visitor.name }}
+
+                </div>
+
+                <div class="company">
+
+                    {{ visitor.company }}
+
+                </div>
+
+                <div class="info-row">
+
+                    <span>Contact</span>
+
+                    <strong>
+                        {{ visitor.phone }}
+                    </strong>
+
+                </div>
+
+                <div class="info-row">
+
+                    <span>Email</span>
+
+                    <strong>
+                        {{ visitor.email }}
+                    </strong>
+
+                </div>
+
+                <div class="info-row">
+
+                    <span>Visitor Department</span>
+
+                    <strong>
+                        {{ visitor.department }}
+                    </strong>
+
+                </div>
+
+                <div class="info-row">
+
+                    <span>Vehicle</span>
+
+                    <strong>
+                        {{ visitor.vehicle_number }}
+                    </strong>
+
+                </div>
+
+                <div class="info-row">
+
+                    <span>Host</span>
+
+                    <strong>
+                        {{ visitor.host_employee }}
+                    </strong>
+
+                </div>
+
+                <div class="info-row">
+
+                    <span>Status</span>
+
+                    <div>
+
+                        {% if visitor.status == "CHECKED_IN" %}
+
+                        <span class="status-badge status-in">
+
+                            Inside
+
+                        </span>
+
+                        {% else %}
+
+                        <span class="status-badge status-out">
+
+                            Checked Out
+
+                        </span>
+
+                        {% endif %}
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- RIGHT -->
+        <div class="content-card">
+
+            <div class="section-title">
+
+                Visitor Belongings
+
+            </div>
+
+            <form method="POST"
+                  action="{% url 'visitors:checkout_visitor' visitor.id %}">
+
+                {% csrf_token %}
+
+                <div class="table-responsive">
+
+                    <table class="table table-bordered">
+
+                        <thead>
+
+                            <tr>
+
+                                <th>Item</th>
+
+                                <th>Qty</th>
+
+                                <th>Serial</th>
+
+                                <th>Remarks</th>
+
+                                <th>Status</th>
+
+                                
+
+                                {% if visitor.status != "CHECKED_OUT" %}
+                                <th>Return</th>
+                                {% endif %}
+
+                            </tr>
+
+                        </thead>
+
+                        <tbody>
+
+                            {% for item in belongings %}
+
+                            <tr>
+
+                                <td>
+                                    {{ item.item_name }}
+                                </td>
+
+                                <td>
+                                    {{ item.quantity }}
+                                </td>
+
+                                <td>
+                                    {{ item.serial_number }}
+                                </td>
+
+                                <td>
+                                    {{ item.remarks }}
+                                </td>
+
+                                <td>
+
+                                    {% if item.returned %}
+
+                                    <span class="return-badge">
+
+                                        Returned
+
+                                    </span>
+
+                                    {% else %}
+
+                                    <span class="pending-badge">
+
+                                        Pending
+
+                                    </span>
+
+                                    {% endif %}
+
+                                </td>
+
+                                {% if visitor.status != "CHECKED_OUT" %}
+
+                                <td>
+
+                                    <input type="checkbox"
+                                           name="returned_{{ item.id }}">
+
+                                </td>
+
+                                {% endif %}
+
+                            </tr>
+
+                            {% endfor %}
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+                {% if visitor.status != "CHECKED_OUT" %}
+
+                <div class="mt-4">
+
+                    <button type="submit"
+                            class="checkout-btn">
+
+                        Checkout Visitor
+
+                    </button>
+
+                </div>
+
+                {% endif %}
+
+            </form>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

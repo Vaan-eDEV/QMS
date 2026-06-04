@@ -1,0 +1,765 @@
+{% extends 'base.html' %}
+{% load custom_tags %}
+{% load static %}
+{% block content %}
+
+<style>
+body{
+    background:#e5e7eb;
+}
+
+/* ================= A4 ================= */
+
+.a4-sheet{
+    width:210mm;
+    min-height:297mm;
+    margin:20px auto;
+    background:#fff;
+    padding:12mm;
+    box-shadow:0 0 12px rgba(0,0,0,0.15);
+    font-family:"Times New Roman", serif;
+}
+
+/* ================= HEADER ================= */
+
+.doc-header{
+    text-align:center;
+    margin-bottom:10px;
+}
+
+.doc-title{
+    font-size:22px;
+    font-weight:bold;
+    letter-spacing:1px;
+}
+
+/* ================= META ================= */
+
+.meta-table{
+    width:100%;
+    margin-bottom:12px;
+    font-size:12px;
+    border-collapse:collapse;
+}
+
+.meta-table td{
+    padding:4px;
+}
+
+/* ================= SECTION ================= */
+
+.section{
+    margin-top:12px;
+}
+
+.section-title{
+    font-size:14px;
+    font-weight:bold;
+    border-bottom:1px solid #000;
+    margin-bottom:6px;
+    text-transform:uppercase;
+    padding-bottom:2px;
+}
+
+.form-name{
+    font-weight:bolder;
+    margin:6px 0;
+    font-size:15px;
+}
+
+/* ================= FIELD ================= */
+
+.field-row{
+    display:flex;
+    font-size:12px;
+    margin-bottom:4px;
+    border-bottom:1px dashed #ddd;
+    padding-bottom:3px;
+}
+
+.field-label{
+    width:30%;
+    font-weight:bolder;
+}
+
+.field-value{
+    width:70%;
+    word-break:break-word;
+}
+
+/* ================= TABLE ================= */
+
+.table-wrapper{
+    overflow-x:auto;
+}
+.data-table{
+    width:100%;
+    border-collapse:collapse !important;
+    border-spacing:0 !important;
+    margin-top:6px;
+    margin-bottom:12px;
+    font-size:15px;
+    table-layout:auto;
+}
+
+.data-table th,
+.data-table td{
+    border:0.1px solid #777;
+    padding:4px 6px;
+    text-align:center;
+    vertical-align:middle;
+    white-space:nowrap;
+}
+
+.data-table th{
+    background:#f8fafc;
+    font-weight:bold;
+}
+
+/* ================= IMAGE ================= */
+
+.preview-image{
+    max-width:120px;
+    max-height:120px;
+    border-radius:4px;
+}
+
+/* ================= FILE LINK ================= */
+
+.file-link{
+    text-decoration:none;
+    color:#0d6efd;
+    font-weight:bold;
+}
+
+/* ================= SIGNATURE ================= */
+
+.signature-ui{
+    position:relative;
+    padding:5px;
+    border:1px solid #ccc;
+    border-radius:6px;
+    font-size:10px;
+    width:150px;
+    margin:auto;
+    overflow:hidden;
+}
+
+.signature-logo{
+    position:absolute;
+    top:50%;
+    left:50%;
+    width:70px;
+    opacity:0.7;
+    transform:translate(-50%, -50%);
+}
+
+.signature-ui div{
+    position:relative;
+    z-index:2;
+}
+
+/* ================= PRINT ================= */
+
+@media print{
+
+    body *{
+        visibility:hidden;
+    }
+
+    .a4-sheet,
+    .a4-sheet *{
+        visibility:visible;
+    }
+
+    .a4-sheet{
+        position:absolute;
+        left:0;
+        top:0;
+        width:210mm;
+        margin:0;
+        padding:12mm;
+        background:white;
+        box-shadow:none;
+    }
+
+    button{
+        display:none !important;
+    }
+
+    .no-print{
+        display:none !important;
+    }
+
+    body{
+        background:white;
+    }
+}
+</style>
+
+<!-- ================= ACTION BUTTONS ================= -->
+
+<div class="no-print" style="
+    width:210mm;
+    margin:20px auto 0 auto;
+    display:flex;
+    justify-content:flex-end;
+    gap:10px;
+">
+
+    <!-- PRINT BUTTON -->
+
+    <button onclick="printReport()"
+            style="
+                background:#16a34a;
+                color:white;
+                border:none;
+                padding:10px 18px;
+                border-radius:6px;
+                cursor:pointer;
+                font-weight:bold;
+            ">
+
+        Print
+
+    </button>
+
+    <!-- DOWNLOAD PDF -->
+
+    <button onclick="downloadPDF()"
+            style="
+                background:#2563eb;
+                color:white;
+                border:none;
+                padding:10px 18px;
+                border-radius:6px;
+                cursor:pointer;
+                font-weight:bold;
+            ">
+
+        Download PDF
+
+    </button>
+
+</div>
+
+<div class="a4-sheet">
+
+    <!-- ================= HEADER ================= -->
+
+    <div class="doc-header">
+
+        <div class="doc-title">
+            REPORT
+        </div>
+
+    </div>
+
+    <!-- ================= META ================= -->
+
+    <table class="meta-table">
+
+        <tr>
+
+            <td>
+                <strong>Reference ID:</strong>
+                {{ ref_id }}
+            </td>
+
+            <td>
+                <strong>Company:</strong>
+                {{ company|default:"-" }}
+            </td>
+
+        </tr>
+
+    </table>
+
+    {% if data %}
+
+        {% for process, forms in data.items %}
+
+        <div class="section">
+
+            <div class="section-title">
+
+                {{ process }}
+
+            </div>
+
+            {% for form in forms %}
+
+            <div class="form-name">
+
+                {{ form.form_name }}
+
+            </div>
+
+            {% if form.data %}
+
+                {% for key, val in form.data.items %}
+
+                    <!-- ================= TABLE ================= -->
+
+                    {% if val.type == "table" %}
+
+                    <div class="section">
+
+                        <div class="section-title">
+
+                            {{ key }}
+
+                        </div>
+
+                        <div class="table-wrapper">
+
+                            <table class="data-table">
+
+                                <!-- ================= TABLE HEADER ================= -->
+
+                                <tr>
+
+                                    <th>
+                                        {{ val.header }}
+                                    </th>
+
+                                    {% for col, temp in val.rows.0.items %}
+                                        {% if col != "row_name" and col != "_row_id" %}
+
+                                        <th>
+
+                                            {{ col }}
+
+                                        </th>
+
+                                        {% endif %}
+
+                                    {% endfor %}
+
+                                </tr>
+
+                                <!-- ================= TABLE ROWS ================= -->
+
+                                {% for row in val.rows %}
+
+                                <tr>
+
+                                    <!-- ROW NAME -->
+
+                                    <td>
+
+                                        {{ row.row_name|default:"-" }}
+
+                                    </td>
+
+                                    <!-- ROW DATA -->
+
+                                    {% for col, temp in val.rows.0.items %}
+
+                                        {% if col != "row_name" and col != "_row_id" %}
+
+                                        <td>
+
+                                            {% with v=row|get_item:col %}
+
+                                                <!-- SIGNATURE -->
+
+                                                {% if v and v.signed_by %}
+
+                                                <div class="signature-ui">
+
+                                                    <div>
+                                                        <b>✔ Signed</b>
+                                                    </div>
+
+                                                    <div>
+                                                        {{ v.signed_by }}
+                                                    </div>
+
+                                                    <div>
+                                                        {{ v.signed_at }}
+                                                    </div>
+
+                                                    <div>
+                                                        {{ v.reference_code }}
+                                                    </div>
+
+                                                    <img src="{% static 'admin/img/watermark.jpeg' %}"
+                                                         class="signature-logo">
+
+                                                </div>
+
+                                                <!-- MULTIPLE FILES -->
+
+                                                {% elif v|is_list %}
+
+                                                    {% for item in v %}
+
+                                                        {% if item|is_image %}
+
+                                                        <img src="{{ item }}"
+                                                             class="preview-image">
+
+                                                        {% elif item|is_file %}
+
+                                                        <a href="{{ item }}"
+                                                           target="_blank"
+                                                           class="file-link">
+
+                                                            📎 {{ item|clean_filename }}
+
+                                                        </a><br>
+
+                                                        {% else %}
+
+                                                        {{ item }}
+
+                                                        {% endif %}
+
+                                                    {% endfor %}
+
+                                                <!-- SINGLE IMAGE -->
+
+                                                {% elif v|is_image %}
+
+                                                <img src="{{ v }}"
+                                                     class="preview-image">
+
+                                                <!-- SINGLE FILE -->
+
+                                                {% elif v|is_file %}
+
+                                                <a href="{{ v }}"
+                                                   target="_blank"
+                                                   class="file-link">
+
+                                                    📎 {{ v|clean_filename }}
+
+                                                </a>
+
+                                                <!-- NORMAL VALUE -->
+
+                                                {% else %}
+
+                                                {{ v|default:"-" }}
+
+                                                {% endif %}
+
+                                            {% endwith %}
+
+                                        </td>
+
+                                        {% endif %}
+
+                                    {% endfor %}
+
+                                </tr>
+
+                                {% endfor %}
+
+<!-- ================= TOTAL FOOTER ================= -->
+{% if val.show_total %}
+
+<tfoot>
+
+<tr style="
+    background:#f1f5f9;
+    font-weight:bold;
+">
+
+    <!-- LABEL -->
+
+    <td>
+        Total
+    </td>
+
+    <!-- COLUMNS -->
+
+    {% for col, temp in val.rows.0.items %}
+
+        {% if col != "row_name" and col != "_row_id" %}
+
+        <td>
+
+ {% if col == val.total_column %}
+
+    {{ val.total_value }}
+
+{% endif %}
+
+        </td>
+
+        {% endif %}
+
+    {% endfor %}
+
+</tr>
+
+</tfoot>
+
+{% endif %}
+</table>
+
+                        </div>
+
+                    </div>
+
+                    <!-- ================= NORMAL FIELD ================= -->
+
+                    {% else %}
+
+                        {% if "_total" in key %}
+
+                            {% if val %}
+
+                            <div class="field-row">
+
+                                <div class="field-label">
+
+                                    {{ key }}
+
+                                </div>
+
+                                <div class="field-value">
+
+                                    {{ val }}
+
+                                </div>
+
+                            </div>
+
+                            {% endif %}
+
+                        {% else %}
+
+                        <div class="field-row">
+
+                            <div class="field-label">
+
+                                {{ key }}
+
+                            </div>
+
+                            <div class="field-value">
+
+                                <!-- SIGNATURE -->
+
+                                {% if val and val.signed_by %}
+
+                                <div class="signature-ui">
+
+                                    <div>
+                                        <b>✔ Signed</b>
+                                    </div>
+
+                                    <div>
+                                        {{ val.signed_by }}
+                                    </div>
+
+                                    <div>
+                                        {{ val.signed_at }}
+                                    </div>
+
+                                    <div>
+                                        {{ val.reference_code }}
+                                    </div>
+
+                                    <img src="{% static 'admin/img/watermark.jpeg' %}"
+                                         class="signature-logo">
+
+                                </div>
+
+                                <!-- MULTIPLE -->
+
+                                {% elif val|is_list %}
+
+                                    {% for item in val %}
+
+                                        {% if item|is_image %}
+
+                                        <img src="{{ item }}"
+                                             style="max-width:180px;
+                                                    max-height:180px;
+                                                    margin:4px;">
+
+                                        {% elif item|is_file %}
+
+                                        <a href="{{ item }}"
+                                           target="_blank"
+                                           class="file-link">
+
+                                            📎 {{ item|clean_filename }}
+
+                                        </a><br>
+
+                                        {% else %}
+
+                                        {{ item }}
+
+                                        {% endif %}
+
+                                    {% endfor %}
+
+                                <!-- IMAGE -->
+
+                                {% elif val|is_image %}
+
+                                <img src="{{ val }}"
+                                     style="max-width:500px;
+                                            max-height:250px;">
+
+                                <!-- FILE -->
+
+                                {% elif val|is_file %}
+
+                                <a href="{{ val }}"
+                                   target="_blank"
+                                   class="file-link">
+
+                                    📎 {{ val|clean_filename }}
+
+                                </a>
+
+                                <!-- NORMAL -->
+
+                                {% else %}
+
+                                {{ val|default:"-" }}
+
+                                {% endif %}
+
+                            </div>
+
+                        </div>
+
+                        {% endif %}
+
+                    {% endif %}
+
+                {% endfor %}
+
+            {% endif %}
+
+            {% endfor %}
+
+        </div>
+
+        {% endfor %}
+
+    {% else %}
+
+    <div>
+
+        No data found
+
+    </div>
+
+    {% endif %}
+
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script>
+
+function printReport(){
+
+    window.print();
+
+}
+function downloadPDF(){
+
+    const element =
+        document.querySelector(".a4-sheet");
+
+    const opt = {
+
+        margin: 0,
+
+        filename:
+            "RFQ_Report_{{ ref_id }}.pdf",
+
+        image: {
+            type: "jpeg",
+            quality: 1
+        },
+
+        html2canvas: {
+            scale: 2,
+            useCORS: true
+        },
+
+        jsPDF: {
+            unit: "mm",
+            format: "a4",
+            orientation: "portrait"
+        }
+    };
+
+    html2pdf()
+        .set(opt)
+        .from(element)
+        .save();
+}
+
+
+document.addEventListener(
+    "DOMContentLoaded",
+    function(){
+
+    document.querySelectorAll(
+        ".data-table"
+    ).forEach(table => {
+
+        let headers =
+            table.querySelectorAll("th");
+
+        table.querySelectorAll(
+            ".total-cell"
+        ).forEach(cell => {
+
+            let colName =
+                cell.dataset.col;
+
+            let colIndex = -1;
+
+            headers.forEach((th, i) => {
+
+                if(
+                    th.innerText.trim() ===
+                    colName
+                ){
+                    colIndex = i;
+                }
+            });
+
+            if(colIndex < 0) return;
+
+            let total = 0;
+
+            table.querySelectorAll(
+                "tbody tr"
+            ).forEach(row => {
+
+                let td =
+                    row.children[colIndex];
+
+                if(td){
+
+                    let val =
+                        parseFloat(
+                            td.innerText
+                        );
+
+                    if(!isNaN(val)){
+
+                        total += val;
+                    }
+                }
+            });
+
+            cell.innerText =
+                total.toFixed(2);
+        });
+    });
+});
+</script>
+{% endblock %}

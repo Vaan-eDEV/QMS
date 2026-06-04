@@ -158,7 +158,7 @@
 <div class="col-12 col-md-4 col-lg-3">
 
     <div class="folder-card">
-
+        {% if request.user.is_superuser or  request.user.page_access.can_delete %}
         <!-- DELETE -->
         <form method="POST"
               action="{% url 'delete_folder' f.id %}"
@@ -166,7 +166,7 @@
             {% csrf_token %}
             <button class="delete-btn">✕</button>
         </form>
-
+        {% endif %}
         <!-- OPEN -->
         <a href="{% url 'folder_documents' f.id %}"
            class="text-decoration-none text-dark">

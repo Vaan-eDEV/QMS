@@ -1,0 +1,205 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+body { background: #f4f6f9; }
+
+.card-box {
+    background: #fff;
+    border-radius: 12px;
+    padding: 18px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    margin-bottom: 20px;
+}
+
+.page-title { font-size: 22px; font-weight: 600; }
+
+.progress { height: 10px; border-radius: 10px; }
+
+.badge-pending { background: #ffc107; color: #000; }
+.badge-completed { background: #28a745; }
+.badge-progress { background: #17a2b8; }
+
+.table th { font-size: 13px; color: #777; }
+.table td { vertical-align: middle; }
+
+.btn-sm { border-radius: 8px; }
+</style>
+
+<div class="container-fluid mt-3">
+
+    <!-- HEADER -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <div class="page-title">Induction Training</div>
+            <small class="text-muted">Manage employee training progress</small>
+        </div>
+    </div>
+
+    <!-- 🔍 SEARCH BOX -->
+    <div class="card-box">
+        <form method="get">
+            <div class="row align-items-end">
+
+                <div class="col-md-3">
+                    <label><b>Enter Employee ID</b></label>
+                    <input type="text"
+                           name="emp_id"
+                           class="form-control"
+                           placeholder="EMP001"
+                           value="{{ request.GET.emp_id }}">
+                </div>
+
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary w-100">
+                        Load Dashboard
+                    </button>
+                </div>
+
+            </div>
+        </form>
+
+        {% if error %}
+        <div class="alert alert-danger mt-3">
+            {{ error }}
+        </div>
+        {% endif %}
+    </div>
+
+    {% if emp %}
+
+    <!-- EMPLOYEE DETAILS -->
+    <div class="card-box">
+        <div class="row">
+
+            <div class="col-md-2 text-center">
+                <img src="https://ui-avatars.com/api/?name={{ emp.name }}"
+                     class="rounded-circle" width="80">
+            </div>
+
+            <div class="col-md-10">
+                <div class="row">
+                    <div class="col-md-3">
+                        <b>Employee ID</b><br>{{ emp.emp_id }}
+                    </div>
+                    <div class="col-md-3">
+                        <b>Name</b><br>{{ emp.name }}
+                    </div>
+                    <div class="col-md-3">
+                        <b>Department</b><br>{{ emp.department }}
+                    </div>
+                    <div class="col-md-3">
+                        <b>Role</b><br>{{ emp.role }}
+                    </div>
+                </div>
+
+                <div class="row mt-2">
+                    <div class="col-md-3">
+                        <b>DOJ</b><br>{{ emp.date_of_joining }}
+                    </div>
+                    <div class="col-md-3">
+                        <b>Status</b><br>
+                        <span class="badge badge-progress">In Progress</span>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- PROGRESS -->
+    <div class="card-box">
+        <div class="d-flex justify-content-between mb-2">
+            <b>Overall Progress</b>
+            <b>{{ progress }}%</b>
+        </div>
+
+        <div class="progress mb-3">
+            <div class="progress-bar bg-primary" style="width: {{ progress }}%"></div>
+        </div>
+
+        <div class="row text-center">
+            <div class="col">
+                <b>{{ total }}</b><br><small>Total Modules</small>
+            </div>
+            <div class="col text-success">
+                <b>{{ completed }}</b><br><small>Completed</small>
+            </div>
+            <div class="col text-warning">
+                <b>{{ pending }}</b><br><small>Pending</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODULE TABLE -->
+    <div class="card-box">
+        <h5>Training Modules</h5>
+
+        <table class="table table-bordered mt-2">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Module</th>
+                    <th>Type</th>
+                    <th>Status</th>
+                    <th>Score</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for t in tests %}
+                <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td>{{ t.title }}</td>
+                    <td>QMS</td>
+
+                    <!-- STATUS -->
+                    <td>
+                        {% if t.id in completed_tests %}
+                            <span class="badge badge-completed">Completed</span>
+                        {% else %}
+                            <span class="badge badge-pending">Pending</span>
+                        {% endif %}
+                    </td>
+
+                    <!-- SCORE -->
+                    <td>
+                        {% with score_found=False %}
+                        {% for r in results %}
+                            {% if r.test.id == t.id %}
+                                {{ r.percentage }}%
+                            {% endif %}
+                        {% endfor %}
+                        {% endwith %}
+                    </td>
+
+                    <!-- ACTION -->
+                    <td>
+                        {% if t.id in completed_tests %}
+                            {% for r in results %}
+                                {% if r.test.id == t.id %}
+                                    <a href="{% url 'result_detail' r.id %}" class="btn btn-info btn-sm">
+                                        View
+                                    </a>
+                                {% endif %}
+                            {% endfor %}
+                        {% else %}
+                            <a href="{% url 'attempt_test' t.id %}" class="btn btn-primary btn-sm">
+                                Start
+                            </a>
+                        {% endif %}
+                    </td>
+
+                </tr>
+                {% endfor %}
+            </tbody>
+
+        </table>
+    </div>
+
+    {% endif %}
+
+</div>
+
+{% endblock %}

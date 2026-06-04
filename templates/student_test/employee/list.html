@@ -1,0 +1,589 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+
+.container-custom{
+    max-width:1400px;
+    margin:auto;
+}
+
+/* =======================================================
+CARD
+======================================================= */
+
+.card-table{
+    border:none;
+    border-radius:20px;
+    overflow:hidden;
+    background:#fff;
+    box-shadow:0 8px 30px rgba(0,0,0,0.06);
+}
+
+/* =======================================================
+TABLE
+======================================================= */
+
+.table{
+    margin-bottom:0;
+}
+
+.table th{
+    font-size:13px;
+    font-weight:700;
+    color:#6b7280;
+    padding:18px 14px;
+    border:none;
+    background:#f8fafc;
+    white-space:nowrap;
+}
+
+.table td{
+    font-size:14px;
+    padding:16px 14px;
+    vertical-align:middle;
+    border-top:1px solid #f1f5f9;
+}
+
+/* =======================================================
+PROFILE
+======================================================= */
+
+.profile-img{
+    width:48px;
+    height:48px;
+    border-radius:50%;
+    object-fit:cover;
+    cursor:pointer;
+    border:2px solid #fff;
+    box-shadow:0 4px 10px rgba(0,0,0,0.08);
+    transition:0.25s;
+}
+
+.profile-img:hover{
+    transform:scale(1.08);
+}
+
+.employee-name{
+    font-weight:700;
+    color:#111827;
+    margin-bottom:2px;
+}
+
+.employee-id{
+    font-size:12px;
+    color:#9ca3af;
+}
+
+/* =======================================================
+BADGES
+======================================================= */
+
+.badge-role{
+    background:#eef2ff;
+    color:#4338ca;
+    font-weight:600;
+    border-radius:999px;
+    padding:8px 12px;
+    font-size:12px;
+}
+
+/* =======================================================
+SEARCH
+======================================================= */
+
+.search-box{
+    border-radius:12px;
+    border:1px solid #dbeafe;
+    padding:12px 14px;
+}
+
+.search-box:focus{
+    box-shadow:none;
+    border-color:#3b82f6;
+}
+
+/* =======================================================
+BUTTONS
+======================================================= */
+
+.btn-primary{
+    border-radius:12px;
+    padding:10px 18px;
+    font-weight:600;
+}
+
+.btn-outline-primary{
+    border-radius:10px;
+    font-weight:600;
+}
+
+.btn-outline-danger{
+    border-radius:10px;
+    font-weight:600;
+}
+
+/* =======================================================
+EMPTY
+======================================================= */
+
+.empty-box{
+    text-align:center;
+    padding:60px 20px;
+    color:#94a3b8;
+}
+
+/* =======================================================
+MODAL IMAGE
+======================================================= */
+
+.preview-img{
+    width:100%;
+    max-height:80vh;
+    object-fit:contain;
+    border-radius:20px;
+}
+
+/* =======================================================
+TOP HEADER
+======================================================= */
+
+.page-title{
+    font-weight:800;
+    color:#111827;
+}
+
+.top-actions{
+    display:flex;
+    gap:10px;
+}
+
+</style>
+
+<div class="container-custom mt-4">
+
+    <!-- =======================================================
+    HEADER
+    ======================================================== -->
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+
+        <div>
+
+            <h3 class="page-title mb-1">
+
+                Employee Directory
+
+            </h3>
+
+            <small class="text-muted">
+
+                Manage employee profiles and certificates
+
+            </small>
+
+        </div>
+
+        <div class="top-actions">
+
+            <a href="{% url 'create_employee' %}"
+
+               class="btn btn-primary">
+
+                + Add Employee
+
+            </a>
+
+        </div>
+
+    </div>
+
+    <!-- =======================================================
+    SEARCH FILTER
+    ======================================================== -->
+
+    <div class="card card-table p-3 mb-4">
+
+        <div class="row align-items-center">
+
+            <div class="col-md-6 mb-2">
+
+                <input type="text"
+
+                       id="searchInput"
+
+                       placeholder="Search employee..."
+
+                       class="form-control search-box">
+
+            </div>
+
+            <div class="col-md-3 mb-2">
+
+                <select id="deptFilter"
+
+                        class="form-control search-box">
+
+                    <option value="">
+
+                        All Departments
+
+                    </option>
+
+                    {% for e in employees %}
+
+                        <option value="{{ e.department }}">
+
+                            {{ e.department }}
+
+                        </option>
+
+                    {% endfor %}
+
+                </select>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- =======================================================
+    TABLE
+    ======================================================== -->
+
+    <div class="card card-table">
+
+        <div class="table-responsive">
+
+            <table class="table table-hover align-middle"
+
+                   id="employeeTable">
+
+                <thead>
+
+                    <tr>
+
+                        <th>Employee</th>
+
+                        <th>Department</th>
+
+                        <th>Role</th>
+
+                        <th>Joining Date</th>
+
+                        <th>Certificates</th>
+
+                        <th width="180">
+
+                            Actions
+
+                        </th>
+
+                    </tr>
+
+                </thead>
+
+                <tbody>
+
+                    {% for e in employees %}
+
+                    <tr>
+
+                        <!-- ===================================================
+                        EMPLOYEE
+                        ==================================================== -->
+
+                        <td>
+
+                            <div class="d-flex align-items-center gap-3">
+
+                                <!-- IMAGE -->
+
+                                {% if e.profile_image %}
+
+                                    <img src="{{ e.profile_image.url }}"
+
+                                         class="profile-img"
+
+                                         data-bs-toggle="modal"
+
+                                         data-bs-target="#imageModal{{ e.id }}">
+
+                                {% else %}
+
+                                    <img src="https://ui-avatars.com/api/?name={{ e.name }}"
+
+                                         class="profile-img"
+
+                                         data-bs-toggle="modal"
+
+                                         data-bs-target="#imageModal{{ e.id }}">
+
+                                {% endif %}
+
+                                <!-- INFO -->
+
+                                <div>
+
+                                    <div class="employee-name">
+
+                                        {{ e.name }}
+
+                                    </div>
+
+                                    <div class="employee-id">
+
+                                        {{ e.emp_id }}
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+                        </td>
+
+                        <!-- ===================================================
+                        DEPARTMENT
+                        ==================================================== -->
+
+                        <td class="dept">
+
+                            {{ e.department }}
+
+                        </td>
+
+                        <!-- ===================================================
+                        ROLE
+                        ==================================================== -->
+
+                        <td>
+
+                            <span class="badge badge-role">
+
+                                {{ e.role }}
+
+                            </span>
+
+                        </td>
+
+                        <!-- ===================================================
+                        DOJ
+                        ==================================================== -->
+
+                        <td>
+
+                            {{ e.date_of_joining|default:"-" }}
+
+                        </td>
+
+                        <!-- ===================================================
+                        CERTIFICATES
+                        ==================================================== -->
+
+                        <td>
+
+                            <span class="badge bg-light text-dark">
+
+                                {{ e.certificates.count }}
+
+                                Certificate{{ e.certificates.count|pluralize }}
+
+                            </span>
+
+                        </td>
+
+                        <!-- ===================================================
+                        ACTIONS
+                        ==================================================== -->
+
+                        <td>
+
+                            <div class="d-flex gap-2">
+
+                                <a href="{% url 'employee_detail' e.id %}"
+
+                                   class="btn btn-sm btn-outline-primary">
+
+                                    View
+
+                                </a>
+
+                                <a href="{% url 'edit_employee' e.id %}"
+
+                                   class="btn btn-sm btn-outline-warning">
+
+                                    Edit
+
+                                </a>
+
+                            </div>
+
+                        </td>
+
+                    </tr>
+
+                    <!-- =======================================================
+                    IMAGE MODAL
+                    ======================================================== -->
+
+                    <div class="modal fade"
+
+                         id="imageModal{{ e.id }}"
+
+                         tabindex="-1">
+
+                        <div class="modal-dialog modal-dialog-centered modal-lg">
+
+                            <div class="modal-content border-0 bg-transparent">
+
+                                <div class="modal-body text-center p-0">
+
+                                    {% if e.profile_image %}
+
+                                        <img src="{{ e.profile_image.url }}"
+
+                                             class="preview-img shadow">
+
+                                    {% else %}
+
+                                        <img src="https://ui-avatars.com/api/?name={{ e.name }}"
+
+                                             class="preview-img shadow">
+
+                                    {% endif %}
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    {% empty %}
+
+                    <tr>
+
+                        <td colspan="6">
+
+                            <div class="empty-box">
+
+                                <h5 class="mb-2">
+
+                                    No Employees Found
+
+                                </h5>
+
+                                <small>
+
+                                    Create your first employee profile
+
+                                </small>
+
+                            </div>
+
+                        </td>
+
+                    </tr>
+
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- =======================================================
+SEARCH SCRIPT
+======================================================= -->
+
+<script>
+
+document.getElementById(
+
+    "searchInput"
+
+).addEventListener(
+
+    "keyup",
+
+    function(){
+
+        let val = this.value.toLowerCase()
+
+        let rows = document.querySelectorAll(
+
+            "#employeeTable tbody tr"
+
+        )
+
+        rows.forEach(r => {
+
+            let txt = r.innerText.toLowerCase()
+
+            r.style.display = txt.includes(val)
+
+            ? ""
+
+            : "none"
+
+        })
+
+    }
+
+)
+
+document.getElementById(
+
+    "deptFilter"
+
+).addEventListener(
+
+    "change",
+
+    function(){
+
+        let dept = this.value.toLowerCase()
+
+        let rows = document.querySelectorAll(
+
+            "#employeeTable tbody tr"
+
+        )
+
+        rows.forEach(r => {
+
+            let deptCell =
+
+                r.querySelector(".dept")
+
+            if(!deptCell) return
+
+            let txt = deptCell.innerText.toLowerCase()
+
+            if(!dept || txt === dept){
+
+                r.style.display = ""
+
+            }else{
+
+                r.style.display = "none"
+
+            }
+
+        })
+
+    }
+
+)
+
+</script>
+
+{% endblock %}

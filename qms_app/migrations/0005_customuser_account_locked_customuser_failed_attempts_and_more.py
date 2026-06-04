@@ -11,19 +11,5 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.AddField(
-            model_name='customuser',
-            name='account_locked',
-            field=models.BooleanField(default=False),
-        ),
-        migrations.AddField(
-            model_name='customuser',
-            name='failed_attempts',
-            field=models.IntegerField(default=0),
-        ),
-        migrations.AddField(
-            model_name='customuser',
-            name='password_changed_at',
-            field=models.DateTimeField(default=django.utils.timezone.now),
-        ),
+        
     ]

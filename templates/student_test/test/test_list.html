@@ -1,0 +1,440 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+
+/* ================= PAGE ================= */
+
+.test-page{
+    padding: 24px;
+}
+
+/* ================= HEADER ================= */
+
+.page-top{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:24px;
+    flex-wrap:wrap;
+    gap:15px;
+}
+
+.page-title{
+    font-size:28px;
+    font-weight:700;
+    color:#1e293b;
+    margin:0;
+}
+
+.create-btn{
+    background:linear-gradient(
+        135deg,
+        #2563eb,
+        #1d4ed8
+    );
+    border:none;
+    color:white;
+    padding:10px 18px;
+    border-radius:12px;
+    font-weight:600;
+    text-decoration:none;
+    transition:.3s;
+    box-shadow:0 4px 12px rgba(37,99,235,.25);
+}
+
+.create-btn:hover{
+    transform:translateY(-2px);
+    color:white;
+}
+
+/* ================= CARD ================= */
+
+.test-card{
+    border:none;
+    border-radius:20px;
+    overflow:hidden;
+    background:white;
+    box-shadow:
+        0 10px 30px rgba(0,0,0,.06);
+}
+
+/* ================= HEADER ================= */
+
+.card-top{
+    background:
+        linear-gradient(
+            135deg,
+            #10b981,
+            #059669
+        );
+
+    padding:18px 24px;
+    color:white;
+    font-size:20px;
+    font-weight:700;
+}
+
+/* ================= TABLE ================= */
+
+.table{
+    margin:0;
+}
+
+.table thead th{
+    background:#f8fafc;
+    border:none;
+    padding:18px;
+    font-size:14px;
+    font-weight:700;
+    color:#475569;
+}
+
+.table tbody td{
+    padding:18px;
+    vertical-align:middle;
+    border-color:#f1f5f9;
+}
+
+.table tbody tr{
+    transition:.25s;
+}
+
+.table tbody tr:hover{
+    background:#f8fafc;
+}
+
+/* ================= TEST TITLE ================= */
+
+.test-title{
+    font-weight:700;
+    color:#0f172a;
+    font-size:15px;
+}
+
+/* ================= BADGES ================= */
+
+.custom-badge{
+    padding:6px 12px;
+    border-radius:50px;
+    font-size:12px;
+    font-weight:600;
+}
+
+.badge-success{
+    background:#dcfce7;
+    color:#166534;
+}
+
+.badge-warning{
+    background:#fef3c7;
+    color:#92400e;
+}
+
+/* ================= BUTTONS ================= */
+
+.action-wrap{
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+}
+
+.action-btn{
+    border:none;
+    border-radius:10px;
+    padding:8px 14px;
+    font-size:13px;
+    font-weight:600;
+    text-decoration:none;
+    transition:.25s;
+}
+
+.action-btn:hover{
+    transform:translateY(-2px);
+}
+
+/* COLORS */
+
+.btn-preview{
+    background:#dbeafe;
+    color:#1d4ed8;
+}
+
+.btn-material{
+    background:#fef3c7;
+    color:#92400e;
+}
+
+.btn-edit{
+    background:#e0f2fe;
+    color:#0369a1;
+}
+
+.btn-start{
+    background:#2563eb;
+    color:white;
+}
+
+.btn-study{
+    background:#f59e0b;
+    color:white;
+}
+
+/* ================= EMPTY ================= */
+
+.empty-box{
+    padding:40px;
+    text-align:center;
+    color:#94a3b8;
+}
+
+/* ================= LOCKED ================= */
+
+.locked-card{
+    border:none;
+    border-radius:18px;
+    padding:20px;
+    background:white;
+    box-shadow:
+        0 8px 25px rgba(0,0,0,.05);
+}
+
+.locked-title{
+    font-size:18px;
+    font-weight:700;
+    color:#0f172a;
+}
+
+.locked-text{
+    color:#64748b;
+    margin-top:8px;
+    margin-bottom:16px;
+}
+
+/* ================= MOBILE ================= */
+
+@media(max-width:768px){
+
+    .table thead{
+        display:none;
+    }
+
+    .table tbody tr{
+        display:block;
+        margin-bottom:15px;
+        border-bottom:1px solid #e2e8f0;
+    }
+
+    .table tbody td{
+        display:block;
+        text-align:left;
+        padding:12px 16px;
+    }
+
+    .action-wrap{
+        margin-top:10px;
+    }
+}
+
+</style>
+
+<div class="container-fluid test-page">
+
+    <!-- ================= HEADER ================= -->
+
+    <div class="page-top">
+
+        <h2 class="page-title">
+            📘 Learning & Tests
+        </h2>
+
+        {% if request.user.role == "admin" or request.user.is_superuser %}
+            <a href="{% url 'create_test' %}"
+               class="create-btn">
+
+                + Create Test
+
+            </a>
+        {% endif %}
+
+    </div>
+
+    <!-- ================= TESTS ================= -->
+
+    <div class="test-card">
+
+        <div class="card-top">
+            ✅ Available Tests
+        </div>
+
+        {% if tests %}
+
+        <div class="table-responsive">
+
+            <table class="table align-middle">
+
+                <thead>
+                    <tr>
+                        <th>Title</th>
+                        <th>Duration</th>
+                        <th>Pass %</th>
+                        <th>Questions</th>
+                        <th width="350">Actions</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+
+                    {% for test in tests %}
+
+                    <tr>
+
+                        <td>
+                            <div class="test-title">
+                                {{ test.title }}
+                            </div>
+                        </td>
+
+                        <td>
+                            ⏱ {{ test.duration_minutes }} min
+                        </td>
+
+                        <td>
+                            <span class="custom-badge badge-success">
+                                {{ test.pass_percentage }}%
+                            </span>
+                        </td>
+
+                        <td>
+                            {{ test.questions.count }}
+                        </td>
+
+                        <td>
+
+                            <div class="action-wrap">
+
+                                <!-- STUDENT -->
+
+                                {% if request.user.role == "student" %}
+
+                                    {% if test.id in attempted_tests %}
+
+                                        <span class="custom-badge badge-success">
+                                            Completed
+                                        </span>
+
+                                    {% else %}
+
+                                        <a href="{% url 'attempt_test' test.id %}"
+                                           class="action-btn btn-start">
+
+                                            Start Test
+
+                                        </a>
+
+                                    {% endif %}
+
+                                {% endif %}
+
+                                <!-- ADMIN -->
+
+                                {% if request.user.role == "admin" or request.user.is_superuser %}
+
+                                    <a href="{% url 'attempt_test' test.id %}"
+                                       class="action-btn btn-preview">
+
+                                        Preview
+
+                                    </a>
+
+                                    <a href="{% url 'upload_material' test.id %}"
+                                       class="action-btn btn-material">
+
+                                        Materials
+
+                                    </a>
+
+                                    <a href="{% url 'edit_test' test.id %}"
+                                       class="action-btn btn-edit">
+
+                                        Edit Questions
+
+                                    </a>
+
+                                {% endif %}
+
+                            </div>
+
+                        </td>
+
+                    </tr>
+
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+        {% else %}
+
+            <div class="empty-box">
+                No available tests found.
+            </div>
+
+        {% endif %}
+
+    </div>
+
+    <!-- ================= LOCKED ================= -->
+
+    {% if locked_tests %}
+
+    <div class="mt-4">
+
+        <div class="test-card">
+
+            <div class="card-top"
+                 style="background:linear-gradient(135deg,#f59e0b,#d97706);">
+
+                🔒 Locked Tests
+
+            </div>
+
+            <div class="p-4">
+
+                {% for test in locked_tests %}
+
+                <div class="locked-card mb-3">
+
+                    <div class="locked-title">
+                        {{ test.title }}
+                    </div>
+
+                    <div class="locked-text">
+                        Complete study materials to unlock this test.
+                    </div>
+
+                    <a href="{% url 'study_material_view' test.id %}"
+                       class="action-btn btn-study">
+
+                        View Materials
+
+                    </a>
+
+                </div>
+
+                {% endfor %}
+
+            </div>
+
+        </div>
+
+    </div>
+
+    {% endif %}
+
+</div>
+
+{% endblock %}

@@ -124,13 +124,19 @@
 /* ===== JSON BOX ===== */
 .audit-json {
     font-family: monospace;
-    font-size: 10px;
+    font-size: 11px;
     background: #f8fafc;
-    padding: 5px;
+    padding: 6px;
     border-radius: 5px;
-    max-height: 70px;
-    overflow: auto;
-    white-space: pre-wrap;
+
+    max-height: 60px;     /* 🔥 smaller */
+    overflow: hidden;     /* ❌ remove scroll */
+    position: relative;
+}
+
+/* expanded mode */
+.audit-json.expanded {
+    max-height: none;
 }
 
 .audit-description {
@@ -251,16 +257,42 @@
                         <td>{{ log.object_repr|default:"-" }}</td>
 
                         <td>
-                            {% if log.old_data %}
-                                <div class="audit-json">{{ log.old_data|safe }}</div>
-                            {% else %}-{% endif %}
-                        </td>
+
+<div class="audit-json" id="old-{{ log.id }}">
+    {% if log.old_data %}
+        {% for key, value in log.old_data.items %}
+            <strong>{{ key|capfirst }}:</strong> {{ value }}<br>
+        {% endfor %}
+    {% else %}
+        -
+    {% endif %}
+</div>
+
+<button onclick="toggleLog('old-{{ log.id }}')"
+        style="font-size:10px;border:none;background:none;color:#2563eb;cursor:pointer;">
+    View
+</button>
+
+</td>
 
                         <td>
-                            {% if log.new_data %}
-                                <div class="audit-json">{{ log.new_data|safe }}</div>
-                            {% else %}-{% endif %}
-                        </td>
+
+<div class="audit-json" id="new-{{ log.id }}">
+    {% if log.new_data %}
+        {% for key, value in log.new_data.items %}
+            <strong>{{ key|capfirst }}:</strong> {{ value }}<br>
+        {% endfor %}
+    {% else %}
+        -
+    {% endif %}
+</div>
+
+<button onclick="toggleLog('new-{{ log.id }}')"
+        style="font-size:10px;border:none;background:none;color:#2563eb;cursor:pointer;">
+    View
+</button>
+
+</td>
 
                         <td>{{ log.ip_address|default:"-" }}</td>
                     </tr>
@@ -279,5 +311,17 @@
     </div>
 
 </div>
+<script>
+function toggleLog(id, btn) {
+    let box = document.getElementById(id);
 
+    if (box.classList.contains("expanded")) {
+        box.classList.remove("expanded");
+        if(btn) btn.innerText = "View";
+    } else {
+        box.classList.add("expanded");
+        if(btn) btn.innerText = "Hide";
+    }
+}
+</script>
 {% endblock %}

@@ -1,0 +1,423 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+
+/* PAGE */
+
+.exam-page{
+    max-width:900px;
+}
+
+/* HEADER */
+
+.exam-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:20px;
+    flex-wrap:wrap;
+    gap:12px;
+}
+
+.exam-title{
+    font-size:28px;
+    font-weight:700;
+    margin:0;
+    color:#111827;
+}
+
+/* TIMER */
+
+.timer-box{
+    background:#ef4444;
+    color:white;
+    padding:10px 18px;
+    border-radius:10px;
+    font-weight:600;
+    font-size:15px;
+}
+
+/* ADMIN ALERT */
+
+.admin-alert{
+    border-radius:12px;
+    font-size:14px;
+}
+
+/* QUESTION CARD */
+
+.question-card{
+    border:1px solid #e5e7eb;
+    border-radius:14px;
+    margin-bottom:18px;
+    background:white;
+}
+
+/* QUESTION HEADER */
+
+.question-top{
+    padding:14px 18px;
+    border-bottom:1px solid #f1f5f9;
+    font-weight:600;
+    font-size:15px;
+    background:#f8fafc;
+}
+
+/* BODY */
+
+.question-body{
+    padding:18px;
+}
+
+/* QUESTION TEXT */
+
+.question-text{
+    font-size:16px;
+    font-weight:600;
+    margin-bottom:18px;
+    color:#111827;
+}
+
+/* OPTIONS */
+
+.option-box{
+    display:block;
+    padding:12px 14px;
+    border:1px solid #e5e7eb;
+    border-radius:10px;
+    margin-bottom:10px;
+    cursor:pointer;
+    transition:.2s;
+}
+
+.option-box:hover{
+    border-color:#2563eb;
+    background:#f8fbff;
+}
+
+.option-label{
+    margin-left:8px;
+    font-size:15px;
+}
+
+/* IMAGES */
+
+.option-image{
+    margin-top:10px;
+    max-width:140px;
+    border-radius:8px;
+}
+
+/* INPUT */
+
+.answer-input{
+    border-radius:10px;
+    padding:12px;
+}
+
+/* SUBMIT */
+
+.submit-wrap{
+    text-align:right;
+    margin-top:24px;
+    margin-bottom:40px;
+}
+
+.submit-btn{
+    background:#2563eb;
+    color:white;
+    border:none;
+    border-radius:10px;
+    padding:12px 24px;
+    font-weight:600;
+}
+
+.submit-btn:hover{
+    background:#1d4ed8;
+}
+
+/* MOBILE */
+
+@media(max-width:768px){
+
+    .exam-title{
+        font-size:22px;
+    }
+
+    .timer-box{
+        width:100%;
+        text-align:center;
+    }
+}
+
+</style>
+
+<div class="container mt-4 exam-page">
+
+    <!-- ================= HEADER ================= -->
+
+    <div class="exam-header">
+
+        <h1 class="exam-title">
+            {{ test.title }}
+        </h1>
+
+        <div class="timer-box">
+            ⏳ Time Left :
+            <span id="timer"></span>
+        </div>
+
+    </div>
+
+    <!-- ================= ADMIN PREVIEW ================= -->
+
+    {% if is_admin_preview %}
+        <div class="alert alert-warning admin-alert">
+            ⚠ Admin Preview Mode — Results will NOT be saved.
+        </div>
+    {% endif %}
+
+    <!-- ================= FORM ================= -->
+
+    <form method="POST" id="examForm">
+
+        {% csrf_token %}
+
+        {% for q in questions %}
+
+        <div class="question-card">
+
+            <!-- QUESTION HEADER -->
+
+            <div class="question-top">
+
+                Question {{ forloop.counter }}
+
+            </div>
+
+            <!-- QUESTION BODY -->
+
+            <div class="question-body">
+
+                <!-- QUESTION -->
+
+                <div class="question-text">
+
+                    {{ q.question_text }}
+
+                </div>
+
+                <!-- ================= MCQ ================= -->
+
+                {% if q.question_type == "MCQ" %}
+
+                    <!-- OPTION A -->
+
+                    <label class="option-box d-block">
+
+                        <input type="radio"
+                               name="question_{{ q.id }}"
+                               value="A">
+
+                        <span class="option-label">
+                            {{ q.option_a }}
+                        </span>
+
+                        {% if q.option_a_image %}
+                            <div>
+                                <img src="{{ q.option_a_image.url }}"
+                                     class="option-image">
+                            </div>
+                        {% endif %}
+
+                    </label>
+
+                    <!-- OPTION B -->
+
+                    <label class="option-box d-block">
+
+                        <input type="radio"
+                               name="question_{{ q.id }}"
+                               value="B">
+
+                        <span class="option-label">
+                            {{ q.option_b }}
+                        </span>
+
+                        {% if q.option_b_image %}
+                            <div>
+                                <img src="{{ q.option_b_image.url }}"
+                                     class="option-image">
+                            </div>
+                        {% endif %}
+
+                    </label>
+
+                    <!-- OPTION C -->
+
+                    <label class="option-box d-block">
+
+                        <input type="radio"
+                               name="question_{{ q.id }}"
+                               value="C">
+
+                        <span class="option-label">
+                            {{ q.option_c }}
+                        </span>
+
+                        {% if q.option_c_image %}
+                            <div>
+                                <img src="{{ q.option_c_image.url }}"
+                                     class="option-image">
+                            </div>
+                        {% endif %}
+
+                    </label>
+
+                    <!-- OPTION D -->
+
+                    <label class="option-box d-block">
+
+                        <input type="radio"
+                               name="question_{{ q.id }}"
+                               value="D">
+
+                        <span class="option-label">
+                            {{ q.option_d }}
+                        </span>
+
+                        {% if q.option_d_image %}
+                            <div>
+                                <img src="{{ q.option_d_image.url }}"
+                                     class="option-image">
+                            </div>
+                        {% endif %}
+
+                    </label>
+
+                <!-- ================= FILL ================= -->
+
+                {% elif q.question_type == "FILL" %}
+
+                    <input type="text"
+                           name="question_{{ q.id }}"
+                           class="form-control answer-input"
+                           placeholder="Type your answer here">
+
+                <!-- ================= BOOL ================= -->
+
+                {% elif q.question_type == "BOOL" %}
+
+                    <label class="option-box d-block">
+
+                        <input type="radio"
+                               name="question_{{ q.id }}"
+                               value="True">
+
+                        <span class="option-label">
+                            Yes
+                        </span>
+
+                    </label>
+
+                    <label class="option-box d-block">
+
+                        <input type="radio"
+                               name="question_{{ q.id }}"
+                               value="False">
+
+                        <span class="option-label">
+                            No
+                        </span>
+
+                    </label>
+
+                {% endif %}
+
+            </div>
+
+        </div>
+
+        {% endfor %}
+
+        <!-- ================= SUBMIT ================= -->
+
+        <div class="submit-wrap">
+
+            <button type="submit"
+                    class="submit-btn">
+
+                Submit Test
+
+            </button>
+
+        </div>
+
+    </form>
+
+</div>
+
+<!-- ================= TIMER SCRIPT ================= -->
+
+<script>
+
+let totalSeconds =
+    {{ duration }} * 60;
+
+const timerDisplay =
+    document.getElementById(
+        "timer"
+    );
+
+function updateTimer(){
+
+    const minutes =
+        Math.floor(
+            totalSeconds / 60
+        );
+
+    const seconds =
+        totalSeconds % 60;
+
+    timerDisplay.textContent =
+
+        minutes
+        .toString()
+        .padStart(2, '0')
+
+        + ":" +
+
+        seconds
+        .toString()
+        .padStart(2, '0');
+
+    if(totalSeconds <= 0){
+
+        clearInterval(interval);
+
+        alert(
+            "⏰ Time is up! Submitting automatically."
+        );
+
+        document
+        .getElementById(
+            "examForm"
+        )
+        .submit();
+    }
+
+    totalSeconds--;
+}
+
+updateTimer();
+
+const interval =
+    setInterval(
+        updateTimer,
+        1000
+    );
+
+</script>
+
+{% endblock %}

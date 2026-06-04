@@ -10,8 +10,5 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.AlterUniqueTogether(
-            name='formbatch',
-            unique_together={('form', 'company_name', 'batch_id')},
-        ),
+       
     ]

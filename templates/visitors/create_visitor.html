@@ -1,0 +1,739 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+
+<style>
+
+body{
+    background:#eef2f7;
+}
+
+/* =========================================
+HEADER
+========================================= */
+
+.page-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:25px;
+    flex-wrap:wrap;
+    gap:15px;
+}
+
+.page-title h2{
+    font-size:30px;
+    font-weight:800;
+    margin-bottom:5px;
+}
+
+.page-title p{
+    color:#6b7280;
+    margin:0;
+}
+
+/* =========================================
+MAIN CARD
+========================================= */
+
+.main-card{
+    background:white;
+    border-radius:26px;
+    padding:30px;
+    box-shadow:0 10px 35px rgba(0,0,0,0.06);
+}
+
+.section-title{
+    font-size:20px;
+    font-weight:800;
+    margin-bottom:20px;
+    color:#111827;
+}
+
+/* =========================================
+FORM
+========================================= */
+
+.form-label{
+    font-weight:700;
+    margin-bottom:8px;
+    font-size:14px;
+}
+
+.form-control,
+.form-select{
+    border-radius:14px;
+    padding:12px;
+    border:1px solid #d1d5db;
+    box-shadow:none;
+}
+
+.form-control:focus,
+.form-select:focus{
+    border-color:#2563eb;
+    box-shadow:none;
+}
+
+/* =========================================
+CAMERA
+========================================= */
+
+.camera-box{
+
+    background:#f9fafb;
+
+    border:2px dashed #d1d5db;
+
+    border-radius:24px;
+
+    padding:18px;
+
+    text-align:center;
+}
+
+.camera-preview{
+
+    position:relative;
+
+    width:100%;
+
+    height:340px;
+
+    border-radius:20px;
+
+    overflow:hidden;
+
+    background:#111827;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+}
+
+#video,
+#preview{
+
+    width:100%;
+
+    height:100%;
+
+    object-fit:cover;
+}
+
+#preview{
+    display:none;
+}
+
+canvas{
+    display:none;
+}
+
+.camera-overlay{
+
+    position:absolute;
+
+    inset:0;
+
+    border:3px solid rgba(255,255,255,0.2);
+
+    border-radius:20px;
+
+    pointer-events:none;
+}
+
+.camera-actions{
+
+    display:flex;
+
+    gap:12px;
+
+    margin-top:16px;
+}
+
+.camera-btn{
+
+    flex:1;
+
+    border:none;
+
+    padding:13px;
+
+    border-radius:14px;
+
+    font-weight:700;
+
+    font-size:14px;
+
+    transition:0.3s;
+}
+
+.capture-btn{
+    background:#111827;
+    color:white;
+}
+
+.retake-btn{
+    background:#dc2626;
+    color:white;
+    display:none;
+}
+
+.camera-btn:hover{
+    opacity:0.92;
+}
+
+/* =========================================
+TABLE
+========================================= */
+
+.table-wrapper{
+    border-radius:20px;
+    height: 300px;
+    overflow-y: auto;
+    overflow-x:hidden;
+    border:1px solid #e5e7eb;
+}
+
+.table{
+    margin:0;
+}
+
+.table thead{
+    background:#f3f4f6;
+}
+
+.table th{
+    font-size:13px;
+    font-weight:700;
+    padding:14px;
+}
+
+.table td{
+    padding:12px;
+    vertical-align:middle;
+}
+
+/* =========================================
+BUTTONS
+========================================= */
+
+.add-btn{
+    border:none;
+    background:#2563eb;
+    color:white;
+    padding:12px 18px;
+    border-radius:14px;
+    font-weight:700;
+    margin-top:15px;
+}
+
+.remove-btn{
+    border:none;
+    background:#dc2626;
+    color:white;
+    border-radius:10px;
+    padding:8px 12px;
+}
+
+.submit-btn{
+    border:none;
+    background:#059669;
+    color:white;
+    padding:15px 28px;
+    border-radius:16px;
+    font-size:16px;
+    font-weight:800;
+    margin-top:35px;
+}
+
+
+/* =========================================
+RESPONSIVE
+========================================= */
+
+@media(max-width:768px){
+
+    .camera-preview{
+        height:260px;
+    }
+
+}
+
+</style>
+
+<div class="container-fluid py-4">
+
+    <!-- HEADER -->
+    <div class="page-header">
+
+        <div class="page-title">
+
+            <h2>
+                Visitor Entry
+            </h2>
+
+            <p>
+                Register visitor with photo & belongings
+            </p>
+
+        </div>
+
+        <a href="{% url 'visitors:visitor_dashboard' %}"
+           class="btn btn-dark rounded-4 px-4">
+
+            ← Back
+
+        </a>
+
+    </div>
+
+    <!-- FORM -->
+    <form method="POST"
+          enctype="multipart/form-data">
+
+        {% csrf_token %}
+
+        <div class="main-card">
+
+            <div class="row">
+
+                <!-- LEFT -->
+                <div class="col-lg-8">
+
+                    <div class="section-title">
+
+                        Visitor Information
+
+                    </div>
+
+                    <div class="row">
+
+                        <div class="col-md-6 mb-3">
+
+                            <label class="form-label">
+                                Visitor Name
+                            </label>
+
+                            <input type="text"
+                                   name="name"
+                                   class="form-control"
+                                   required>
+
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+
+                            <label class="form-label">
+                                Organization
+                            </label>
+
+                            <input type="text"
+                                   name="company"
+                                   class="form-control">
+
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+
+                            <label class="form-label">
+                                Contact
+                            </label>
+
+                            <input type="text"
+                                   name="phone"
+                                   class="form-control"
+                                   required>
+
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+
+                            <label class="form-label">
+                                Email
+                            </label>
+
+                            <input type="email"
+                                   name="email"
+                                   class="form-control">
+
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+
+                            <label class="form-label">
+                                Visitor Department
+                            </label>
+
+                            <input type="text"
+                                   name="department"
+                                   class="form-control">
+
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+
+                            <label class="form-label">
+                                Vehicle Number
+                            </label>
+
+                            <input type="text"
+                                   name="vehicle_number"
+                                   class="form-control">
+
+                        </div>
+
+                        <div class="col-md-12 mb-3">
+
+                            <label class="form-label">
+                                Purpose
+                            </label>
+
+                            <textarea name="purpose"
+                                      rows="3"
+                                      class="form-control"></textarea>
+
+                        </div>
+
+                        <div class="col-md-12 mb-3">
+
+                            <label class="form-label">
+                                Host Employee
+                            </label>
+
+                            <select name="host_employee"
+                                    class="form-select">
+
+                                <option value="">
+                                    Select Employee
+                                </option>
+
+                                {% for user in users %}
+
+                                <option value="{{ user.id }}">
+
+                                    {{ user.email }}
+
+                                </option>
+
+                                {% endfor %}
+
+                            </select>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <!-- RIGHT CAMERA -->
+                <div class="col-lg-4">
+
+                    <div class="camera-box">
+
+                        <div class="section-title mb-3">
+
+                            Visitor Photo
+
+                        </div>
+
+                        <div class="camera-preview">
+
+                            <video id="video"
+                                   autoplay
+                                   playsinline></video>
+
+                            <img id="preview">
+
+                            <div class="camera-overlay"></div>
+
+                        </div>
+
+                        <canvas id="canvas"></canvas>
+
+                        <div class="camera-actions">
+
+                            <button type="button"
+                                    class="camera-btn capture-btn"
+                                    onclick="capturePhoto()">
+
+                                📷 Capture
+
+                            </button>
+
+                            <button type="button"
+                                    class="camera-btn retake-btn"
+                                    onclick="retakePhoto()">
+
+                                🔄 Re-Capture
+
+                            </button>
+
+                        </div>
+
+                        <input type="hidden"
+                               name="captured_photo"
+                               id="captured_photo">
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            <!-- BELONGINGS -->
+            <div class="section-title mt-5">
+
+                Visitor Belongings
+
+            </div>
+
+            <div class="table-wrapper">
+
+                <div class="table-responsive">
+
+                    <table class="table"
+                           id="belongingsTable">
+
+                        <thead>
+
+                            <tr>
+
+                                <th>Item</th>
+
+                                <th width="100">Qty</th>
+
+                                <th>Serial No</th>
+
+                                <th>Remarks</th>
+
+                                <th width="80"></th>
+
+                            </tr>
+
+                        </thead>
+
+                        <tbody>
+
+                            <tr>
+
+                                <td>
+
+                                    <input type="text"
+                                           name="item_name[]"
+                                           class="form-control">
+
+                                </td>
+
+                                <td>
+
+                                    <input type="number"
+                                           name="quantity[]"
+                                           class="form-control"
+                                           value="1">
+
+                                </td>
+
+                                <td>
+
+                                    <input type="text"
+                                           name="serial_number[]"
+                                           class="form-control">
+
+                                </td>
+
+                                <td>
+
+                                    <input type="text"
+                                           name="remarks[]"
+                                           class="form-control">
+
+                                </td>
+
+                                <td>
+
+                                    <button type="button"
+                                            class="remove-btn"
+                                            onclick="removeRow(this)">
+
+                                        ✖
+
+                                    </button>
+
+                                </td>
+
+                            </tr>
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            </div>
+
+            <button type="button"
+                    class="add-btn"
+                    onclick="addRow()">
+
+                ➕ Add Belonging
+
+            </button>
+
+            <!-- SUBMIT -->
+            <div>
+
+                <button type="submit"
+                        class="submit-btn">
+
+                    Save Visitor Entry
+
+                </button>
+
+            </div>
+
+        </div>
+
+    </form>
+
+</div>
+
+<script>
+
+const video = document.getElementById("video")
+
+const preview =
+    document.getElementById("preview")
+
+const captureBtn =
+    document.querySelector(".capture-btn")
+
+const retakeBtn =
+    document.querySelector(".retake-btn")
+
+navigator.mediaDevices.getUserMedia({
+
+    video:true
+
+})
+
+.then(stream => {
+
+    video.srcObject = stream
+
+})
+
+function capturePhoto(){
+
+    const canvas =
+        document.getElementById("canvas")
+
+    const context =
+        canvas.getContext("2d")
+
+    canvas.width = video.videoWidth
+
+    canvas.height = video.videoHeight
+
+    context.drawImage(
+        video,
+        0,
+        0
+    )
+
+    const imageData =
+        canvas.toDataURL("image/png")
+
+    preview.src = imageData
+
+    preview.style.display = "block"
+
+    video.style.display = "none"
+
+    document.getElementById(
+        "captured_photo"
+    ).value = imageData
+
+    captureBtn.style.display = "none"
+
+    retakeBtn.style.display = "block"
+}
+
+function retakePhoto(){
+
+    preview.style.display = "none"
+
+    video.style.display = "block"
+
+    captureBtn.style.display = "block"
+
+    retakeBtn.style.display = "none"
+
+    document.getElementById(
+        "captured_photo"
+    ).value = ""
+}
+
+function addRow(){
+
+    const table = document.querySelector(
+        "#belongingsTable tbody"
+    )
+
+    const row = `
+
+        <tr>
+
+            <td>
+                <input type="text"
+                       name="item_name[]"
+                       class="form-control">
+            </td>
+
+            <td>
+                <input type="number"
+                       name="quantity[]"
+                       class="form-control"
+                       value="1">
+            </td>
+
+            <td>
+                <input type="text"
+                       name="serial_number[]"
+                       class="form-control">
+            </td>
+
+            <td>
+                <input type="text"
+                       name="remarks[]"
+                       class="form-control">
+            </td>
+
+            <td>
+                <button type="button"
+                        class="remove-btn"
+                        onclick="removeRow(this)">
+                    ✖
+                </button>
+            </td>
+
+        </tr>
+    `
+
+    table.insertAdjacentHTML(
+        "beforeend",
+        row
+    )
+}
+
+function removeRow(btn){
+
+    btn.closest("tr").remove()
+}
+
+
+</script>
+
+{% endblock %}

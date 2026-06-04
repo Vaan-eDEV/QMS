@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% block content %}
+{% load custom_tags %}
+<div class="container mt-4">
+
+    <h4 class="mb-3">📚 Study Materials - {{ test.title }}</h4>
+
+    {% if materials %}
+
+        {% for m in materials %}
+            {% with progress=progress_map|get_item:m.id %}
+            <div class="card p-3 mb-4 shadow-sm">
+
+                <!-- HEADER -->
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-1">{{ m.title }}</h5>
+
+                    {% if progress and progress.completed %}
+                        <span class="badge bg-success">Completed</span>
+                    {% else %}
+                        <span class="badge bg-warning text-dark">Pending</span>
+                    {% endif %}
+                </div>
+
+                <!-- DEADLINE -->
+                <p class="text-muted mb-2">
+                    Deadline:
+                    <b>{{ m.end_date|date:"d M Y H:i" }}</b>
+                </p>
+
+                <!-- 🔥 SMART PREVIEW -->
+                <div class="border rounded mb-3" style="overflow:hidden;">
+
+                    {% with file_url=m.file.url|lower %}
+
+                        {% if file_url|slice:"-4:" == ".pdf" %}
+                            <!-- PDF -->
+                            <iframe src="{{ m.file.url }}"
+                                    width="100%"
+                                    height="450px"
+                                    style="border:none;">
+                            </iframe>
+
+                        {% else %}
+                            <!-- PPT / DOC -->
+                            <iframe 
+                                src="https://docs.google.com/gview?url={{ m.full_url }}&embedded=true"
+                                width="100%" 
+                                height="450px"
+                                style="border:none;">
+                            </iframe>
+
+                            <div class="p-2 text-center">
+                                <a href="{{ m.file.url }}" target="_blank"
+                                   class="btn btn-sm btn-primary">
+                                    Open File
+                                </a>
+                            </div>
+                        {% endif %}
+
+                    {% endwith %}
+
+                </div>
+
+                <!-- ACTION -->
+                <div class="text-end">
+
+                    {% if progress and not progress.completed %}
+                        <a href="{% url 'mark_material_complete' m.id %}"
+                           class="btn btn-warning btn-sm">
+                            Mark as Completed
+                        </a>
+                    {% else %}
+                        <button class="btn btn-success btn-sm" disabled>
+                            Completed
+                        </button>
+                    {% endif %}
+
+                </div>
+
+            </div>
+            {% endwith %}
+        {% endfor %}
+
+    {% else %}
+        <div class="text-muted">No materials available</div>
+    {% endif %}
+
+    <hr>
+
+    <!-- TEST BUTTON -->
+    <div class="text-end">
+
+        {% if all_completed %}
+            <a href="{% url 'attempt_test' test.id %}"
+               class="btn btn-success">
+                Start Test
+            </a>
+        {% else %}
+            <button class="btn btn-secondary" disabled>
+                Complete all materials to unlock test
+            </button>
+        {% endif %}
+
+    </div>
+
+</div>
+
+{% endblock %}

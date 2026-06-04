@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<h3>Quotations</h3>
+
+<a href="{% url 'po_qu:create_quotation' %}" class="btn btn-primary mb-2">New</a>
+
+<table class="table">
+    <tr>
+        <th>No</th>
+        <th>Customer</th>
+        <th>Date</th>
+        <th>Total</th>
+        <th></th>
+    </tr>
+
+    {% for q in quotations %}
+    <tr>
+        <td>{{ q.quotation_number }}</td>
+        <td>{{ q.customer_name }}</td>
+        <td>{{ q.date }}</td>
+        <td>₹ {{ q.grand_total }}</td>
+        <td><a href="{% url 'po_qu:quotation_detail' q.id %}">View</a></td>
+    </tr>
+    {% endfor %}
+</table>
+
+{% endblock %}

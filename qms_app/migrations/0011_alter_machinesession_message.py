@@ -10,9 +10,5 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.AlterField(
-            model_name='machinesession',
-            name='message',
-            field=models.TextField(blank=True, null=True),
-        ),
+        
     ]

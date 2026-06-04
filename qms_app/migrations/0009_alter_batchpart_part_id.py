@@ -10,9 +10,5 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.AlterField(
-            model_name='batchpart',
-            name='part_id',
-            field=models.CharField(max_length=100, unique=True),
-        ),
+        
     ]

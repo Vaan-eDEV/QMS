@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+.page-title {
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 20px;
+}
+
+.card-box {
+    background: #fff;
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.05);
+}
+
+.btn-view {
+    background: #4e73df;
+    color: #fff;
+    padding: 5px 12px;
+    border-radius: 6px;
+    text-decoration: none;
+}
+
+.btn-approve {
+    background: #28a745;
+    color: #fff;
+    padding: 5px 12px;
+    border-radius: 6px;
+    text-decoration: none;
+}
+</style>
+
+<div class="container mt-4">
+
+    <div class="page-title">📝 Employee Approval</div>
+
+    <div class="card-box">
+
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Department</th>
+                    <th>Role</th>
+                    <th width="200">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for emp in employees %}
+                <tr>
+                    <td>{{ emp.emp_id }}</td>
+                    <td>{{ emp.name }}</td>
+                    <td>{{ emp.department }}</td>
+                    <td>{{ emp.role }}</td>
+                    <td>
+                        <a href="{% url 'employee_detail_approval' emp.id %}" class="btn-view">
+                            View
+                        </a>
+
+                        <a href="{% url 'approve_employee' emp.id %}" class="btn-approve">
+                            Approve
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="4" class="text-center">No pending employees</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+    </div>
+
+</div>
+
+{% endblock %}

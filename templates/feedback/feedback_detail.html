@@ -1,0 +1,608 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class="container-fluid py-4">
+
+    <!-- PAGE HEADER -->
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+
+        <div>
+
+            <h2 class="fw-bold mb-1">
+                Feedback Details
+            </h2>
+
+            <p class="text-muted mb-0">
+                View complete customer feedback information
+            </p>
+
+        </div>
+
+        <div class="d-flex gap-2">
+
+            <a href="{% url 'feedback_list' %}"
+               class="btn btn-light border rounded-3 px-4">
+
+                Back
+
+            </a>
+
+            <a href="#"
+               class="btn btn-primary rounded-3 px-4">
+
+                Edit Feedback
+
+            </a>
+
+        </div>
+
+    </div>
+
+    <!-- MAIN CARD -->
+
+    <div class="card border-0 shadow-sm rounded-4">
+
+        <div class="card-body p-4">
+
+            <!-- STATUS ROW -->
+
+            <div class="row mb-4">
+
+                <div class="col-md-3">
+
+                    <label class="text-muted small">
+                        Feedback No
+                    </label>
+
+                    <h5 class="fw-bold">
+
+                        {{ feedback.feedback_no }}
+
+                    </h5>
+
+                </div>
+
+                <div class="col-md-3">
+
+                    <label class="text-muted small">
+                        Status
+                    </label>
+
+                    <div>
+
+                        {% if feedback.status == 'Open' %}
+
+                        <span class="badge bg-success rounded-pill px-3 py-2">
+
+                            Open
+
+                        </span>
+
+                        {% elif feedback.status == 'Under Investigation' %}
+
+                        <span class="badge bg-primary rounded-pill px-3 py-2">
+
+                            Under Investigation
+
+                        </span>
+
+                        {% elif feedback.status == 'CAPA Created' %}
+
+                        <span class="badge bg-secondary rounded-pill px-3 py-2">
+
+                            CAPA Created
+
+                        </span>
+
+                        {% elif feedback.status == 'Response Sent' %}
+
+                        <span class="badge bg-info rounded-pill px-3 py-2">
+
+                            Response Sent
+
+                        </span>
+
+                        {% else %}
+
+                        <span class="badge bg-dark rounded-pill px-3 py-2">
+
+                            Closed
+
+                        </span>
+
+                        {% endif %}
+
+                    </div>
+
+                </div>
+
+                <div class="col-md-3">
+
+                    <label class="text-muted small">
+                        Severity
+                    </label>
+
+                    <div>
+
+                        {% if feedback.severity == 'Critical' %}
+
+                        <span class="badge bg-danger rounded-pill px-3 py-2">
+
+                            Critical
+
+                        </span>
+
+                        {% elif feedback.severity == 'High' %}
+
+                        <span class="badge bg-warning text-dark rounded-pill px-3 py-2">
+
+                            High
+
+                        </span>
+
+                        {% elif feedback.severity == 'Medium' %}
+
+                        <span class="badge bg-info text-dark rounded-pill px-3 py-2">
+
+                            Medium
+
+                        </span>
+
+                        {% else %}
+
+                        <span class="badge bg-success rounded-pill px-3 py-2">
+
+                            Low
+
+                        </span>
+
+                        {% endif %}
+
+                    </div>
+
+                </div>
+
+                <div class="col-md-3">
+
+                    <label class="text-muted small">
+                        Priority
+                    </label>
+
+                    <h6>
+
+                        {{ feedback.priority }}
+
+                    </h6>
+
+                </div>
+
+            </div>
+
+            <!-- GENERAL INFORMATION -->
+
+            <div class="border-bottom pb-2 mb-4">
+
+                <h5 class="fw-bold text-primary">
+                    1. General Information
+                </h5>
+
+            </div>
+
+            <div class="row">
+
+                <div class="col-md-4 mb-4">
+
+                    <label class="text-muted small">
+                        Date Received
+                    </label>
+
+                    <h6>
+
+                        {{ feedback.date_received }}
+
+                    </h6>
+
+                </div>
+
+                <div class="col-md-4 mb-4">
+
+                    <label class="text-muted small">
+                        Received By
+                    </label>
+
+                    <h6>
+
+                        {{ feedback.received_by }}
+
+                    </h6>
+
+                </div>
+
+                <div class="col-md-4 mb-4">
+
+                    <label class="text-muted small">
+                        Customer Name
+                    </label>
+
+                    <h6>
+
+                        {{ feedback.customer_name }}
+
+                    </h6>
+
+                </div>
+
+                <div class="col-md-4 mb-4">
+
+                    <label class="text-muted small">
+                        Customer Contact
+                    </label>
+
+                    <h6>
+
+                        {{ feedback.customer_contact }}
+
+                    </h6>
+
+                </div>
+
+                <div class="col-md-4 mb-4">
+
+                    <label class="text-muted small">
+                        Customer Email
+                    </label>
+
+                    <h6>
+
+                        {{ feedback.customer_email }}
+
+                    </h6>
+
+                </div>
+
+                <div class="col-md-4 mb-4">
+
+                    <label class="text-muted small">
+                        Product Name
+                    </label>
+
+                    <h6>
+
+                        {{ feedback.product_name }}
+
+                    </h6>
+
+                </div>
+
+                <div class="col-md-4 mb-4">
+
+                    <label class="text-muted small">
+                        Part Number
+                    </label>
+
+                    <h6>
+
+                        {{ feedback.part_number }}
+
+                    </h6>
+
+                </div>
+
+                <div class="col-md-4 mb-4">
+
+                    <label class="text-muted small">
+                        Lot / Batch Number
+                    </label>
+
+                    <h6>
+
+                        {{ feedback.lot_batch_number }}
+
+                    </h6>
+
+                </div>
+
+                <div class="col-md-4 mb-4">
+
+                    <label class="text-muted small">
+                        Sales Order No
+                    </label>
+
+                    <h6>
+
+                        {{ feedback.sales_order_no }}
+
+                    </h6>
+
+                </div>
+
+                <div class="col-md-4 mb-4">
+
+                    <label class="text-muted small">
+                        Feedback Type
+                    </label>
+
+                    <h6>
+
+                        {{ feedback.feedback_type }}
+
+                    </h6>
+
+                </div>
+
+                <div class="col-md-4 mb-4">
+
+                    <label class="text-muted small">
+                        Category
+                    </label>
+
+                    <h6>
+
+                        {{ feedback.category }}
+
+                    </h6>
+
+                </div>
+
+                <div class="col-md-4 mb-4">
+
+                    <label class="text-muted small">
+                        Source of Feedback
+                    </label>
+
+                    <h6>
+
+                        {{ feedback.source_of_feedback }}
+
+                    </h6>
+
+                </div>
+
+                <div class="col-md-12 mb-4">
+
+                    <label class="text-muted small">
+                        Description
+                    </label>
+
+                    <div class="border rounded-3 p-3 bg-light">
+
+                        {{ feedback.description }}
+
+                    </div>
+
+                </div>
+
+                {% if feedback.attachment %}
+
+                <div class="col-md-12 mb-4">
+
+                    <label class="text-muted small">
+                        Attachment
+                    </label>
+
+                    <div>
+
+                        <a href="{{ feedback.attachment.url }}"
+                           target="_blank"
+                           class="btn btn-outline-primary rounded-3">
+
+                            <i class="fa fa-download me-2"></i>
+
+                            Download Attachment
+
+                        </a>
+
+                    </div>
+
+                </div>
+
+                {% endif %}
+
+            </div>
+
+            <!-- ADDITIONAL INFORMATION -->
+
+            <div class="border-bottom pb-2 mb-4 mt-4">
+
+                <h5 class="fw-bold text-primary">
+                    2. Additional Information
+                </h5>
+
+            </div>
+
+            <div class="row">
+
+                <div class="col-md-4 mb-4">
+
+                    <label class="text-muted small">
+                        Date of Occurrence
+                    </label>
+
+                    <h6>
+
+                        {{ feedback.date_of_occurrence }}
+
+                    </h6>
+
+                </div>
+
+                <div class="col-md-4 mb-4">
+
+                    <label class="text-muted small">
+                        Location / Site
+                    </label>
+
+                    <h6>
+
+                        {{ feedback.location_site }}
+
+                    </h6>
+
+                </div>
+
+                <div class="col-md-4 mb-4">
+
+                    <label class="text-muted small">
+                        Department
+                    </label>
+
+                    <h6>
+
+                        {{ feedback.department }}
+
+                    </h6>
+
+                </div>
+
+                <div class="col-md-6 mb-4">
+
+                    <label class="text-muted small">
+                        Impact on Customer
+                    </label>
+
+                    <div class="border rounded-3 p-3 bg-light">
+
+                        {{ feedback.impact_on_customer }}
+
+                    </div>
+
+                </div>
+
+                <div class="col-md-6 mb-4">
+
+                    <label class="text-muted small">
+                        Immediate Action Taken
+                    </label>
+
+                    <div class="border rounded-3 p-3 bg-light">
+
+                        {{ feedback.immediate_action_taken }}
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            <!-- INTERNAL USE -->
+
+            <div class="border-bottom pb-2 mb-4 mt-4">
+
+                <h5 class="fw-bold text-primary">
+                    3. Internal Use
+                </h5>
+
+            </div>
+
+            <div class="row">
+
+                <div class="col-md-4 mb-4">
+
+                    <label class="text-muted small">
+                        Assigned To
+                    </label>
+
+                    <h6>
+
+                        {{ feedback.assigned_to }}
+
+                    </h6>
+
+                </div>
+
+                <div class="col-md-4 mb-4">
+
+                    <label class="text-muted small">
+                        Due Date
+                    </label>
+
+                    <h6>
+
+                        {{ feedback.due_date }}
+
+                    </h6>
+
+                </div>
+
+                <div class="col-md-4 mb-4">
+
+                    <label class="text-muted small">
+                        Investigation Date
+                    </label>
+
+                    <h6>
+
+                        {{ feedback.target_investigation_date }}
+
+                    </h6>
+
+                </div>
+
+                <div class="col-md-12 mb-4">
+
+                    <label class="text-muted small">
+                        Remarks
+                    </label>
+
+                    <div class="border rounded-3 p-3 bg-light">
+
+                        {{ feedback.remarks }}
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            <!-- SYSTEM DETAILS -->
+
+            <div class="border-bottom pb-2 mb-4 mt-4">
+
+                <h5 class="fw-bold text-primary">
+                    4. System Information
+                </h5>
+
+            </div>
+
+            <div class="row">
+
+                <div class="col-md-6 mb-4">
+
+                    <label class="text-muted small">
+                        Created At
+                    </label>
+
+                    <h6>
+
+                        {{ feedback.created_at }}
+
+                    </h6>
+
+                </div>
+
+                <div class="col-md-6 mb-4">
+
+                    <label class="text-muted small">
+                        Last Updated
+                    </label>
+
+                    <h6>
+
+                        {{ feedback.updated_at }}
+
+                    </h6>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}
+

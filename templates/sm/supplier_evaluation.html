@@ -1,0 +1,645 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+
+<div class="container-fluid py-4">
+
+    <!-- ===================================== -->
+    <!-- PAGE HEADER -->
+    <!-- ===================================== -->
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+
+        <div>
+
+            <h2 class="fw-bold mb-1">
+
+                Evaluation & Scorecard
+
+            </h2>
+
+            <p class="text-muted mb-0">
+
+                {{ supplier.supplier_name }}
+                -
+                {{ supplier.supplier_code }}
+
+            </p>
+
+        </div>
+
+        <div>
+
+            <a
+                href="{% url 'supplier_detail' supplier.id %}"
+                class="btn btn-light"
+            >
+
+                Back
+
+            </a>
+
+        </div>
+
+    </div>
+
+    <!-- ===================================== -->
+    <!-- TOP INFO -->
+    <!-- ===================================== -->
+
+    <div class="card border-0 shadow-sm mb-4">
+
+        <div class="card-body">
+
+            <div class="row g-4">
+
+                <div class="col-md-3">
+
+                    <div class="border rounded p-3 h-100">
+
+                        <small class="text-muted">
+
+                            Supplier
+
+                        </small>
+
+                        <h6 class="fw-bold mt-2">
+
+                            {{ supplier.supplier_name }}
+
+                        </h6>
+
+                    </div>
+
+                </div>
+
+                <div class="col-md-3">
+
+                    <div class="border rounded p-3 h-100">
+
+                        <small class="text-muted">
+
+                            Supplier Code
+
+                        </small>
+
+                        <h6 class="fw-bold mt-2">
+
+                            {{ supplier.supplier_code }}
+
+                        </h6>
+
+                    </div>
+
+                </div>
+
+                <div class="col-md-3">
+
+                    <div class="border rounded p-3 h-100">
+
+                        <small class="text-muted">
+
+                            Evaluator
+
+                        </small>
+
+                        <h6 class="fw-bold mt-2">
+
+                            {{ request.user }}
+
+                        </h6>
+
+                    </div>
+
+                </div>
+
+                <div class="col-md-3">
+
+                    <div class="border rounded p-3 h-100">
+
+                        <small class="text-muted">
+
+                            Evaluation Date
+
+                        </small>
+
+                        <h6 class="fw-bold mt-2">
+
+                            {% now "d M Y" %}
+
+                        </h6>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- ===================================== -->
+    <!-- MAIN -->
+    <!-- ===================================== -->
+
+    <div class="row g-4">
+
+        <!-- LEFT -->
+
+        <div class="col-lg-8">
+
+            <form method="POST">
+
+                {% csrf_token %}
+
+                <div class="card border-0 shadow-sm">
+
+                    <div class="card-header bg-white">
+
+                        <h5 class="mb-0">
+
+                            Evaluation Criteria & Scorecard
+
+                        </h5>
+
+                    </div>
+
+                    <div class="card-body p-0">
+
+                        <div class="table-responsive">
+
+                            <table class="table align-middle mb-0">
+
+                                <thead class="table-light">
+
+                                    <tr>
+
+                                        <th>#</th>
+
+                                        <th>Criteria</th>
+
+                                        <th>Max</th>
+
+                                        <th>Score</th>
+
+                                    </tr>
+
+                                </thead>
+
+                                <tbody>
+
+                                    <!-- QUALITY -->
+
+                                    <tr>
+
+                                        <td>1</td>
+
+                                        <td>
+
+                                            <div class="fw-semibold">
+
+                                                Quality Performance
+
+                                            </div>
+
+                                            <small class="text-muted">
+
+                                                Incoming Quality, CAPA Response
+
+                                            </small>
+
+                                        </td>
+
+                                        <td>20</td>
+
+                                        <td>
+
+                                            <input
+                                                type="number"
+                                                name="quality_score"
+                                                class="form-control score-input"
+                                                max="20"
+                                                value="{{ evaluation.quality_score }}"
+                                                required
+                                            >
+
+                                        </td>
+
+                                    </tr>
+
+                                    <!-- DELIVERY -->
+
+                                    <tr>
+
+                                        <td>2</td>
+
+                                        <td>
+
+                                            <div class="fw-semibold">
+
+                                                Delivery Performance
+
+                                            </div>
+
+                                            <small class="text-muted">
+
+                                                On-Time Delivery
+
+                                            </small>
+
+                                        </td>
+
+                                        <td>15</td>
+
+                                        <td>
+
+                                            <input
+                                                type="number"
+                                                name="delivery_score"
+                                                class="form-control score-input"
+                                                max="15"
+                                                value="{{ evaluation.delivery_score }}"
+                                                required
+                                            >
+
+                                        </td>
+
+                                    </tr>
+
+                                    <!-- TECHNICAL -->
+
+                                    <tr>
+
+                                        <td>3</td>
+
+                                        <td>
+
+                                            <div class="fw-semibold">
+
+                                                Technical Capability
+
+                                            </div>
+
+                                            <small class="text-muted">
+
+                                                Engineering & Manufacturing
+
+                                            </small>
+
+                                        </td>
+
+                                        <td>15</td>
+
+                                        <td>
+
+                                            <input
+                                                type="number"
+                                                name="technical_score"
+                                                class="form-control score-input"
+                                                max="15"
+                                                value="{{ evaluation.technical_score }}"
+                                                required
+                                            >
+
+                                        </td>
+
+                                    </tr>
+
+                                    <!-- DOCUMENTATION -->
+
+                                    <tr>
+
+                                        <td>4</td>
+
+                                        <td>
+
+                                            <div class="fw-semibold">
+
+                                                Documentation Control
+
+                                            </div>
+
+                                            <small class="text-muted">
+
+                                                ISO, COC, Records
+
+                                            </small>
+
+                                        </td>
+
+                                        <td>15</td>
+
+                                        <td>
+
+                                            <input
+                                                type="number"
+                                                name="documentation_score"
+                                                class="form-control score-input"
+                                                max="15"
+                                                value="{{ evaluation.documentation_score }}"
+                                                required
+                                            >
+
+                                        </td>
+
+                                    </tr>
+
+                                    <!-- COMPLIANCE -->
+
+                                    <tr>
+
+                                        <td>5</td>
+
+                                        <td>
+
+                                            <div class="fw-semibold">
+
+                                                Risk & Compliance
+
+                                            </div>
+
+                                            <small class="text-muted">
+
+                                                Regulatory & Risk Management
+
+                                            </small>
+
+                                        </td>
+
+                                        <td>15</td>
+
+                                        <td>
+
+                                            <input
+                                                type="number"
+                                                name="compliance_score"
+                                                class="form-control score-input"
+                                                max="15"
+                                                value="{{ evaluation.compliance_score }}"
+                                                required
+                                            >
+
+                                        </td>
+
+                                    </tr>
+
+                                    <!-- COMMERCIAL -->
+
+                                    <tr>
+
+                                        <td>6</td>
+
+                                        <td>
+
+                                            <div class="fw-semibold">
+
+                                                Commercial Performance
+
+                                            </div>
+
+                                            <small class="text-muted">
+
+                                                Price & Payment Terms
+
+                                            </small>
+
+                                        </td>
+
+                                        <td>10</td>
+
+                                        <td>
+
+                                            <input
+                                                type="number"
+                                                name="commercial_score"
+                                                class="form-control score-input"
+                                                max="10"
+                                                value="{{ evaluation.commercial_score }}"
+                                                required
+                                            >
+
+                                        </td>
+
+                                    </tr>
+
+                                </tbody>
+
+                            </table>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <!-- COMMENTS -->
+
+                <div class="card border-0 shadow-sm mt-4">
+
+                    <div class="card-header bg-white">
+
+                        <h5 class="mb-0">
+
+                            Evaluator Comments
+
+                        </h5>
+
+                    </div>
+
+                    <div class="card-body">
+
+                        <textarea
+                            name="remarks"
+                            rows="5"
+                            class="form-control"
+                        >{{ evaluation.remarks }}</textarea>
+
+                    </div>
+
+                </div>
+
+                <!-- BUTTONS -->
+
+                <div class="d-flex justify-content-end gap-2 mt-4">
+
+                    <button
+                        type="submit"
+                        class="btn btn-success"
+                    >
+
+                        Submit Evaluation
+
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+
+        <!-- RIGHT -->
+
+        <div class="col-lg-4">
+
+            <!-- SCORE CARD -->
+
+            <div class="card border-0 shadow-sm mb-4">
+
+                <div class="card-header bg-white">
+
+                    <h5 class="mb-0">
+
+                        Overall Score
+
+                    </h5>
+
+                </div>
+
+                <div class="card-body text-center">
+
+                    <canvas id="scoreChart"></canvas>
+
+                    <h2 class="fw-bold mt-3">
+
+                        {{ evaluation.total_score }}/90
+
+                    </h2>
+
+                </div>
+
+            </div>
+
+            <!-- STATUS -->
+
+            <div class="card border-0 shadow-sm">
+
+                <div class="card-body">
+
+                    <div class="mb-3">
+
+                        <small class="text-muted">
+
+                            Risk Level
+
+                        </small>
+
+                        <h5 class="mt-1">
+
+                            {{ supplier.risk_level|title }}
+
+                        </h5>
+
+                    </div>
+
+                    <div>
+
+                        <small class="text-muted">
+
+                            Current Status
+
+                        </small>
+
+                        <h5 class="mt-1">
+
+                            {{ supplier.status|title }}
+
+                        </h5>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<style>
+
+.card{
+
+    border-radius:18px;
+
+}
+
+.form-control{
+
+    border-radius:10px;
+
+}
+
+.score-input{
+
+    width:100px;
+
+}
+
+.table td,
+.table th{
+
+    vertical-align:middle;
+
+}
+
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+
+const ctx = document.getElementById('scoreChart');
+
+new Chart(ctx, {
+
+    type: 'doughnut',
+
+    data: {
+
+        labels: [
+
+            'Score',
+
+            'Remaining'
+
+        ],
+
+        datasets: [{
+
+            data: [
+
+                {{ evaluation.total_score|default:0 }},
+
+                90 - {{ evaluation.total_score|default:0 }}
+
+            ]
+
+        }]
+
+    },
+
+    options: {
+
+        responsive: true,
+
+        plugins: {
+
+            legend: {
+
+                position: 'bottom'
+
+            }
+
+        }
+
+    }
+
+});
+
+</script>
+
+{% endblock %}

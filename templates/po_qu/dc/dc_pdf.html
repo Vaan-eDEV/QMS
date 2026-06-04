@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Delivery Challan {{ dc.dc_number }}</title>
+
+<style>
+
+/* ================= PAGE ================= */
+@page {
+    size: A4;
+    margin: 10mm 15mm 20mm 15mm;
+
+    @bottom-center {
+        content: "Page " counter(page) " of " counter(pages);
+        font-size: 10px;
+        color: #555;
+    }
+}
+
+body {
+    font-family: Arial, sans-serif;
+    font-size: 12px;
+    color: #333;
+}
+
+/* LOGO */
+.logo {
+    height: 70px;
+}
+
+/* HEADER TABLE */
+.header-table td {
+    vertical-align: top;
+}
+
+/* ITEMS TABLE */
+.dc-items {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+}
+
+.dc-items th {
+    background-color: #3399ff;
+    color: white;
+    padding: 6px;
+    font-size: 11px;
+    text-align: center;
+}
+
+.dc-items td {
+    padding: 7px;
+    font-size: 11px;
+    text-align: center;
+    border-bottom: 1px solid #ddd;
+}
+
+.dc-items td.product {
+    text-align: left;
+}
+
+/* SIGNATURE */
+.signatures {
+    display: flex;
+    gap: 40px;
+    margin-top: 20px;
+}
+
+.signatures img {
+    max-width: 120px;
+}
+
+/* FOOTER NOTE */
+.footer {
+    position: fixed;
+    bottom: 10px;
+    left: 15px;
+    right: 15px;
+    font-size: 11px;
+    color: #555;
+}
+
+</style>
+</head>
+
+<body>
+
+<!-- ================= COMPANY ================= -->
+<div style="text-align:center; margin-bottom:15px;">
+    {% if logo_path %}
+    <img src="{{ logo_path }}" class="logo">
+    {% endif %}
+
+    <div style="font-size:10px;">
+        {{ company_address }}
+    </div>
+</div>
+
+<!-- ================= HEADER ================= -->
+<table width="100%" class="header-table">
+<tr>
+
+<td>
+    <span style="color:#3399ff; font-size:26px; font-weight:bold;">
+        DC #{{ dc.dc_number }}
+    </span><br><br>
+
+    <small>Date: {{ dc.date }}</small><br>
+    <small>City: {{ dc.city }}</small><br>
+    <small>Transporter: {{ dc.transporter }}</small><br>
+    <small>Created By: {{ dc.created_by }}</small>
+</td>
+
+<td align="right">
+    {% if qr_code_path %}
+    <img src="{{ qr_code_path }}" style="width:100px;">
+    {% endif %}
+</td>
+
+</tr>
+</table>
+
+<br>
+
+<!-- ================= FROM / TO ================= -->
+<table width="100%" style="margin-bottom:15px;">
+<tr>
+
+<td width="50%">
+    <b>From</b><br>
+    {{ dc.from_name }}<br>
+    {{ dc.from_address }}<br>
+    {{ dc.from_city }} {{ dc.from_state }}<br>
+    {{ dc.from_pincode }}<br>
+    Phone: {{ dc.from_phone }}<br>
+    Email: {{ dc.from_email }}
+</td>
+
+<td width="50%" align="right">
+    <b>To</b><br>
+    {{ dc.to_name }}<br>
+    {{ dc.to_address }}<br>
+    {{ dc.to_city }} {{ dc.to_state }}<br>
+    {{ dc.to_pincode }}<br>
+    Phone: {{ dc.to_phone }}<br>
+    Email: {{ dc.to_email }}
+</td>
+
+</tr>
+</table>
+
+<!-- ================= ITEMS ================= -->
+<table class="dc-items">
+<thead>
+<tr>
+    <th>#</th>
+    <th>Product</th>
+    <th>Unit</th>
+    <th>Quantity</th>
+</tr>
+</thead>
+
+<tbody>
+{% for item in dc.items.all %}
+<tr>
+    <td>{{ forloop.counter }}</td>
+    <td class="product">{{ item.product_name }}</td>
+    <td>{{ item.unit }}</td>
+    <td>{{ item.quantity }}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+
+<!-- ================= SIGNATURE ================= -->
+<div class="signatures">
+
+    <div style="text-align:center;">
+        <div style="font-size:11px;">
+            <b>Prepared By</b><br>
+            {{ dc.prepared_by|default:"—" }}<br>
+            {{ dc.prepared_at|date:"d M Y H:i"|default:"—" }}<br>
+
+            {% if dc.prepared_signature_id %}
+            ID: {{ dc.prepared_signature_id }}
+            {% endif %}
+        </div>
+    </div>
+
+    <div style="text-align:center">
+        <div style="font-size: 11px;">
+            <b>Reviewed By</b>
+            {{ dc.reviewed_by | default:"—" }}<br>
+            {{ dc.reviewed_at | date:"d M Y H:i | default: "—" }}<br>
+
+            {% if dc.reviewed_signature_id %}
+            ID: {{ dc.reviewed_signature_id }}
+            {% endif %}
+        </div>
+    </div>
+
+    <div style="text-align:center;">
+        <div style="font-size:11px;">
+            <b>Approved By</b><br>
+            {{ dc.approved_by|default:"—" }}<br>
+            {{ dc.approved_at|date:"d M Y H:i"|default:"—" }}<br>
+
+            {% if dc.approved_signature_id %}
+            ID: {{ dc.approved_signature_id }}
+            {% endif %}
+        </div>
+    </div>
+
+
+    <div style="text-align: center;">
+        <div style="font-size: large;">
+            <b>Reviewd by</b>
+            {{ dc.reviewed_by | default: "—" }}<br>
+            {{ dc.reviewed_at | date: "d M Y H:i" | default: "—" }}<br>
+
+            {% if dc.reviewed_signature_id %}
+            ID: {{ dc.reviewed_signature_id }}
+            {% endif %}
+        </div>
+    </div>
+
+</div>
+
+<!-- ================= FOOTER NOTE ================= -->
+<div class="footer">
+    {% if dc.note %}
+    <strong>Note:</strong>
+    {{ dc.note }}
+    {% endif %}
+</div>
+
+</body>
+</html>

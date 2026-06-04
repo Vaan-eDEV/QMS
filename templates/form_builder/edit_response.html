@@ -1,12 +1,98 @@
 {% extends "base.html" %}
 {% block content %}
 {% load custom_tags %}
+<style>
+/* ===== TABLE UI FIX ===== */
+.dynamic-table {
+    display: block;
+    overflow-x: auto;
+    width: 100%;
+}
 
+/* make table wide */
+.dynamic-table table {
+    min-width: 1400px;
+    table-layout: fixed;
+    border-collapse: collapse;
+}
+
+/* equal column width */
+.dynamic-table th,
+.dynamic-table td {
+    width: 160px;
+    text-align: center;
+    vertical-align: middle;
+    padding: 8px;
+    overflow:hidden;
+}
+
+/* bigger inputs */
+.dynamic-table input {
+    width: 100%;
+    min-width: 140px;
+    height: 38px;
+    font-size: 14px;
+}
+.signature-box {
+    max-width: 200px;
+    margin: auto;
+}
+
+.signature-ui {
+    font-size: 12px;
+    text-align: center;
+}
+
+.signature-logo {
+    max-width: 120px;
+    opacity: 0.3;
+    margin-top: 5px;
+}
+
+.signature-title {
+    font-weight: bold;
+    color: green;
+    font-size: 13px;
+}
+
+.signature-user,
+.signature-time,
+.signature-ref {
+    font-size: 11px;
+    margin-top: 2px;
+}
+/* sticky header */
+.dynamic-table thead th {
+    position: sticky;
+    top: 0;
+    background: #4e73df;
+    color: white;
+    z-index: 2;
+}
+
+/* first column sticky */
+.dynamic-table th:first-child,
+.dynamic-table td:first-child {
+    position: sticky;
+    left: 0;
+    background: white;
+    z-index: 3;
+}
+
+/* smooth scroll */
+.dynamic-table::-webkit-scrollbar {
+    height: 8px;
+}
+.dynamic-table::-webkit-scrollbar-thumb {
+    background: #ccc;
+    border-radius: 10px;
+}
+</style>
 <div class="container">
 
     <h4 class="mb-4">Edit: {{ form.name }}</h4>
 
-    <form method="POST">
+    <form method="POST" enctype="multipart/form-data">
         {% csrf_token %}
 
         <!-- RFQ -->
@@ -22,189 +108,752 @@
 
             <div class="card-body">
 
-                <!-- ================= FIELDS ================= -->
+                <!-- ======c=========== FIELDS ================= -->
 
-                {% for field in stage.field_set.all %}
-                {% with val=data|get_item:field.label %}
+                {% for item in stage.elements %}
+                    {% if item.type == "field" %}
+                        {% with field=item.data %}
+                            {% with val=data|get_item:field.label %}
 
-                <div class="mb-3">
+                                <div class="mb-3">
 
-                    <label class="form-label">{{ field.label }}</label>
+                                    <label class="form-label">{{ field.label }}</label>
 
-                    {% if field.field_type == "text" %}
-                        <input type="text" name="{{ field.label }}" class="form-control"
-                               value="{{ val }}"
-                               data-colname="{{ field.label }}" data-type="text">
+                                    {% if field.field_type == "text" %}
+        <input type="text" name="{{ field.label }}" class="form-control"
+               value="{{ val }}">
 
-                    {% elif field.field_type == "textarea" %}
-                        <textarea name="{{ field.label }}" class="form-control"
-                                  data-colname="{{ field.label }}" data-type="text">{{ val }}</textarea>
+    {% elif field.field_type == "textarea" %}
+        <textarea name="{{ field.label }}" class="form-control">{{ val }}</textarea>
 
-                    {% elif field.field_type == "number" %}
-                        <input type="number" step="any" name="{{ field.label }}" class="form-control"
-                               value="{{ val }}"
-                               data-colname="{{ field.label }}" data-type="number">
+    {% elif field.field_type == "number" %}
+        <input type="number" step="any" name="{{ field.label }}" class="form-control"
+               value="{{ val }}">
 
-                    {% elif field.field_type == "date" %}
-                        <input type="date" name="{{ field.label }}" class="form-control"
-                               value="{{ val }}">
+    {% elif field.field_type == "date" %}
+        <input type="date" name="{{ field.label }}" class="form-control"
+               value="{{ val }}">
 
-                    {% elif field.field_type == "percentage" %}
-                        <input type="number" step="any" name="{{ field.label }}" class="form-control"
-                               value="{{ val }}"
-                               data-colname="{{ field.label }}" data-type="percentage">
+    {% elif field.field_type == "percentage" %}
+        <input type="number" step="any" name="{{ field.label }}" class="form-control"
+               value="{{ val }}">
 
-                    {% elif field.field_type == "select" %}
-                        <select name="{{ field.label }}" class="form-control">
-                            {% for opt in field.option_list %}
-                                <option value="{{ opt }}" {% if opt == val %}selected{% endif %}>{{ opt }}</option>
-                            {% endfor %}
-                        </select>
+    {% elif field.field_type == "select" %}
+        <select name="{{ field.label }}" class="form-control">
+            {% for opt in field.option_list %}
+                <option value="{{ opt }}" {% if opt == val %}selected{% endif %}>
+                    {{ opt }}
+                </option>
+            {% endfor %}
+        </select>
 
-                    {% elif field.field_type == "checkbox" %}
-                        <input type="checkbox" name="{{ field.label }}" value="1"
-                               {% if val %}checked{% endif %}>
+    {% elif field.field_type == "checkbox" %}
+        {% for opt in field.option_list %}
+            <label>
+                <input type="checkbox"
+                       name="{{ field.label }}"
+                       value="{{ opt }}"
+                       {% if val and opt in val %}checked{% endif %}>
+                {{ opt }}
+            </label>
+        {% endfor %}
 
-                    {% elif field.field_type == "formula" %}
-                        <input type="number" step="any" name="{{ field.label }}" class="form-control"
-                               value="{{ val }}"
-                               data-colname="{{ field.label }}"
-                               data-type="formula"
-                               data-formula="{{ field.formula }}"
-                               readonly>
+    {% elif field.field_type == "formula" %}
+        <input type="number" step="any" name="{{ field.label }}" class="form-control"
+               value="{{ val }}" readonly>
+
+    {% elif field.field_type == "file" %}
+
+        <!-- ✅ MULTI FILE INPUT -->
+        <input type="file" name="{{ field.label }}" class="form-control" multiple>
+
+        <!-- ✅ PREVIEW -->
+        {% if val %}
+
+            {% if val|is_list %}
+                {# MULTIPLE FILES #}
+                {% for v in val %}
+                    <a href="{{ v }}" target="_blank"
+                       class="btn btn-sm btn-info mt-1">
+                        📎 {{ v|clean_filename }}
+                    </a><br>
+                {% endfor %}
+            {% else %}
+                {# SINGLE FILE #}
+                <a href="{{ val }}" target="_blank"
+                   class="btn btn-sm btn-info mt-1">
+                    📎 {{ val|clean_filename }}
+                </a>
+            {% endif %}
+
+        {% endif %}
+
+    {% elif field.field_type == "image" %}
+
+        <!-- ✅ MULTI IMAGE INPUT -->
+        <input type="file" name="{{ field.label }}" class="form-control" multiple>
+
+        <!-- ✅ PREVIEW -->
+        {% if val %}
+
+            {% if val|is_list %}
+                {# MULTIPLE IMAGES #}
+                <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                {% for v in val %}
+                    {% if v|is_image %}
+                        <img src="{{ v }}"
+                             style="max-width:120px; border-radius:6px; cursor:pointer;"
+                             onclick="window.open(this.src)">
+                    {% else %}
+                        <a href="{{ v }}" target="_blank">
+                            📎 {{ v|clean_filename }}
+                        </a>
                     {% endif %}
+                {% endfor %}
+                </div>
+            {% else %}
+                {# SINGLE IMAGE #}
+                {% if val|is_image %}
+                    <img src="{{ val }}"
+                         style="max-width:120px; border-radius:6px; cursor:pointer;"
+                         onclick="window.open(this.src)">
+                {% else %}
+                    <a href="{{ val }}" target="_blank">
+                        📎 {{ val|clean_filename }}
+                    </a>
+                {% endif %}
+            {% endif %}
 
+        {% endif %}
+
+                    {% elif field.field_type == "signature" %}
+
+    <div class="signature-container">
+
+        <input type="hidden"
+               name="{{ field.label }}"
+               class="signature-input"
+               value="{{ val }}">
+
+        <button type="button"
+                class="btn btn-primary btn-sm sign-btn"
+                {% if val %}style="display:none"{% endif %}>
+            Sign
+        </button>
+
+        {% if val %}
+            {% with sig=val|parse_json %}
+                <div class="signature-box">
+
+                    <div class="signature-ui">
+
+                        <div class="signature-title">
+                            ✔️ Digitally Signed
+                        </div>
+
+                        <div class="signature-user">
+                            👤 {{ sig.signed_by }}
+                        </div>
+
+                        <div class="signature-time">
+                            🕒 {{ sig.signed_at }}
+                        </div>
+
+                        <div class="signature-ref">
+                            {{ sig.reference_code }}
+                        </div>
+
+                        <img src="/static/admin/img/watermark.jpeg"
+                             class="signature-logo">
+
+                    </div>
+
+                </div>
+            {% endwith %}
+        {% endif %}
+
+    </div>
+
+{% else %}
+
+    <div class="alert alert-secondary">
+
+        {{ val|default:field.label }}
+
+    </div>
+
+{% endif %}
+                    
                 </div>
 
                 {% endwith %}
-                {% endfor %}
+                {% endwith %}
 
 
                 <!-- ================= TABLES ================= -->
 
-                {% for table in stage.table_set.all %}
+                {% elif item.type == "table" %}
+                {% with table=item.data %}
 
                 <h5 class="mt-4">{{ table.name }}</h5>
 
                 {% with table_data=data|get_item:table.name %}
                 {% with total_key=table.name|add:"_total" %}
 
-                <table class="table table-bordered dynamic-table" data-table="{{ table.name }}">
+                <div class="dynamic-table">
+                <table class="table table-bordered" data-table="{{ table.name }}">
 
                     <thead class="table-light">
                         <tr>
+
+                            <!-- ROW HEADER -->
+                            <th style="min-width:120px;">
+                                Row
+                            </th>
+
                             {% for col in table.tablecolumn_set.all %}
                                 <th>{{ col.name }}</th>
                             {% endfor %}
+
                             <th>Action</th>
+
                         </tr>
                     </thead>
+<tbody class="table-body">
 
-                    <tbody class="table-body">
+{% with saved_rows=data|get_item:table.name %}
 
-                        {% if table_data %}
-                            {% for row in table_data %}
-                            <tr>
+{% for db_row in table.tablerow_set.all|dictsort:"order" %}
+<tr>
 
-                                {% for col in table.tablecolumn_set.all %}
-                                <td>
+    <!-- ================= ROW NAME ================= -->
+{% get_row_id_by_name table db_row.name as real_row_id %}
+   <td class="fw-bold">
 
-                                    {% with val=row|get_item:col.name %}
+  
 
-                                    {% if col.column_type == "text" %}
-                                        <input type="text"
-                                               name="{{ table.name }}__{{ col.name }}__{{ forloop.parentloop.counter0 }}"
-                                               value="{{ val }}"
-                                               class="form-control"
-                                               data-colname="{{ col.name|lower|cut:' ' }}"
-                                               data-type="text">
+    <!-- STABLE ROW ID -->
+    <input type="hidden"
+       class="real-row-id"
+       name="_row_id__{{ table.id }}__{{ real_row_id }}"
+       value="{{ real_row_id }}">
+    <!-- ROW NAME -->
+    <input type="text"
+           class="form-control row-name-input"
+           value="{{ db_row.name }}"
+           name="row_name__{{ table.id }}__{{ real_row_id }}">
 
-                                    {% elif col.column_type == "number" %}
-                                        <input type="number" step="any"
-                                               name="{{ table.name }}__{{ col.name }}__{{ forloop.parentloop.counter0 }}"
-                                               value="{{ val }}"
-                                               class="form-control"
-                                               data-colname="{{ col.name|lower|cut:' ' }}"
-                                               data-type="number">
+</td>
 
-                                    {% elif col.column_type == "percentage" %}
-                                        <input type="number" step="any"
-                                               name="{{ table.name }}__{{ col.name }}__{{ forloop.parentloop.counter0 }}"
-                                               value="{{ val }}"
-                                               class="form-control"
-                                               data-colname="{{ col.name|lower|cut:' ' }}"
-                                               data-type="percentage">
+    <!-- ================= COLUMNS ================= -->
 
-                                    {% elif col.column_type == "formula" %}
-                                        <input type="number" step="any"
-                                               name="{{ table.name }}__{{ col.name }}__{{ forloop.parentloop.counter0 }}"
-                                               value="{{ val }}"
-                                               class="form-control"
-                                               data-colname="{{ col.name|lower|cut:' ' }}"
-                                               data-type="formula"
-                                               data-formula="{{ col.formula }}"
-                                               readonly>
-                                    {% endif %}
+    {% for col in table.tablecolumn_set.all %}
 
-                                    {% endwith %}
+    <td>
 
-                                </td>
-                                {% endfor %}
+       
 
-                                <td>
-                                    <button type="button" class="btn btn-danger btn-sm"
-                                            onclick="deleteRow(this)">
-                                        Delete
-                                    </button>
-                                </td>
+        {% with real_row_id|stringformat:"s" as row_id %}
+        {% with col.id|stringformat:"s" as col_id %}
+        {% with row_id|add:"_"|add:col_id as key %}
+        {% with config=cell_configs|get_item:key %}
 
-                            </tr>
-                            {% endfor %}
-                        {% else %}
-                            <tr>
-                                {% for col in table.tablecolumn_set.all %}
-                                    <td><input class="form-control"></td>
-                                {% endfor %}
-                                <td></td>
-                            </tr>
-                        {% endif %}
+        
 
-                    </tbody>
+        <!-- ================= FIND SAVED VALUE ================= -->
 
-                    <!-- ================= TOTAL ================= -->
-                    <tfoot>
-                    <tr>
+            {% with val=table_data|get_row_by_id:real_row_id|get_item:col.name %}
 
-                        {% for col in table.tablecolumn_set.all %}
-                        
-                            {% if col.is_total %}
-                            <td>
-                                <input type="text"
-                                       class="form-control total-column"
-                                       data-colname="{{ col.name|lower|cut:' ' }}"
-                                       value="{{ data|get_item:total_key|default:'0.00' }}"
-                                       readonly>
-                            </td>
-                            {% else %}
-                            <td></td>
-                            {% endif %}
+                    {% if config %}
+
+                    <!-- ================= TEXT ================= -->
+
+                    {% if config.cell_type == "text" %}
+
+                    <input type="text"
+                           name="{{ table.id }}__{{ real_row_id }}__{{ col.id }}"
+                           value="{{ val }}"
+                           class="form-control calc-input"
+                           data-col="{{ col.name|lower|cut:' '|cut:'-'|cut:'/'|cut:'%'|cut:'&'|cut:'('|cut:')'|cut:'.'|cut:',' }}"
+                           data-type="text">
+
+                    <!-- ================= NUMBER ================= -->
+
+                    {% elif config.cell_type == "number" %}
+
+                    <input type="number"
+                           step="any"
+                           name="{{ table.id }}__{{ real_row_id }}__{{ col.id }}"
+                           value="{{ val }}"
+                           class="form-control calc-input"
+                           data-col="{{ col.name|lower|cut:' '|cut:'-'|cut:'/'|cut:'%'|cut:'&'|cut:'('|cut:')'|cut:'.'|cut:',' }}"
+                           data-type="number">
+
+                    <!-- ================= PERCENTAGE ================= -->
+
+                    {% elif config.cell_type == "percentage" %}
+
+                    <input type="number"
+                           step="any"
+                           name="{{ table.id }}__{{ real_row_id }}__{{ col.id }}"
+                           value="{{ val }}"
+                           class="form-control calc-input"
+                           data-col="{{ col.name|lower|cut:' '|cut:'-'|cut:'/'|cut:'%'|cut:'&'|cut:'('|cut:')'|cut:'.'|cut:',' }}"
+                           data-type="percentage">
+
+                    <!-- ================= DATE ================= -->
+
+                    {% elif config.cell_type == "date" %}
+
+                    <input type="date"
+                           name="{{ table.id }}__{{ real_row_id }}__{{ col.id }}"
+                           value="{{ val }}"
+                           class="form-control">
+
+                    <!-- ================= TEXTAREA ================= -->
+
+                    {% elif config.cell_type == "textarea" %}
+
+                    <textarea
+                        name="{{ table.id }}__{{ real_row_id }}__{{ col.id }}"
+                        class="form-control calc-input"
+                        data-col="{{ col.name|lower|cut:' '|cut:'-'|cut:'/'|cut:'%'|cut:'&'|cut:'('|cut:')'|cut:'.'|cut:',' }}"
+                        data-type="textarea">{{ val }}</textarea>
+
+                    <!-- ================= CHECKBOX ================= -->
+
+                    {% elif config.cell_type == "checkbox" %}
+
+                        {% for opt in config.option_list %}
+
+                        <label style="display:block;">
+
+                            <input type="checkbox"
+                                   name="{{ table.id }}__{{ real_row_id }}__{{ col.id }}"
+                                   value="{{ opt }}"
+                                   {% if val and opt in val %}
+                                   checked
+                                   {% endif %}>
+
+                            {{ opt }}
+
+                        </label>
 
                         {% endfor %}
 
-                        <td><strong>Total</strong></td>
+                    <!-- ================= SELECT ================= -->
 
-                    </tr>
-                    </tfoot>
+                    {% elif config.cell_type == "select" %}
 
+                    <select
+                        name="{{ table.id }}__{{ real_row_id }}__{{ col.id }}"
+                        class="form-control">
+
+                        <option value="">-- Select --</option>
+
+                        {% for opt in config.option_list %}
+
+                        <option value="{{ opt }}"
+                            {% if val|stringformat:"s" == opt %}
+                            selected
+                            {% endif %}>
+
+                            {{ opt }}
+
+                        </option>
+
+                        {% endfor %}
+
+                    </select>
+
+                    <!-- ================= FORMULA ================= -->
+
+                    {% elif config.cell_type == "formula" %}
+
+                    <input type="number"
+                        step="any"
+                        name="{{ table.id }}__{{ real_row_id }}__{{ col.id }}"
+                        value="{{ val }}"
+                        class="form-control calc-input"
+                        data-col="{{ col.name|lower|cut:' '|cut:'-'|cut:'/'|cut:'%'|cut:'&'|cut:'('|cut:')'|cut:'.'|cut:',' }}"
+                        data-type="formula"
+                        data-formula="{{ config.formula }}"
+                        readonly>
+
+                    <!-- ================= FILE ================= -->
+                     
+
+                    {% elif config.cell_type == "file" %}
+
+                    <input type="file"
+                        name="{{ table.id }}__{{ real_row_id }}__{{ col.id }}"
+                        class="form-control"
+                        multiple>
+
+                    {% if val %}
+
+                        {% if val|is_list %}
+
+                            {% for v in val %}
+
+                                {% if v|is_image %}
+
+                                    <img src="{{ v }}"
+                                        style="max-width:120px;">
+
+                                {% else %}
+
+                                    <a href="{{ v }}" target="_blank">
+                                        📎 {{ v|clean_filename }}
+                                    </a><br>
+
+                                {% endif %}
+
+                            {% endfor %}
+
+                        {% else %}
+
+                        {% if val|is_image %}
+
+                        <img src="{{ val }}"
+                            style="max-width:120px;">
+
+                        {% else %}
+
+                            <a href="{{ val }}" target="_blank">
+                                📎 {{ val|clean_filename }}
+                            </a>
+
+                    {% endif %}
+
+                {% endif %}
+
+            {% endif %}
+                    <!-- ================= IMAGE ================= -->
+
+                   {% elif config.cell_type == "image" %}
+
+                    <input type="file"
+                           name="{{ table.id }}__{{ real_row_id }}__{{ col.id }}"
+                           class="form-control"
+                           multiple>
+
+                    {% if val %}
+
+                        {% if val|is_list %}
+
+                            <div style="display:flex;
+                                        gap:10px;
+                                        flex-wrap:wrap;">
+
+                                {% for v in val %}
+
+                                    {% if v|is_image %}
+
+                                        <img src="{{ v }}"
+                                             style="max-width:120px;
+                                                    border-radius:6px;
+                                                    cursor:pointer;"
+                                             onclick="window.open(this.src)">
+
+                                    {% else %}
+
+                                        <a href="{{ v }}"
+                                           target="_blank">
+
+                                            📎 {{ v|clean_filename }}
+
+                                        </a>
+
+                                    {% endif %}
+
+                                {% endfor %}
+
+                            </div>
+
+                        {% else %}
+
+                            {% if val|is_image %}
+
+                                <img src="{{ val }}"
+                                     style="max-width:120px;
+                                            border-radius:6px;
+                                            cursor:pointer;"
+                                     onclick="window.open(this.src)">
+
+                            {% else %}
+
+                                <a href="{{ val }}"
+                                   target="_blank">
+
+                                    📎 {{ val|clean_filename }}
+
+                                </a>
+
+                            {% endif %}
+
+                        {% endif %}
+
+                    {% endif %}
+
+                    <!-- ================= SIGNATURE ================= -->
+
+                    {% elif config.cell_type == "signature" %}
+
+                    <div class="signature-container">
+
+                        <input type="hidden"
+                               name="{{ table.id }}__{{ real_row_id }}__{{ col.id }}"
+                               class="signature-input"
+                               value="{% if val != 'None' %}{{ val|safe }}{% endif %}">
+                        
+                        <button type="button"
+                                class="btn btn-primary btn-sm sign-btn"
+                                {% if val and val != "None" %}
+                                style="display:none"
+                                {% endif %}>
+                            Sign
+                        </button>
+
+                        {% if val and val != "None" %}
+
+                            {% with sig=val|parse_json %}
+
+                            <div class="signature-box">
+
+                                <div class="signature-ui">
+
+                                    <div class="signature-title">
+                                        ✔️ Digitally Signed
+                                    </div>
+
+                                    <div class="signature-user">
+                                        👤 {{ sig.signed_by }}
+                                    </div>
+
+                                    <div class="signature-time">
+                                        🕒 {{ sig.signed_at }}
+                                    </div>
+
+                                    <div class="signature-ref">
+                                        {{ sig.reference_code }}
+                                    </div>
+
+                                    <img src="/static/admin/img/watermark.jpeg"
+                                         class="signature-logo">
+
+                                </div>
+
+                            </div>
+
+                            {% endwith %}
+
+                        {% endif %}
+
+                    </div>
+
+                    <!-- ================= DEFAULT ================= -->
+
+                    {% else %}
+
+                    <input type="text"
+                           name="{{ table.id }}__{{ real_row_id }}__{{ col.id }}"
+                           value="{{ val }}"
+                           class="form-control">
+
+                    {% endif %}
+
+                    {% endif %}
+
+                {% endwith %}
+
+            
+
+        {% endwith %}
+        {% endwith %}
+        {% endwith %}
+        {% endwith %}
+        
+
+    </td>
+
+    {% endfor %}
+
+    <!-- ================= DELETE ================= -->
+
+    <td>
+
+        <button type="button"
+                class="btn btn-danger btn-sm"
+                onclick="deleteRow(this)">
+
+            Delete
+
+        </button>
+
+    </td>
+
+</tr>
+
+{% endfor %}
+
+<!-- ================= DYNAMIC SAVED ROWS ================= -->
+
+{% for saved_row in saved_rows %}
+
+    {% with rowid=saved_row|get_item:"_row_id" %}
+
+    {% if rowid|stringformat:"s"|slice:":4" == "new_" %}
+
+    <tr>
+
+        <!-- ROW NAME -->
+
+        <td class="fw-bold">
+
+            <input type="hidden"
+                   class="real-row-id"
+                   name="_row_id__{{ table.id }}__{{ rowid }}"
+                   value="{{ rowid }}">
+
+            <input type="text"
+                   class="form-control row-name-input"
+                   value="{{ saved_row.row_name }}"
+                   name="row_name__{{ table.id }}__{{ rowid }}">
+
+        </td>
+
+        <!-- COLUMNS -->
+
+        {% for col in table.tablecolumn_set.all %}
+
+        <td>
+
+            {% with rowid|stringformat:"s" as row_id %}
+{% with col.id|stringformat:"s" as col_id %}
+{% with row_id|add:"_"|add:col_id as key %}
+{% with config=cell_configs|get_item:key %}
+
+{% if config.cell_type == "number" %}
+
+<input type="number"
+       step="any"
+       class="form-control calc-input"
+       data-col="{{ col.name|lower|cut:' '|cut:'-'|cut:'/'|cut:'%'|cut:'&'|cut:'('|cut:')'|cut:'.'|cut:',' }}"
+       data-type="number"
+       name="{{ table.id }}__{{ rowid }}__{{ col.id }}"
+       value="{{ saved_row|get_item:col.name }}">
+
+{% elif config.cell_type == "percentage" %}
+
+<input type="number"
+       step="any"
+       class="form-control calc-input"
+       data-col="{{ col.name|lower|cut:' '|cut:'-'|cut:'/'|cut:'%'|cut:'&'|cut:'('|cut:')'|cut:'.'|cut:',' }}"
+       data-type="percentage"
+       name="{{ table.id }}__{{ rowid }}__{{ col.id }}"
+       value="{{ saved_row|get_item:col.name }}">
+
+{% elif config.cell_type == "formula" %}
+
+<input type="number"
+       step="any"
+       readonly
+       class="form-control calc-input"
+       data-col="{{ col.name|lower|cut:' '|cut:'-'|cut:'/'|cut:'%'|cut:'&'|cut:'('|cut:')'|cut:'.'|cut:',' }}"
+       data-type="formula"
+       data-formula="{{ config.formula }}"
+       name="{{ table.id }}__{{ rowid }}__{{ col.id }}"
+       value="{{ saved_row|get_item:col.name }}">
+
+{% else %}
+
+<input type="text"
+       class="form-control calc-input"
+       data-col="{{ col.name|lower|cut:' '|cut:'-'|cut:'/'|cut:'%'|cut:'&'|cut:'('|cut:')'|cut:'.'|cut:',' }}"
+       data-type="text"
+       name="{{ table.id }}__{{ rowid }}__{{ col.id }}"
+       value="{{ saved_row|get_item:col.name }}">
+
+{% endif %}
+
+{% endwith %}
+{% endwith %}
+{% endwith %}
+{% endwith %}
+
+        </td>
+
+        {% endfor %}
+
+        <td>
+
+            <button type="button"
+                    class="btn btn-danger btn-sm"
+                    onclick="deleteRow(this)">
+
+                Delete
+
+            </button>
+
+        </td>
+
+    </tr>
+
+    {% endif %}
+
+    {% endwith %}
+
+{% endfor %}
+
+{% endwith %}
+
+</tbody>
+        <tfoot>
+            <tr>
+
+                <!-- ROW NAME COLUMN -->
+                <td></td>
+
+                {% for col in table.tablecolumn_set.all %}
+
+                    {% if col.is_total %}
+
+                        <td>
+                            <input type="text"
+                                class="form-control total-column"
+                                data-col="{{ col.name|lower|cut:' '|cut:'-'|cut:'/'|cut:'%'|cut:'&'|cut:'('|cut:')'|cut:'.'|cut:',' }}"
+                                readonly>
+                        </td>
+
+                    {% else %}
+
+                        <td></td>
+
+                    {% endif %}
+
+                {% endfor %}
+
+                <!-- ACTION COLUMN -->
+                <td>
+                    <strong>Total</strong>
+                </td>
+
+            </tr>
+        </tfoot>
                 </table>
-
-                {% endwith %}
-                {% endwith %}
 
                 <button type="button" class="btn btn-success btn-sm mb-3"
                         onclick="addRow(this)">
                     + Add Row
                 </button>
+                </div>
+                {% endwith %}
+                {% endwith %}
+                {% endwith %}
+                {% endif %}
+                {% endfor %}
+
 
                 {% endfor %}
 
@@ -212,174 +861,674 @@
 
         </div>
 
-        {% endfor %}
+
 
         <button class="btn btn-primary">Update Data</button>
 
     </form>
 
 </div>
+<!-- ================= SIGNATURE MODAL ================= -->
+<div class="modal fade" id="signatureModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
 
+      <div class="modal-header">
+        <h5 class="modal-title">Enter Signature Password</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+
+      <div class="modal-body">
+        <input type="password"
+               id="signaturePassword"
+               class="form-control"
+               placeholder="Enter password">
+      </div>
+
+      <div class="modal-footer">
+        <button type="button"
+                class="btn btn-secondary"
+                data-bs-dismiss="modal">
+            Cancel
+        </button>
+
+        <button type="button"
+                class="btn btn-primary"
+                id="confirmSignature">
+            Confirm
+        </button>
+      </div>
+
+    </div>
+  </div>
+</div>
 
 <script>
-
 /* ================= NORMALIZE ================= */
+
 function normalize(name){
-    return name.toLowerCase().replace(/\s+/g, "").replace(/[^a-z0-9]/g, "");
+
+    if(!name){
+        return "";
+    }
+
+    return String(name)
+        .toLowerCase()
+        .replace(/\s+/g, "")
+        .replace(/[^a-z0-9]/g, "");
+}
+
+/* ================= WHOLE TABLE ================= */
+function calculateWholeTable(table){
+
+    if(!table){
+        return;
+    }
+
+    table.querySelectorAll(
+        "tbody tr"
+    ).forEach(row => {
+
+        calculateRow(row);
+    });
+
+    calculateTotals(table);
 }
 
 /* ================= FORMULA ================= */
-function calculateFormulas(){
 
-    document.querySelectorAll(".dynamic-table").forEach(table => {
+function calculateRow(row){
 
-        table.querySelectorAll("tbody tr").forEach(row => {
+    if(!row){
+        return;
+    }
 
-            let inputs = {};
+    let values = {};
 
-            // collect inputs
-            row.querySelectorAll("input[data-colname]").forEach(input => {
+    // =====================================
+    // COLLECT VALUES
+    // =====================================
 
-                let key = normalize(input.dataset.colname);
-                let value = parseFloat(input.value) || 0;
+    row.querySelectorAll(
+        ".calc-input"
+    ).forEach(input => {
 
-                if(input.dataset.type === "percentage"){
-                    value = value / 100;
-                }
+        // SKIP FORMULA INPUT
+        if(
+            input.dataset.type === "formula"
+        ){
+            return;
+        }
 
-                inputs[key] = value;
-            });
+        let key = normalize(
+            input.dataset.col || ""
+        );
 
-            // apply formula
-            row.querySelectorAll("[data-type='formula']").forEach(field => {
+        if(!key){
+            return;
+        }
 
-                let formula = field.dataset.formula;
-                if(!formula) return;
+        let value =
+            parseFloat(input.value);
 
-                let expression = formula.toLowerCase();
+        values[key] =
+            isNaN(value)
+            ? 0
+            : value;
+    });
 
-                // 🔥 replace variables safely
-                Object.keys(inputs).forEach(key => {
-                    let regex = new RegExp(`\\b${key}\\b`, "g");
-                    expression = expression.replace(regex, inputs[key]);
-                });
+    // =====================================
+    // FORMULA FIELDS
+    // =====================================
 
-                try {
-                    let result = Function("return " + expression)();
-                    field.value = isNaN(result) ? "" : result.toFixed(2);
-                } catch (e) {
-                    console.log("Formula Error:", expression);
-                    field.value = "";
-                }
+    row.querySelectorAll(
+        "[data-type='formula']"
+    ).forEach(input => {
 
-            });
+        let formula =
+            String(
+                input.dataset.formula || ""
+            )
+            .toLowerCase();
 
+        if(!formula){
+            return;
+        }
+
+        // =====================================
+        // REPLACE VARIABLES
+        // =====================================
+
+        Object.keys(values)
+        .sort((a,b)=>b.length-a.length)
+        .forEach(key => {
+
+            let safeValue =
+                parseFloat(values[key]);
+
+            if(isNaN(safeValue)){
+                safeValue = 0;
+            }
+
+            let regex =
+                new RegExp(
+                    "\\b" + key + "\\b",
+                    "g"
+                );
+
+            formula =
+                formula.replace(
+                    regex,
+                    String(safeValue)
+                );
         });
 
+        // =====================================
+        // REMOVE LEFTOVER VARIABLES
+        // =====================================
+
+        formula =
+            formula.replace(
+                /[a-zA-Z_][a-zA-Z0-9_]*/g,
+                "0"
+            );
+        console.log("ROW =", row);
+
+        console.log("VALUES =", values);
+
+        console.log("ORIGINAL FORMULA =",
+            input.dataset.formula
+        );
+
+        console.log("FINAL FORMULA =",
+            formula
+        );
+        try{
+
+            let result =
+                Number(eval(formula));
+
+            let finalValue =
+                isNaN(result)
+                ? ""
+                : result.toFixed(2);
+
+            input.value = finalValue;
+
+
+        }catch(err){
+
+            console.error(
+                "FORMULA ERROR",
+                err
+            );
+
+            input.value = "";
+        }
     });
 }
 
 /* ================= TOTAL ================= */
-function calculateDynamicTotal(){
 
-    document.querySelectorAll(".dynamic-table").forEach(table => {
+function calculateTotals(table){
 
-        let rows = table.querySelectorAll("tbody tr");
+    if(!table){
+        return;
+    }
 
-        table.querySelectorAll(".total-column").forEach(totalField => {
+    table.querySelectorAll(
+        ".total-column"
+    ).forEach(totalField => {
 
-            let totalKey = normalize(totalField.dataset.colname);
-            let total = 0;
+        let col = normalize(
+            totalField.dataset.col || ""
+        );
 
-            rows.forEach(row => {
+        if(!col){
+            return;
+        }
 
-                row.querySelectorAll("input[data-colname]").forEach(input => {
+        let total = 0;
 
-                    let key = normalize(input.dataset.colname);
+        table.querySelectorAll(
+            `tbody tr input[data-col="${col}"]`
+        ).forEach(input => {
 
-                    if(key === totalKey){
+            if(
+                input.classList.contains(
+                    "total-column"
+                )
+            ){
+                return;
+            }
 
-                        let value = parseFloat(input.value) || 0;
+            let val =
+                parseFloat(input.value);
 
-                        if(input.dataset.type === "percentage"){
-                            value = value / 100;
-                        }
-
-                        total += value;
-                    }
-
-                });
-
-            });
-
-            totalField.value = total.toFixed(2);
-
+            if(!isNaN(val)){
+                total += val;
+            }
         });
 
+        totalField.value =
+            total.toFixed(2);
     });
-
 }
 
 /* ================= EVENTS ================= */
-document.addEventListener("input", function(){
+function bindCalculationEvents(){
 
-    calculateFormulas();
+    document.querySelectorAll(
+        ".calc-input"
+    ).forEach(input => {
 
-    setTimeout(() => {
-        calculateDynamicTotal();
-    }, 50);
-
-});
-
-document.addEventListener("DOMContentLoaded", function () {
-
-    calculateFormulas();
-
-    setTimeout(() => {
-        calculateDynamicTotal();
-    }, 100);
-
-});
-
-/* ================= ADD ROW ================= */
-function addRow(btn){
-
-    let table = btn.previousElementSibling;
-    let body = table.querySelector(".table-body");
-    let newRow = body.querySelector("tr").cloneNode(true);
-
-    let rowIndex = body.rows.length;
-
-    newRow.querySelectorAll("input").forEach(input => {
-
-        input.value = "";
-
-        if(input.name){
-            let parts = input.name.split("__");
-            input.name = parts[0] + "__" + parts[1] + "__" + rowIndex;
+        // SKIP FORMULA FIELD
+        if(
+            input.dataset.type === "formula"
+        ){
+            return;
         }
 
+        // REMOVE OLD EVENTS
+        if(input._calcHandler){
+
+            input.removeEventListener(
+                "input",
+                input._calcHandler
+            );
+        }
+
+        input._calcHandler = function(){
+
+            const table =
+                this.closest("table");
+
+            calculateWholeTable(table);
+        };
+
+        input.addEventListener(
+            "input",
+            input._calcHandler
+        );
+    });
+}
+/* ================= PAGE LOAD ================= */
+
+document.addEventListener(
+    "DOMContentLoaded",
+    function(){
+
+        bindCalculationEvents();
+
+        document.querySelectorAll(
+            ".dynamic-table table"
+        ).forEach(table => {
+
+            calculateWholeTable(
+                table
+            );
+        });
+    }
+);
+
+function addRow(btn){
+
+    const wrapper = btn.closest(".dynamic-table");
+
+    const tbody = wrapper.querySelector(".table-body");
+
+    const rows =
+        tbody.querySelectorAll("tr");
+
+    const firstRow =
+        rows[rows.length - 1];
+
+    if(!firstRow){
+        return;
+    }
+
+    // =========================================
+    // CLONE ROW
+    // =========================================
+
+    const newRow = firstRow.cloneNode(true);
+
+    const index = tbody.rows.length;
+
+    // =========================================
+    // DYNAMIC ROW ID
+    // =========================================
+
+    const dynamicRowName =
+        "new_" +
+        Date.now() +
+        "_" +
+        Math.floor(Math.random() * 1000);
+
+    // =========================================
+    // FIND TABLE ID
+    // =========================================
+
+    let firstInput = newRow.querySelector(
+        "input[name*='__'], textarea[name*='__'], select[name*='__']"
+    );
+
+    let tableId = "";
+
+    if(firstInput){
+
+        let parts = firstInput.name.split("__");
+
+        tableId = parts[0];
+    }
+
+    // =========================================
+    // UPDATE ROW NAME INPUT
+    // =========================================
+
+    let rowInput = newRow.querySelector(
+        ".row-name-input"
+    );
+
+    if(rowInput){
+
+        rowInput.value =
+            `Row${index + 1}`;
+
+        rowInput.name =
+            `row_name__${tableId}__${dynamicRowName}`;
+    }
+
+    // =========================================
+    // UPDATE HIDDEN ROW ID
+    // =========================================
+
+    let hiddenRowId = newRow.querySelector(
+        ".real-row-id"
+    );
+
+    if(hiddenRowId){
+
+        hiddenRowId.name =
+            `_row_id__${tableId}__${dynamicRowName}`;
+
+        hiddenRowId.value =
+            dynamicRowName;
+    }
+
+    // =========================================
+    // REMOVE OLD PREVIEWS
+    // =========================================
+
+    newRow.querySelectorAll("img").forEach(img=>{
+        img.remove();
     });
 
-    body.appendChild(newRow);
+    newRow.querySelectorAll("a").forEach(a=>{
+        if(a.href){
+            a.remove();
+        }
+    });
 
-    calculateFormulas();
-    calculateDynamicTotal();
+    newRow.querySelectorAll(".signature-box").forEach(box=>{
+        box.remove();
+    });
+
+    // =========================================
+    // RESET INPUTS
+    // =========================================
+
+    newRow.querySelectorAll(
+        "input, textarea, select"
+    ).forEach(input => {
+
+        // =====================================
+        // SKIP META INPUTS
+        // =====================================
+
+        if(
+            input.classList.contains("row-name-input") ||
+            input.classList.contains("real-row-id")
+        ){
+            return;
+        }
+
+        // =====================================
+        // UPDATE FIELD NAME
+        // =====================================
+
+        if(input.name){
+
+            let parts = input.name.split("__");
+
+            if(parts.length >= 3){
+
+                parts[1] = dynamicRowName;
+
+                input.name = parts.join("__");
+            }
+        }
+
+        // =====================================
+        // FILE / IMAGE INPUTS
+        // =====================================
+
+        if(input.type === "file"){
+
+            let td = input.closest("td");
+
+            if(td){
+
+                td.innerHTML = `
+                    <input type="text"
+                           class="form-control"
+                           name="${input.name}">
+                `;
+            }
+
+            return;
+        }
+
+        // =====================================
+        // SIGNATURE INPUTS
+        // =====================================
+
+        if(
+            input.classList.contains(
+                "signature-input"
+            )
+        ){
+
+            let td = input.closest("td");
+
+            if(td){
+
+                td.innerHTML = `
+                    <input type="text"
+                           class="form-control"
+                           name="${input.name}">
+                `;
+            }
+
+            return;
+        }
+
+        // =====================================
+        // RESET VALUES
+        // =====================================
+
+        if(input.type === "checkbox"){
+
+            input.checked = false;
+
+        }else if(input.type === "radio"){
+
+            input.checked = false;
+
+        }else if(input.tagName === "SELECT"){
+
+            input.selectedIndex = 0;
+
+        }else{
+
+            input.value = "";
+        }
+
+        input.removeAttribute("checked");
+        input.removeAttribute("selected");
+    });
+
+    // =========================================
+    // REMOVE SIGN BUTTONS
+    // =========================================
+
+    newRow.querySelectorAll(
+        ".sign-btn"
+    ).forEach(btn=>{
+        btn.remove();
+    });
+
+    // =========================================
+    // APPEND ROW
+    // =========================================
+
+    tbody.appendChild(newRow);
+    bindCalculationEvents();
+    // =========================================
+    // RECALCULATE
+    // =========================================
+    calculateRow(newRow);
+
 }
-
 /* ================= DELETE ROW ================= */
 function deleteRow(btn){
 
-    let row = btn.closest("tr");
-    let tbody = row.parentElement;
+    const row = btn.closest("tr");
 
-    if(tbody.rows.length > 1){
-        row.remove();
+    if(!row){
+        return;
     }
 
-    calculateFormulas();
-    calculateDynamicTotal();
+    const hiddenId =
+        row.querySelector(".real-row-id");
+
+    const rowId =
+        hiddenId
+        ? String(hiddenId.value).trim()
+        : "";
+
+    // =====================================
+    // DYNAMIC ROW
+    // =====================================
+
+    if(rowId.startsWith("new_")){
+
+        row.parentNode.removeChild(row);
+
+    }else{
+
+        // =================================
+        // EXISTING DB ROW
+        // =================================
+
+        const existingDelete =
+            document.querySelector(
+                `input[name="delete_row__${rowId}"]`
+            );
+
+        if(!existingDelete){
+
+            let deleteInput =
+                document.createElement("input");
+
+            deleteInput.type = "hidden";
+
+            deleteInput.name =
+                `delete_row__${rowId}`;
+
+            deleteInput.value = "1";
+
+            document.querySelector("form")
+                .appendChild(deleteInput);
+        }
+
+        row.parentNode.removeChild(row);
+    }
+
+    // =====================================
+    // RECALCULATE TOTAL
+    // =====================================
+
+    const table =
+        btn.closest("table");
+
+    if(table){
+
+        calculateTotals(table);
+    }
 }
+/* ================= SIGNATURE ================= */
+let activeSignatureCell = null;
+
+document.addEventListener("click", function(e){
+    if(e.target.classList.contains("sign-btn")){
+        activeSignatureCell = e.target.closest(".signature-container");
+        new bootstrap.Modal(document.getElementById("signatureModal")).show();
+    }
+});
+
+document.getElementById("confirmSignature")?.addEventListener("click", function(){
+
+    let password = document.getElementById("signaturePassword").value;
+
+    fetch("{% url 'verify_signature' %}", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": document.querySelector('[name=csrfmiddlewaretoken]').value
+        },
+        body: JSON.stringify({ password: password })
+    })
+    .then(res => res.json())
+    .then(data => {
+
+        if(data.ok){
+
+            let hidden = activeSignatureCell.querySelector(".signature-input");
+
+            hidden.value = JSON.stringify({
+                signed_by: data.name,
+                signed_at: data.time,
+                reference_code: data.code
+            });
+
+            // ✅ CREATE UI (NO RELOAD)
+            let box = document.createElement("div");
+            box.className = "signature-box";
+
+            box.innerHTML = `
+                <div class="signature-ui">
+                    <div class="signature-title">✔️ Digitally Signed</div>
+                    <div class="signature-user">👤 ${data.name}</div>
+                    <div class="signature-time">🕒 ${data.time}</div>
+                    <div class="signature-ref">${data.code}</div>
+                    <img src="/static/admin/img/watermark.jpeg" class="signature-logo">
+                </div>
+            `;
+
+            let old = activeSignatureCell.querySelector(".signature-box");
+            if(old) old.remove();
+
+            activeSignatureCell.querySelector(".sign-btn").style.display = "none";
+            activeSignatureCell.appendChild(box);
+
+            bootstrap.Modal.getInstance(document.getElementById("signatureModal")).hide();
+
+        } else {
+            alert("Invalid password");
+        }
+    });
+});
 
 </script>
 {% endblock %}

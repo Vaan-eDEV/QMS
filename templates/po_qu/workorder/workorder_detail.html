@@ -1,0 +1,903 @@
+{% extends "base.html" %}
+{% load static %}
+{% block content %}
+
+<style>
+
+body{
+    background:#f4f6fb;
+}
+
+.wo-card{
+    background:#fff;
+    border-radius:18px;
+    padding:22px;
+    box-shadow:0 4px 18px rgba(0,0,0,0.06);
+    margin-bottom:22px;
+    border:1px solid #edf0f7;
+}
+
+.wo-title{
+    font-size:15px;
+    font-weight:700;
+    color:#4e73df;
+    margin-bottom:18px;
+}
+
+.info-label{
+    font-size:12px;
+    color:#858796;
+    margin-bottom:4px;
+}
+
+.info-value{
+    font-size:15px;
+    font-weight:600;
+    color:#2e2e2e;
+}
+
+.top-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:25px;
+    flex-wrap:wrap;
+    gap:10px;
+}
+
+.top-header h2{
+    font-size:28px;
+    font-weight:800;
+    margin:0;
+}
+
+.top-header p{
+    margin:0;
+    color:#858796;
+}
+
+.action-btn{
+    border:none;
+    border-radius:10px;
+    padding:10px 18px;
+    font-size:14px;
+    font-weight:600;
+    text-decoration:none;
+    transition:0.2s;
+}
+
+.btn-pdf{
+    background:#1f2937;
+    color:white;
+}
+
+.btn-edit{
+    background:#4e73df;
+    color:white;
+}
+
+.btn-back{
+    background:#e5e7eb;
+    color:#111827;
+}
+
+.action-btn:hover{
+    transform:translateY(-1px);
+    opacity:0.92;
+}
+
+.status-badge{
+    display:inline-block;
+    padding:7px 14px;
+    border-radius:30px;
+    font-size:12px;
+    font-weight:700;
+}
+
+.status-draft{
+    background:#fff3cd;
+    color:#856404;
+}
+
+.status-prepared{
+    background:#dbeafe;
+    color:#1e40af;
+}
+
+.status-approved{
+    background:#d1fae5;
+    color:#065f46;
+}
+
+.table-modern{
+    border-radius:14px;
+    overflow:hidden;
+}
+
+.table-modern thead{
+    background:#f8fafc;
+}
+
+.table-modern th{
+    border:none;
+    padding:14px;
+    font-size:13px;
+    color:#6b7280;
+}
+
+.table-modern td{
+    padding:14px;
+    vertical-align:middle;
+    border-top:1px solid #f1f5f9;
+}
+
+.delivery-box{
+    background:#f8fafc;
+    border-radius:10px;
+    padding:8px 10px;
+    margin-bottom:6px;
+    font-size:13px;
+}
+
+.notes-box{
+    background:#f9fafb;
+    border-radius:14px;
+    padding:15px;
+    height:100%;
+}
+
+.notes-box h6{
+    font-weight:700;
+    margin-bottom:10px;
+    color:#374151;
+}
+/* 
+.signature-box{
+    text-align:center;
+    padding:18px;
+    border-radius:16px;
+    background:#f8fafc;
+    height:100%;
+}
+
+.signature-name{
+    font-weight:700;
+    margin-top:10px;
+}
+
+.signature-id{
+    font-size:12px;
+    color:#4e73df;
+    margin-top:6px;
+}
+
+.sign-btn{
+    border:none;
+    border-radius:12px;
+    padding:11px 20px;
+    font-weight:700;
+}
+
+.prepare-btn{
+    background:#2563eb;
+    color:white;
+}
+
+.approve-btn{
+    background:#059669;
+    color:white;
+}
+
+.completed-badge{
+    background:#10b981;
+    color:white;
+    padding:10px 18px;
+    border-radius:12px;
+    font-weight:700;
+}
+
+.digital-id{
+    font-size:13px;
+    color:#6b7280;
+} */
+
+.signature-box{
+
+    position:relative;
+
+    overflow:hidden;
+
+    background:#fff;
+
+}
+
+.signature-box::before{
+
+    content:"";
+
+    position:absolute;
+
+    top:0;
+
+    left:0;
+
+    width:50%;
+
+    height:100%;
+
+    background-image:url("{% static 'admin/img/watermark.jpeg' %}");
+
+    background-repeat:no-repeat;
+
+    background-position:center;
+
+    background-size:180px;
+
+    opacity:0.2;
+
+    z-index:0;
+
+    pointer-events:none;
+}
+
+.signature-content{
+
+    position:relative;
+
+    z-index:2;
+}
+@media(max-width:768px){
+
+    .top-header{
+        flex-direction:column;
+        align-items:flex-start;
+    }
+
+    .top-header h2{
+        font-size:22px;
+    }
+
+}
+
+</style>
+
+<div class="container-fluid py-4">
+
+    <!-- HEADER -->
+    <div class="top-header">
+
+        <div>
+            <h2>
+                Work Order
+            </h2>
+
+            <p>
+                {{ wo.wo_number }}
+            </p>
+        </div>
+
+        <div class="d-flex gap-2 flex-wrap">
+
+            <a href="{% url 'po_qu:po_au' %}"
+                class="action-btn btn-back">
+
+                ← Back
+
+            </a>
+
+            <a href="{% url 'po_qu:workorder_pdf' wo.id %}"
+               class="action-btn btn-pdf">
+
+                🖨 PDF
+
+            </a>
+
+            <a href="{% url 'po_qu:edit_workorder' wo.id %}"
+               class="action-btn btn-edit">
+
+                ✏ Edit
+
+            </a>
+
+        </div>
+
+    </div>
+
+    <!-- BASIC -->
+    <div class="wo-card">
+
+        <div class="wo-title">
+            Basic Information
+        </div>
+
+        <div class="row g-4">
+
+            <div class="col-md-3">
+                <div class="info-label">
+                    Work Order Number
+                </div>
+
+                <div class="info-value">
+                    {{ wo.wo_number }}
+                </div>
+            </div>
+
+            <div class="col-md-3">
+                <div class="info-label">
+                    Date
+                </div>
+
+                <div class="info-value">
+                    {{ wo.date }}
+                </div>
+            </div>
+
+            <div class="col-md-3">
+                <div class="info-label">
+                    PO Number
+                </div>
+
+                <div class="info-value">
+                    {{ wo.po_number }}
+                </div>
+            </div>
+
+            <div class="col-md-3">
+                <div class="info-label">
+                    Status
+                </div>
+
+                <div>
+
+                    <span class="status-badge
+                        {% if wo.status == 'draft' %}
+                            status-draft
+                        {% elif wo.status == 'prepared' %}
+                            status-prepared
+                        {% else %}
+                            status-approved
+                        {% endif %}
+                    ">
+
+                        {{ wo.status|title }}
+
+                    </span>
+
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="info-label">
+                    Customer Name
+                </div>
+
+                <div class="info-value">
+                    {{ wo.customer_name }}
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="info-label">
+                    Customer Address
+                </div>
+
+                <div class="info-value">
+                    {{ wo.customer_address }}
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- ITEMS -->
+    <div class="wo-card">
+
+        <div class="wo-title">
+            Work Order Items
+        </div>
+
+        <div class="table-responsive table-modern">
+
+            <table class="table align-middle">
+
+                <thead>
+
+                    <tr>
+
+                        <th>#</th>
+                        <th>Code</th>
+                        <th>Name</th>
+                        <th>Material</th>
+                        <th>Qty</th>
+                        <th>Unit</th>
+                        <th>Deliveries</th>
+
+                    </tr>
+
+                </thead>
+
+                <tbody>
+
+                    {% for item in wo.items.all %}
+
+                    <tr>
+
+                        <td>
+                            {{ forloop.counter }}
+                        </td>
+
+                        <td>
+                            <strong>
+                                {{ item.product_code }}
+                            </strong>
+                        </td>
+
+                        <td>
+                            {{ item.product_name }}
+                        </td>
+
+                        <td>
+                            {{ item.material }}
+                        </td>
+
+                        <td>
+                            {{ item.quantity }}
+                        </td>
+
+                        <td>
+                            {{ item.unit }}
+                        </td>
+
+                        <td>
+
+                            {% for d in item.deliveries.all %}
+
+                            <div class="delivery-box">
+
+                                📅 {{ d.delivery_date }}
+                                → Qty: {{ d.quantity }}
+
+                            </div>
+
+                            {% empty %}
+
+                            <span class="text-muted">
+                                No deliveries
+                            </span>
+
+                            {% endfor %}
+
+                        </td>
+
+                    </tr>
+
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+    <!-- NOTES -->
+    <div class="row">
+
+        <div class="col-md-6 mb-4">
+
+            <div class="wo-card">
+
+                <div class="wo-title">
+                    Product & Process Notes
+                </div>
+
+                <div class="notes-box mb-3">
+
+                    <h6>
+                        Product Notes
+                    </h6>
+
+                    <p>
+                        {{ wo.product_notes|default:"—" }}
+                    </p>
+
+                </div>
+
+                <div class="notes-box">
+
+                    <h6>
+                        Process Notes
+                    </h6>
+
+                    <p>
+                        {{ wo.process_notes|default:"—" }}
+                    </p>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="col-md-6 mb-4">
+
+            <div class="wo-card">
+
+                <div class="wo-title">
+                    Packing & Delivery Notes
+                </div>
+
+                <div class="notes-box mb-3">
+
+                    <h6>
+                        Packing Notes
+                    </h6>
+
+                    <p>
+                        {{ wo.packing_notes|default:"—" }}
+                    </p>
+
+                </div>
+
+                <div class="notes-box">
+
+                    <h6>
+                        Delivery Notes
+                    </h6>
+
+                    <p>
+                        {{ wo.delivery_notes|default:"—" }}
+                    </p>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+        
+<!-- DIGITAL SIGNATURE -->
+
+<div class="card shadow-sm mt-3">
+
+    <div class="card-body">
+
+        <h5 class="mb-4 fw-bold">
+
+            Digital Approval Workflow
+
+        </h5>
+
+        <div class="row g-3">
+
+            <!-- =====================================
+            PREPARED
+            ====================================== -->
+
+            <div class="col-md-4">
+
+                <div class="border rounded-4 p-4 h-100 signature-box">
+
+                    <div class="signature-content">
+
+                    <small class="text-muted">
+
+                        Prepared By
+
+                    </small>
+
+                    <h6 class="fw-semibold mt-2 mb-1">
+
+                        {{ wo.prepared_by|default:"—" }}
+
+                    </h6>
+
+                    <small class="text-muted">
+
+                        {{ wo.prepared_at|date:"d M Y H:i"|default:"—" }}
+
+                    </small>
+
+                    {% if wo.prepared_signature_id %}
+
+                    <div class="mt-2 text-primary small">
+
+                        {{ wo.prepared_signature_id }}
+
+                    </div>
+
+                    {% endif %}
+
+                    <div class="mt-3">
+
+                        {% if not wo.prepared_by %}
+
+                        <button class="btn btn-primary btn-sm"
+
+                            onclick="signDoc(
+                                'wo',
+                                '{{ wo.id }}',
+                                'prepare'
+                            )">
+
+                            Sign
+
+                        </button>
+
+                        {% endif %}
+
+                    </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- =====================================
+            REVIEWED
+            ====================================== -->
+
+            <div class="col-md-4">
+
+                <div class="border rounded-4 p-4 h-100 signature-box">
+
+                    <div class="signature-content">
+
+                    <small class="text-muted">
+
+                        Reviewed By
+
+                    </small>
+
+                    <h6 class="fw-semibold mt-2 mb-1">
+
+                        {{ wo.reviewed_by|default:"—" }}
+
+                    </h6>
+
+                    <small class="text-muted">
+
+                        {{ wo.reviewed_at|date:"d M Y H:i"|default:"—" }}
+
+                    </small>
+
+                    {% if wo.reviewed_signature_id %}
+
+                    <div class="mt-2 text-warning small">
+
+                        {{ wo.reviewed_signature_id }}
+
+                    </div>
+
+                    {% endif %}
+
+                    <div class="mt-3">
+
+                        {% if wo.prepared_by and not wo.reviewed_by %}
+
+                        <button class="btn btn-warning btn-sm"
+
+                            onclick="signDoc(
+                                'wo',
+                                '{{ wo.id }}',
+                                'review'
+                            )">
+
+                            Review
+
+                        </button>
+
+                        {% elif not wo.prepared_by %}
+
+                        <small class="text-muted">
+
+                            Waiting for preparation
+
+                        </small>
+
+                        {% endif %}
+
+                    </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- =====================================
+            APPROVED
+            ====================================== -->
+
+            <div class="col-md-4">
+
+                <div class="border rounded-4 p-4 h-100 signature-box">
+
+                    <div class="signature-content">
+
+                    <small class="text-muted">
+
+                        Approved By
+
+                    </small>
+
+                    <h6 class="fw-semibold mt-2 mb-1">
+
+                        {{ wo.approved_by|default:"—" }}
+
+                    </h6>
+
+                    <small class="text-muted">
+
+                        {{ wo.approved_at|date:"d M Y H:i"|default:"—" }}
+
+                    </small>
+
+                    {% if wo.approved_signature_id %}
+
+                    <div class="mt-2 text-success small">
+
+                        {{ wo.approved_signature_id }}
+
+                    </div>
+
+                    {% endif %}
+
+                    <div class="mt-3">
+
+                        {% if wo.reviewed_by and not wo.approved_by %}
+
+                        <button class="btn btn-success btn-sm"
+
+                            onclick="signDoc(
+                                'wo',
+                                '{{ wo.id }}',
+                                'approve'
+                            )">
+
+                            Approve
+
+                        </button>
+
+                        {% elif not wo.reviewed_by %}
+
+                        <small class="text-muted">
+
+                            Waiting for review
+
+                        </small>
+
+                        {% endif %}
+
+                    </div>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- =====================================
+        STATUS + DIGITAL ID
+        ====================================== -->
+
+        <hr>
+
+        <div class="d-flex justify-content-between align-items-center">
+
+            <div>
+
+                <small class="text-muted">
+
+                    Digital ID
+
+                </small>
+
+                <div class="fw-semibold">
+
+                    {{ wo.digital_id|default:"—" }}
+
+                </div>
+
+            </div>
+
+            <div>
+
+                {% if wo.status == "approved" %}
+
+                    <span class="badge bg-success px-3 py-2">
+
+                        Approved
+
+                    </span>
+
+                {% elif wo.status == "reviewed" %}
+
+                    <span class="badge bg-warning text-dark px-3 py-2">
+
+                        Reviewed
+
+                    </span>
+
+                {% elif wo.status == "prepared" %}
+
+                    <span class="badge bg-primary px-3 py-2">
+
+                        Prepared
+
+                    </span>
+
+                {% else %}
+
+                    <span class="badge bg-secondary px-3 py-2">
+
+                        Draft
+
+                    </span>
+
+                {% endif %}
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+
+function signDoc(type, id, action){
+
+    let password = prompt(
+        "Enter your password:"
+    );
+
+    if(!password) return;
+
+    fetch("{% url 'po_qu:apply_signature' %}", {
+
+        method: "POST",
+
+        headers: {
+
+            "Content-Type":
+            "application/x-www-form-urlencoded",
+
+            "X-CSRFToken":
+            "{{ csrf_token }}"
+
+        },
+
+        body:
+        `type=${type}&id=${id}&password=${password}&action=${action}`
+
+    })
+
+    .then(res => res.json())
+
+    .then(data => {
+
+        if(data.status === "success"){
+
+            alert(
+                "Action completed successfully"
+            );
+
+            location.reload();
+
+        } else {
+
+            alert(
+                data.msg
+            );
+
+        }
+
+    });
+
+}
+
+</script>
+{% endblock %}

@@ -172,15 +172,11 @@ def get_batch_details(request, batch_id):
             "from": batch.from_location,
             "to": batch.to_location,
             "transporter": batch.transporter,
-
             "created_at": localtime(batch.created_at).strftime("%Y-%m-%d %H:%M"),
             "status_value": batch.status,
-
-            # ✅ ADD THESE
             "confirmed_by": batch.confirmed_by.email if batch.confirmed_by else "",
             "confirmed_at": localtime(batch.confirmed_at).strftime("%Y-%m-%d %H:%M")
                             if batch.confirmed_at else "",
-
             "items": items
         })
 
