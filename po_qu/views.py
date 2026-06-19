@@ -3,7 +3,11 @@ from .models import PurchaseOrder, PurchaseOrderItem
 from django.contrib.auth.decorators import login_required
 from .models import WorkOrder
 from django.contrib import messages
+from goods_entry.models import Product
 from .models import (PurchaseOrder,PurchaseOrderItem,Quotation,QuotationItem,DeliveryChallan,DeliveryChallanItem,WorkOrder,WorkOrderItem,RFQ,RFQItem)
+from .models import QAInspection
+
+
 @login_required
 def po_au_view(request):
 
@@ -78,7 +82,19 @@ def po_au_view(request):
         .order_by("-id")
 
     )
+    # =====================================================
+    # QA REPORTS
+    # =====================================================
 
+    qa_reports = (
+
+        QAInspection.objects
+
+        .all()
+
+        .order_by("-id")
+
+    )
     # =====================================================
     # PAGE
     # =====================================================
@@ -105,6 +121,8 @@ def po_au_view(request):
 
             "workorders": workorders,
 
+            "qa_reports": qa_reports,
+
             # =================================================
             # COUNTS
             # =================================================
@@ -118,6 +136,8 @@ def po_au_view(request):
             "total_dc": dcs.count(),
 
             "total_workorders": workorders.count(),
+
+            "total_qa": qa_reports.count(),
 
         }
 
@@ -178,8 +198,13 @@ def create_po(request):
                 qty = float(qty or 0)
                 rate = float(rate or 0)
 
+                product = Product.objects.filter(
+                    product_code=code
+                ).first()
+
                 PurchaseOrderItem.objects.create(
                     po=po,
+                    product=product,
                     product_code=code,
                     description=desc,
                     unit=unit,
@@ -245,9 +270,13 @@ def edit_po(request, po_id):
                 if code:
                     qty = float(qty or 0)
                     rate = float(rate or 0)
+                    product = Product.objects.filter(
+                        product_code=code
+                    ).first()
 
                     PurchaseOrderItem.objects.create(
                         po=po,
+                        product=product,
                         product_code=code,
                         description=desc,
                         unit=unit,
@@ -275,33 +304,66 @@ def po_list(request):
     pos = PurchaseOrder.objects.all().order_by('-id')
     return render(request, 'po_qu/po/po_list.html', {'pos': pos})
 
-
 from django.template.loader import get_template
 from django.http import HttpResponse
-from weasyprint import HTML
 from django.conf import settings
+from weasyprint import HTML
+from .models import PurchaseOrder
 import os
+
 
 def generate_po_pdf(request, po_id):
 
     po = PurchaseOrder.objects.get(id=po_id)
 
-    # 🔒 Allow only after approval
+    # Allow PDF only after approval
     if not po.prepared_by or not po.approved_by:
         return HttpResponse("Not allowed", status=403)
+
+    # Watermark image
+    watermark_path = os.path.join(
+        settings.BASE_DIR,
+        "static",
+        "admin",
+        "img",
+        "watermark.jpeg"
+    )
+
+    # Company logo
+    logo_path = os.path.join(
+        settings.BASE_DIR,
+        "static",
+        "img",
+        "vaan.png"
+    )
 
     template = get_template("po_qu/po/po_pdf.html")
 
     html = template.render({
         "po": po,
-        "logo_path": request.build_absolute_uri("/static/img/logo.jpeg"),
-        "qr_code_path": po.qr_code.url if po.qr_code else "",
+
+        # Local file paths for WeasyPrint
+        "logo_path": f"file://{logo_path}",
+        "watermark_path": f"file://{watermark_path}",
+
+        # QR code
+        "qr_code_path": (
+            request.build_absolute_uri(po.qr_code.url)
+            if po.qr_code
+            else ""
+        ),
     })
 
-    response = HttpResponse(content_type='application/pdf')
-    response['Content-Disposition'] = f'filename=PO_{po.id}.pdf'
+    response = HttpResponse(content_type="application/pdf")
 
-    HTML(string=html, base_url=request.build_absolute_uri()).write_pdf(response)
+    response["Content-Disposition"] = (
+        f'inline; filename="PO_{po.po_number}.pdf"'
+    )
+
+    HTML(
+        string=html,
+        base_url=settings.BASE_DIR
+    ).write_pdf(response)
 
     return response
 # ======================================== Quotation =================================================
@@ -550,26 +612,6 @@ def create_quotation(request):
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 from django.db import transaction
 
 @login_required
@@ -656,46 +698,74 @@ def quotation_list(request):
     return render(request, "po_qu/quotation/quotation_list.html", {"quotations": quotations})
 
 
-
+from django.shortcuts import get_object_or_404
 from django.template.loader import get_template
 from django.http import HttpResponse
+from django.conf import settings
 from weasyprint import HTML
-from django.shortcuts import get_object_or_404
-
 from .models import Quotation
+import os
 
 
 def generate_quotation_pdf(request, quotation_id):
+    quotation = get_object_or_404(
+        Quotation,
+        id=quotation_id
+    )
 
-    quotation = get_object_or_404(Quotation, id=quotation_id)
-
-    # 🔒 Optional restriction (same like PO)
+    # Allow PDF generation only after approval
     if not quotation.prepared_by or not quotation.approved_by:
-        return HttpResponse("Not allowed", status=403)
+        return HttpResponse(
+            "Quotation is not approved yet.",
+            status=403
+        )
 
-    template = get_template("po_qu/quotation/quotation_pdf.html")
+    # VAAN Logo Path
+    logo_path = os.path.join(
+        settings.BASE_DIR,
+        "static",
+        "img",
+        "vaan.png"
+    )
+
+   
+    # QR Code Path
+    qr_code_path = ""
+
+    if quotation.qr_code:
+        qr_code_path = f"file://{quotation.qr_code.path}"
+
+    template = get_template(
+        "po_qu/quotation/quotation_pdf.html"
+    )
 
     html = template.render({
         "quotation": quotation,
         "items": quotation.items.all(),
 
-        "logo_path": request.build_absolute_uri("/static/img/logo.jpeg"),
-        
-        
+        # Images
+        "logo_path": f"file://{logo_path}",
+        "qr_code_path": qr_code_path,
 
-        "qr_code_path": quotation.qr_code.url if hasattr(quotation, 'qr_code') and quotation.qr_code else "",
-
-        "company_address": "Your Company Address",
-        "company_phone": "9876543210",
-        "company_email": "your@email.com",
+        # Company Information
+        "company_address": "183A, Fifth Street, Cross Cut Road, Gandhipuram, Coimbatore - 641012",
+        "company_phone": "7397624456",
+        "company_email": "info@vaanaerospace.com",
+        "company_gstin": "33AACV4149D1ZF | 33AALCV0503H1ZN",
     })
 
-    response = HttpResponse(content_type='application/pdf')
+    response = HttpResponse(
+        content_type="application/pdf"
+    )
 
-    # 🔥 force download
-    response['Content-Disposition'] = f'attachment; filename=Quotation_{quotation.id}.pdf'
+    response["Content-Disposition"] = (
+        f'inline; filename="Quotation_{quotation.quotation_number}.pdf"'
+    )
 
-    HTML(string=html, base_url=request.build_absolute_uri()).write_pdf(response)
+    HTML(
+        string=html,
+        base_url=settings.BASE_DIR
+    ).write_pdf(response)
 
     return response
 #===================================================DC ==================================================================
@@ -831,44 +901,81 @@ def dc_list(request):
     dcs = DeliveryChallan.objects.all().order_by('-id')
     return render(request, "po_qu/dc/dc_list.html", {"dcs": dcs})
 
+
+from django.shortcuts import get_object_or_404
 from django.template.loader import get_template
 from django.http import HttpResponse
+from django.conf import settings
 from weasyprint import HTML
-from django.shortcuts import get_object_or_404
 
 from .models import DeliveryChallan
+
+import os
 
 
 def generate_dc_pdf(request, dc_id):
 
-    dc = get_object_or_404(DeliveryChallan, id=dc_id)
+    dc = get_object_or_404(
+        DeliveryChallan,
+        id=dc_id
+    )
 
-    # 🔒 same restriction
+    # Allow PDF generation only after approval
     if not dc.prepared_by or not dc.approved_by:
-        return HttpResponse("Not allowed", status=403)
+        return HttpResponse(
+            "Delivery Challan is not approved yet.",
+            status=403
+        )
 
-    template = get_template("po_qu/dc/dc_pdf.html")
+    # VAAN Logo
+    logo_path = os.path.join(
+        settings.BASE_DIR,
+        "static",
+        "img",
+        "vaan.png"
+    )
+
+    # QR Code
+    qr_code_path = ""
+
+    if dc.qr_code:
+        qr_code_path = f"file://{dc.qr_code.path}"
+
+    template = get_template(
+        "po_qu/dc/dc_pdf.html"
+    )
 
     html = template.render({
         "dc": dc,
 
-        # ✅ EXACT SAME METHOD AS QUOTATION (this is key)
-        "logo_path": request.build_absolute_uri("/static/img/logo.jpeg"),
+        # Images
+        "logo_path": f"file://{logo_path}",
+        "qr_code_path": qr_code_path,
 
-        "qr_code_path": dc.qr_code.url if hasattr(dc, 'qr_code') and dc.qr_code else "",
-
-        "company_address": "Your Company Address",
+        # Company Information
+        "company_address": (
+            "183A, Fifth Street, Cross Cut Road, "
+            "Gandhipuram, Coimbatore - 641012"
+        ),
+        "company_phone": "7397624456",
+        "company_email": "info@vaanaerospace.com",
+        "company_gstin": "33AACV4149D1ZF | 33AALCV0503H1ZN",
     })
 
-    response = HttpResponse(content_type='application/pdf')
+    response = HttpResponse(
+        content_type="application/pdf"
+    )
 
-    response['Content-Disposition'] = f'attachment; filename=DC_{dc.id}.pdf'
+    response["Content-Disposition"] = (
+        f'inline; filename="DC_{dc.dc_number}.pdf"'
+    )
 
-    # ✅ same base_url
-    HTML(string=html, base_url=request.build_absolute_uri()).write_pdf(response)
+    HTML(
+        string=html,
+        base_url=settings.BASE_DIR
+    ).write_pdf(response)
 
     return response
-
 
 
 
@@ -1850,23 +1957,86 @@ def edit_workorder(request, wo_id):
 # ==========================================================
 # 🔷 PDF
 # ==========================================================
+from django.shortcuts import get_object_or_404
+from django.template.loader import get_template
+from django.http import HttpResponse
+from django.conf import settings
+from django.contrib.auth.decorators import login_required
+
+from weasyprint import HTML
+
+from .models import WorkOrder
+
+import os
+
+
 @login_required
 def generate_workorder_pdf(request, wo_id):
 
-    wo = get_object_or_404(WorkOrder, id=wo_id)
+    wo = get_object_or_404(
+        WorkOrder,
+        id=wo_id
+    )
 
-    template = get_template("po_qu/workorder/workorder_pdf.html")
+    # Allow PDF generation only after approval
+    if not wo.prepared_by or not wo.approved_by:
+        return HttpResponse(
+            "Work Order is not approved yet.",
+            status=403
+        )
+
+    # VAAN Logo Path
+    logo_path = os.path.join(
+        settings.BASE_DIR,
+        "static",
+        "img",
+        "vaan.png"
+    )
+
+    # QR Code Path
+    qr_code_path = ""
+
+    if hasattr(wo, "qr_code") and wo.qr_code:
+        qr_code_path = f"file://{wo.qr_code.path}"
+
+    template = get_template(
+        "po_qu/workorder/workorder_pdf.html"
+    )
 
     html = template.render({
         "wo": wo,
         "items": wo.items.all(),
-        "logo_path": request.build_absolute_uri("/static/img/Brand_Logo_Square_copy.png"),
+
+        # Images
+        "logo_path": f"file://{logo_path}",
+        "qr_code_path": qr_code_path,
+
+        # Company Information
+        "company_address":
+            "183A, Fifth Street, Cross Cut Road, Gandhipuram, Coimbatore - 641012",
+
+        "company_phone":
+            "7397624456",
+
+        "company_email":
+            "info@vaanaerospace.com",
+
+        "company_gstin":
+            "33AACV4149D1ZF",
     })
 
-    response = HttpResponse(content_type='application/pdf')
-    response['Content-Disposition'] = f'filename=WO_{wo.id}.pdf'
+    response = HttpResponse(
+        content_type="application/pdf"
+    )
 
-    HTML(string=html, base_url=request.build_absolute_uri()).write_pdf(response)
+    response["Content-Disposition"] = (
+        f'inline; filename="WorkOrder_{wo.wo_number}.pdf"'
+    )
+
+    HTML(
+        string=html,
+        base_url=settings.BASE_DIR
+    ).write_pdf(response)
 
     return response
 
@@ -2733,3 +2903,533 @@ def edit_rfq(request, rfq_id):
         }
 
     )
+import os
+
+from decimal import Decimal
+
+from django.conf import settings
+from django.http import HttpResponse
+from django.shortcuts import get_object_or_404
+from django.template.loader import get_template
+from django.contrib.auth.decorators import login_required
+
+from weasyprint import HTML
+
+from .models import RFQ
+
+
+@login_required
+def generate_rfq_pdf(request, rfq_id):
+
+    rfq = get_object_or_404(
+        RFQ.objects.prefetch_related("items"),
+        id=rfq_id
+    )
+
+    # Approval Check
+
+    if not rfq.prepared_by or not rfq.approved_by:
+        return HttpResponse(
+            "RFQ is not approved yet.",
+            status=403
+        )
+
+    # Grand Total
+
+    grand_total = Decimal("0.00")
+
+    for item in rfq.items.all():
+
+        grand_total += Decimal(
+            item.total_price or 0
+        )
+
+    # Logo
+
+    logo_path = os.path.join(
+        settings.BASE_DIR,
+        "static",
+        "img",
+        "vaan.png"
+    )
+
+    # QR Code
+
+    qr_code_path = ""
+
+    if hasattr(rfq, "qr_code") and rfq.qr_code:
+
+        qr_code_path = f"file://{rfq.qr_code.path}"
+
+    # Render Template
+
+    template = get_template(
+        "po_qu/rfq/rfq_pdf.html"
+    )
+
+    html = template.render({
+
+        "rfq": rfq,
+
+        "items": rfq.items.all(),
+
+        "grand_total": grand_total,
+
+        "logo_path": f"file://{logo_path}",
+
+        "qr_code_path": qr_code_path,
+
+        "company_address":
+            "183A, Fifth Street, Cross Cut Road, "
+            "Gandhipuram, Coimbatore - 641012",
+
+        "company_phone":
+            "7397624456",
+
+        "company_email":
+            "info@vaanaerospace.com",
+
+        "company_gstin":
+            "33AACV4149D1ZF",
+    })
+
+    response = HttpResponse(
+        content_type="application/pdf"
+    )
+
+    response["Content-Disposition"] = (
+        f'inline; filename="RFQ_{rfq.rfq_number}.pdf"'
+    )
+
+    HTML(
+        string=html,
+        base_url=settings.BASE_DIR
+    ).write_pdf(response)
+
+    return response
+
+
+
+
+#
+# ======================================== qa =======================
+#
+
+@login_required
+def create_qa_inspection(request, wo_id):
+
+    work_order = get_object_or_404(
+        WorkOrder,
+        id=wo_id
+    )
+
+    if request.method == "POST":
+
+        qa = QAInspection.objects.create(
+
+            work_order=work_order,
+
+            inspection_no=request.POST.get(
+                "inspection_no"
+            ),
+
+            inspection_date=request.POST.get(
+                "inspection_date"
+            ),
+
+            # ==================================
+            # PART IDENTIFICATION
+            # ==================================
+
+            part_number=request.POST.get(
+                "part_number"
+            ),
+
+            revision=request.POST.get(
+                "revision"
+            ),
+
+            drawing_reference=request.POST.get(
+                "drawing_reference"
+            ),
+
+            cad_model_filename=request.POST.get(
+                "cad_model_filename"
+            ),
+
+            batch_lot_no=request.POST.get(
+                "batch_lot_no"
+            ),
+
+            inspection_stage=request.POST.get(
+                "inspection_stage"
+            ),
+
+            # ==================================
+            # EQUIPMENT
+            # ==================================
+
+            cmm_model=request.POST.get(
+                "cmm_model"
+            ),
+
+            cmm_calibration_valid=(
+                request.POST.get(
+                    "cmm_calibration_valid"
+                ) == "yes"
+            ),
+
+            calibration_expiry=request.POST.get(
+                "calibration_expiry"
+            ) or None,
+
+            program_loaded=(
+                request.POST.get(
+                    "program_loaded"
+                ) == "yes"
+            ),
+
+            program_filename=request.POST.get(
+                "program_filename"
+            ),
+
+            drawing_revision_verified=(
+                request.POST.get(
+                    "drawing_revision_verified"
+                ) == "yes"
+            ),
+
+            revision_match=request.POST.get(
+                "revision_match"
+            ),
+
+            fixture_setup_verified=(
+                request.POST.get(
+                    "fixture_setup_verified"
+                ) == "yes"
+            ),
+
+            fixture_id=request.POST.get(
+                "fixture_id"
+            ),
+
+            environmental_conditions_stable=(
+                request.POST.get(
+                    "environmental_conditions_stable"
+                ) == "yes"
+            ),
+
+            environmental_log=request.POST.get(
+                "environmental_log"
+            ),
+
+            # ==================================
+            # DISPOSITION
+            # ==================================
+
+            all_features_within_tolerance=(
+                request.POST.get(
+                    "all_features_within_tolerance"
+                ) == "yes"
+            ),
+
+            tolerance_remarks=request.POST.get(
+                "tolerance_remarks"
+            ),
+
+            surface_condition=request.POST.get(
+                "surface_condition"
+            ),
+
+            labeling_verified=(
+                request.POST.get(
+                    "labeling_verified"
+                ) == "yes"
+            ),
+
+            ncr_initiated=(
+                request.POST.get(
+                    "ncr_initiated"
+                ) == "yes"
+            ),
+
+            ncr_number=request.POST.get(
+                "ncr_number"
+            ),
+
+            hold_tagged=(
+                request.POST.get(
+                    "hold_tagged"
+                ) == "yes"
+            ),
+
+            hold_location=request.POST.get(
+                "hold_location"
+            ),
+
+            inspector_notified=(
+                request.POST.get(
+                    "inspector_notified"
+                ) == "yes"
+            ),
+
+            remarks=request.POST.get(
+                "remarks"
+            ),
+
+            created_by=request.user
+
+        )
+
+        # ==================================
+        # MEASUREMENTS
+        # ==================================
+
+        feature_names = request.POST.getlist(
+            "feature_name[]"
+        )
+
+        specifications = request.POST.getlist(
+            "specification[]"
+        )
+
+        part1_values = request.POST.getlist(
+            "part1_value[]"
+        )
+
+        part1_statuses = request.POST.getlist(
+            "part1_status[]"
+        )
+
+        part2_values = request.POST.getlist(
+            "part2_value[]"
+        )
+
+        part2_statuses = request.POST.getlist(
+            "part2_status[]"
+        )
+
+        part3_values = request.POST.getlist(
+            "part3_value[]"
+        )
+
+        part3_statuses = request.POST.getlist(
+            "part3_status[]"
+        )
+
+        part4_values = request.POST.getlist(
+            "part4_value[]"
+        )
+
+        part4_statuses = request.POST.getlist(
+            "part4_status[]"
+        )
+
+        part5_values = request.POST.getlist(
+            "part5_value[]"
+        )
+
+        part5_statuses = request.POST.getlist(
+            "part5_status[]"
+        )
+
+        measurement_remarks = request.POST.getlist(
+            "measurement_remarks[]"
+        )
+
+        for (
+            feature,
+            spec,
+            p1_val,
+            p1_status,
+            p2_val,
+            p2_status,
+            p3_val,
+            p3_status,
+            p4_val,
+            p4_status,
+            p5_val,
+            p5_status,
+            remark
+        ) in zip(
+
+            feature_names,
+            specifications,
+
+            part1_values,
+            part1_statuses,
+
+            part2_values,
+            part2_statuses,
+
+            part3_values,
+            part3_statuses,
+
+            part4_values,
+            part4_statuses,
+
+            part5_values,
+            part5_statuses,
+
+            measurement_remarks
+
+        ):
+
+            if not feature:
+                continue
+
+            QAInspectionMeasurement.objects.create(
+
+                inspection=qa,
+
+                feature_name=feature,
+
+                specification=spec,
+
+                part1_value=p1_val,
+                part1_status=p1_status or "PASS",
+
+                part2_value=p2_val,
+                part2_status=p2_status or "PASS",
+
+                part3_value=p3_val,
+                part3_status=p3_status or "PASS",
+
+                part4_value=p4_val,
+                part4_status=p4_status or "PASS",
+
+                part5_value=p5_val,
+                part5_status=p5_status or "PASS",
+
+                remarks=remark
+
+            )
+
+        # ==================================
+        # DOCUMENTS
+        # ==================================
+
+        document_types = request.POST.getlist(
+            "document_type[]"
+        )
+
+        document_statuses = request.POST.getlist(
+            "document_status[]"
+        )
+
+        document_identifiers = request.POST.getlist(
+            "document_identifier[]"
+        )
+
+        document_revisions = request.POST.getlist(
+            "document_revision[]"
+        )
+
+        document_issue_dates = request.POST.getlist(
+            "document_issue_date[]"
+        )
+
+        document_remarks = request.POST.getlist(
+            "document_remarks[]"
+        )
+
+        document_files = request.FILES.getlist(
+            "document_attachment[]"
+        )
+
+        for i, doc_type in enumerate(document_types):
+
+            if not doc_type:
+                continue
+
+            attachment = None
+
+            if i < len(document_files):
+                attachment = document_files[i]
+
+            QAInspectionDocument.objects.create(
+
+                inspection=qa,
+
+                document_type=doc_type,
+
+                status=(
+                    document_statuses[i]
+                    if i < len(document_statuses)
+                    else "pending"
+                ),
+
+                identifier=(
+                    document_identifiers[i]
+                    if i < len(document_identifiers)
+                    else ""
+                ),
+
+                revision=(
+                    document_revisions[i]
+                    if i < len(document_revisions)
+                    else ""
+                ),
+
+                issue_date=(
+                    document_issue_dates[i]
+                    if i < len(document_issue_dates)
+                    and document_issue_dates[i]
+                    else None
+                ),
+
+                remarks=(
+                    document_remarks[i]
+                    if i < len(document_remarks)
+                    else ""
+                ),
+
+                attachment=attachment
+
+            )
+        # ==================================
+        # SUCCESS
+        # ==================================
+
+        messages.success(
+            request,
+            "QA Inspection Created Successfully"
+        )
+
+        return redirect(
+            "po_qu:qa_detail",
+            qa_id=qa.id
+        )
+
+    # ==================================
+    # GET
+    # ==================================
+
+    return render(
+
+        request,
+
+        "po_qu/qa/create_qa.html",
+
+        {
+            "work_order": work_order
+        }
+
+    )
+
+
+
+def qa_list(request):
+    return HttpResponse("QA List")
+
+
+def qa_detail(request, qa_id):
+    return HttpResponse(f"QA Detail {qa_id}")
+
+
+def edit_qa(request, qa_id):
+    return HttpResponse(f"Edit QA {qa_id}")
+
+
+def generate_qa_pdf(request, qa_id):
+    return HttpResponse(f"QA PDF {qa_id}")

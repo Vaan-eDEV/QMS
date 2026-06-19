@@ -1,0 +1,501 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="container-fluid mt-4">
+
+
+<div class="card border-0 shadow-sm">
+
+    <div class="card-header bg-white">
+
+        <h4 class="mb-0">
+            Material Issue
+        </h4>
+
+    </div>
+
+    <div class="card-body">
+
+        <div class="row mb-4">
+
+            <div class="col-md-6">
+
+                <label class="form-label">
+                    Select Work Order
+                </label>
+
+                <div class="input-group">
+
+                    <select
+                        id="wo_id"
+                        class="form-select"
+                    >
+
+                        <option value="">
+                            Select Work Order
+                        </option>
+
+                        {% for wo in workorders %}
+
+                        <option value="{{ wo.id }}">
+                            {{ wo.wo_number }}
+                        </option>
+
+                        {% endfor %}
+
+                    </select>
+
+                    <button
+                        class="btn btn-primary"
+                        onclick="loadWorkOrder()"
+                    >
+                        Load
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div id="woInfo"></div>
+
+        <div class="table-responsive">
+
+            <table
+                class="table table-bordered align-middle"
+                id="issueTable"
+            >
+
+                <thead class="table-light">
+
+                    <tr>
+
+    <th>
+        Product Code
+    </th>
+
+    <th>
+        Product Name
+    </th>
+
+    <th class="text-end">
+        Required Qty
+    </th>
+
+    <th class="text-end">
+        Already Issued
+    </th>
+
+    <th class="text-end">
+        Remaining Qty
+    </th>
+
+    <th class="text-end">
+        Available Stock
+    </th>
+
+    <th class="text-end">
+        Issue Qty
+    </th>
+
+</tr>
+
+                </thead>
+
+                <tbody></tbody>
+
+            </table>
+
+        </div>
+
+        <div class="text-end mt-3">
+
+            <button
+                class="btn btn-success"
+                onclick="issueMaterial()"
+            >
+                Issue Material
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+</div>
+
+<script>
+
+let currentWO = null;
+let currentWONumber = "";
+
+function loadWorkOrder() {
+
+    const woID =
+        document.getElementById(
+            "wo_id"
+        ).value;
+
+    if (!woID) {
+
+        alert(
+            "Select Work Order"
+        );
+
+        return;
+    }
+
+    fetch(
+        `/goods/get-workorder-items/?wo_id=${woID}`
+    )
+
+    .then(response => response.json())
+
+    .then(data => {
+
+        if (
+            data.status !== "success"
+        ) {
+
+            alert(
+                data.message
+            );
+
+            return;
+        }
+
+        currentWO = woID;
+        currentWONumber = data.wo_number;
+
+        document.getElementById(
+            "woInfo"
+        ).innerHTML = `
+
+            <div class="card border-0 bg-light mb-3">
+
+                <div class="card-body">
+
+                    <h6 class="text-muted mb-1">
+
+                        Work Order
+
+                    </h6>
+
+                    <h4 class="mb-0">
+
+                        ${data.wo_number}
+
+                    </h4>
+
+                </div>
+
+            </div>
+
+        `;
+
+        let tbody =
+            document.querySelector(
+                "#issueTable tbody"
+            );
+
+        tbody.innerHTML = "";
+
+        data.items.forEach(item => {
+
+            tbody.innerHTML += `
+
+                <tr>
+
+                    <td>
+                        ${item.product_code}
+                    </td>
+
+                    <td>
+                        ${item.product_name}
+                    </td>
+
+                    <td class="text-end">
+
+                        ${item.required_qty}
+
+                    </td>
+
+                    <td class="text-end">
+
+                        <span class="badge bg-info">
+
+                            ${item.issued_qty}
+
+                        </span>
+
+                    </td>
+
+                    <td class="text-end">
+
+                        <span class="badge bg-warning text-dark">
+
+                            ${item.remaining_qty}
+
+                        </span>
+
+                    </td>
+
+                    <td class="text-end">
+
+                        <span class="badge bg-primary">
+
+                            ${item.available_qty}
+
+                        </span>
+
+                    </td>
+
+                    <td>
+
+                        <input
+                            type="number"
+
+                            class="form-control issueQty"
+
+                            value="${item.remaining_qty}"
+
+                            min="0"
+
+                            max="${item.remaining_qty}"
+
+                            step="0.01"
+
+                            data-item-id="${item.item_id}"
+
+                            data-code="${item.product_code}"
+
+                            data-product="${item.product_name}"
+
+                            data-stock="${item.available_qty}"
+                        >
+
+                    </td>
+
+                </tr>
+
+            `;
+
+        });
+
+    })
+
+    .catch(error => {
+
+        console.error(error);
+
+        alert(
+            "Unable to load Work Order"
+        );
+
+    });
+
+}
+
+
+
+function issueMaterial() {
+
+    if (!currentWO) {
+
+        alert(
+            "Load Work Order First"
+        );
+
+        return;
+    }
+
+    let items = [];
+
+    let hasIssue = false;
+
+    try {
+
+        document
+            .querySelectorAll(
+                ".issueQty"
+            )
+            .forEach(row => {
+
+                let qty =
+                    parseFloat(
+                        row.value || 0
+                    );
+
+                let stock =
+                    parseFloat(
+                        row.dataset.stock || 0
+                    );
+
+                // ============================
+                // NEGATIVE CHECK
+                // ============================
+
+                if (qty < 0) {
+
+                    alert(
+                        "Issue quantity cannot be negative"
+                    );
+
+                    throw new Error(
+                        "Invalid Quantity"
+                    );
+                }
+
+                // ============================
+                // STOCK CHECK
+                // ============================
+
+                if (qty > stock) {
+
+                    alert(
+                        row.dataset.code +
+                        " stock insufficient.\n\nAvailable : " +
+                        stock
+                    );
+
+                    throw new Error(
+                        "Stock Error"
+                    );
+                }
+
+                if (qty > 0) {
+
+                    hasIssue = true;
+
+                }
+
+                items.push({
+
+                    item_id:
+                        row.dataset.itemId,
+
+                    product_code:
+                        row.dataset.code,
+
+                    product_name:
+                        row.dataset.product,
+
+                    issue_qty:
+                        qty,
+
+                    wo_number:
+                        currentWONumber
+
+                });
+
+            });
+
+    } catch (e) {
+
+        return;
+
+    }
+
+    // ============================
+    // NO QTY ENTERED
+    // ============================
+
+    if (!hasIssue) {
+
+        alert(
+            "Enter Issue Quantity"
+        );
+
+        return;
+    }
+
+    // ============================
+    // CONFIRM
+    // ============================
+
+    if (
+        !confirm(
+            "Issue Material To Work Order ?"
+        )
+    ) {
+
+        return;
+    }
+
+    // ============================
+    // SAVE
+    // ============================
+
+    fetch(
+        "/goods/issue-material/",
+        {
+
+            method: "POST",
+
+            headers: {
+
+                "Content-Type":
+                    "application/json",
+
+                "X-CSRFToken":
+                    "{{ csrf_token }}"
+
+            },
+
+            body: JSON.stringify({
+
+                items: items
+
+            })
+
+        }
+
+    )
+
+    .then(response => response.json())
+
+    .then(data => {
+
+        if (
+            data.status === "success"
+        ) {
+
+            alert(
+                data.message ||
+                "Material Issued Successfully"
+            );
+
+            loadWorkOrder();
+
+        }
+
+        else {
+
+            alert(
+                data.message
+            );
+
+        }
+
+    })
+
+    .catch(error => {
+
+        console.error(error);
+
+        alert(
+            "Error issuing material"
+        );
+
+    });
+
+}
+
+
+
+</script>
+
+{% endblock %}

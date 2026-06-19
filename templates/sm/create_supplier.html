@@ -3,6 +3,32 @@
 
 {% block content %}
 
+<style>
+
+.card{
+    border-radius:18px;
+}
+
+.form-control,
+.form-select{
+    border-radius:10px;
+    min-height:48px;
+}
+
+textarea.form-control{
+    min-height:auto;
+}
+
+.form-label{
+
+    font-weight:600;
+
+    margin-bottom:8px;
+
+}
+
+</style>
+
 <div class="container-fluid py-4">
 
     <!-- ===================================== -->
@@ -436,41 +462,5 @@
 
 </div>
 
-<!-- ===================================== -->
-<!-- CUSTOM CSS -->
-<!-- ===================================== -->
-
-<style>
-
-.card{
-
-    border-radius:18px;
-
-}
-
-.form-control,
-.form-select{
-
-    border-radius:10px;
-
-    min-height:48px;
-
-}
-
-textarea.form-control{
-
-    min-height:auto;
-
-}
-
-.form-label{
-
-    font-weight:600;
-
-    margin-bottom:8px;
-
-}
-
-</style>
 
 {% endblock %}

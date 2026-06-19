@@ -1,0 +1,543 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+
+<div class="container-fluid py-4">
+
+    <!-- Page Header -->
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+
+        <div>
+
+            <h2 class="fw-bold mb-1">
+                Create Routine
+            </h2>
+
+            <p class="text-muted mb-0">
+                Configure a new routine inspection/checklist.
+            </p>
+
+        </div>
+
+        <a href="{% url 'routine:dashboard' %}"
+           class="btn btn-secondary">
+
+            Back
+
+        </a>
+
+    </div>
+
+    <!-- Messages -->
+
+    {% if messages %}
+
+        {% for message in messages %}
+
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+
+                {{ message }}
+
+                <button
+                    type="button"
+                    class="btn-close"
+                    data-bs-dismiss="alert">
+                </button>
+
+            </div>
+
+        {% endfor %}
+
+    {% endif %}
+
+    <form method="post">
+
+        {% csrf_token %}
+
+        <div class="card border-0 shadow-sm">
+
+            <div class="card-header bg-white">
+
+                <h5 class="mb-0">
+                    Routine Information
+                </h5>
+
+            </div>
+
+            <div class="card-body">
+
+                <div class="row">
+
+                    <!-- Routine No -->
+
+                    <div class="col-md-4 mb-3">
+
+                        <label class="form-label">
+                            Routine Number
+                        </label>
+
+                        <input
+                            type="text"
+                            name="routine_no"
+                            class="form-control"
+                            placeholder="RTN-001"
+                            required>
+
+                    </div>
+
+                    <!-- Status -->
+
+                    <div class="col-md-4 mb-3">
+
+                        <label class="form-label">
+                            Status
+                        </label>
+
+                        <select
+                            name="status"
+                            class="form-select">
+
+                            <option value="active">
+                                Active
+                            </option>
+
+                            <option value="inactive">
+                                Inactive
+                            </option>
+
+                        </select>
+
+                    </div>
+
+                    <!-- Category -->
+
+                    <div class="col-md-4 mb-3">
+
+                        <label class="form-label">
+                            Category
+                        </label>
+
+                        <select
+                            name="category"
+                            class="form-select"
+                            required>
+
+                            <option value="">
+                                Select Category
+                            </option>
+
+                            {% for category in categories %}
+
+                            <option value="{{ category.id }}">
+
+                                {{ category.category_name }}
+
+                            </option>
+
+                            {% endfor %}
+
+                        </select>
+
+                    </div>
+
+                    <!-- Routine Name -->
+
+                    <div class="col-md-12 mb-3">
+
+                        <label class="form-label">
+                            Routine Name
+                        </label>
+
+                        <input
+                            type="text"
+                            name="routine_name"
+                            class="form-control"
+                            placeholder="Daily Machine Inspection"
+                            required>
+
+                    </div>
+
+                    <!-- Department -->
+
+                    <div class="col-md-4 mb-3">
+
+                        <label class="form-label">
+                            Department
+                        </label>
+
+                        <input
+                            type="text"
+                            name="department"
+                            class="form-control">
+
+                    </div>
+
+                    <!-- Location -->
+
+                    <div class="col-md-4 mb-3">
+
+                        <label class="form-label">
+                            Location
+                        </label>
+
+                        <input
+                            type="text"
+                            name="location"
+                            class="form-control">
+
+                    </div>
+
+                    <!-- Asset -->
+
+                    <div class="col-md-4 mb-3">
+
+                        <label class="form-label">
+                            Machine / Asset
+                        </label>
+
+                        <input
+                            type="text"
+                            name="machine_asset"
+                            class="form-control">
+
+                    </div>
+
+                    <!-- Description -->
+
+                    <div class="col-md-12 mb-3">
+
+                        <label class="form-label">
+                            Description
+                        </label>
+
+                        <textarea
+                            name="description"
+                            rows="4"
+                            class="form-control"></textarea>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- Configuration -->
+
+        <div class="card border-0 shadow-sm mt-4">
+
+            <div class="card-header bg-white">
+
+                <h5 class="mb-0">
+                    Routine Configuration
+                </h5>
+
+            </div>
+
+            <div class="card-body">
+
+                <div class="row">
+
+                    <div class="col-md-4">
+
+                        <div class="form-check mb-3">
+
+                            <input
+                                type="checkbox"
+                                class="form-check-input"
+                                name="photo_mandatory">
+
+                            <label class="form-check-label">
+
+                                Photo Mandatory
+
+                            </label>
+
+                        </div>
+
+                    </div>
+
+                    <div class="col-md-4">
+
+                        <div class="form-check mb-3">
+
+                            <input
+                                type="checkbox"
+                                class="form-check-input"
+                                name="attachment_mandatory">
+
+                            <label class="form-check-label">
+
+                                Attachment Mandatory
+
+                            </label>
+
+                        </div>
+
+                    </div>
+
+                    <div class="col-md-4">
+
+                        <div class="form-check mb-3">
+
+                            <input
+                                type="checkbox"
+                                class="form-check-input"
+                                name="critical_routine">
+
+                            <label class="form-check-label">
+
+                                Critical Routine
+
+                            </label>
+
+                        </div>
+
+                    </div>
+
+                    <div class="col-md-6">
+
+                        <div class="form-check mb-3">
+
+                            <input
+                                type="checkbox"
+                                class="form-check-input"
+                                name="comment_mandatory_on_fail"
+                                checked>
+
+                            <label class="form-check-label">
+
+                                Comment Mandatory On Failure
+
+                            </label>
+
+                        </div>
+
+                    </div>
+
+                    <div class="col-md-6">
+
+                        <div class="form-check mb-3">
+
+                            <input
+                                type="checkbox"
+                                class="form-check-input"
+                                name="ncr_required_on_fail"
+                                checked>
+
+                            <label class="form-check-label">
+
+                                NCR Required On Failure
+
+                            </label>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+        <!-- Checklist Questions -->
+
+<div class="card border-0 shadow-sm mt-4">
+
+    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+
+        <h5 class="mb-0">
+            Checklist Questions
+        </h5>
+
+        <button
+            type="button"
+            class="btn btn-primary btn-sm"
+            onclick="addQuestion()">
+
+            <i class="fas fa-plus"></i>
+            Add Question
+
+        </button>
+
+    </div>
+
+    <div class="card-body">
+
+        <div class="table-responsive">
+
+            <table
+                class="table table-bordered align-middle"
+                id="questionTable">
+
+                <thead class="table-light">
+
+                    <tr>
+
+                        <th width="40%">
+                            Question
+                        </th>
+
+                        <th width="20%">
+                            Response Type
+                        </th>
+
+                        <th width="15%">
+                            Photo Required
+                        </th>
+
+                        <th width="15%">
+                            Critical
+                        </th>
+
+                        <th width="10%">
+                            Action
+                        </th>
+
+                    </tr>
+
+                </thead>
+
+                <tbody>
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+</div>
+        <!-- Buttons -->
+
+        <div class="text-end mt-4">
+
+            <a href="{% url 'routine:dashboard' %}"
+               class="btn btn-secondary">
+
+                Cancel
+
+            </a>
+
+            <button
+                type="submit"
+                class="btn btn-success">
+
+                Save Routine
+
+            </button>
+
+        </div>
+
+    </form>
+
+</div>
+<script>
+
+function addQuestion() {
+
+    let tbody = document.querySelector(
+        "#questionTable tbody"
+    );
+
+    let index = tbody.rows.length;
+
+    let row = `
+    <tr>
+
+        <td>
+
+            <input
+                type="text"
+                name="question[]"
+                class="form-control"
+                placeholder="Enter checklist question"
+                required>
+
+        </td>
+
+        <td>
+
+            <select
+                name="response_type[]"
+                class="form-select">
+
+                <option value="pass_fail">
+                    Pass / Fail
+                </option>
+
+                <option value="yes_no">
+                    Yes / No
+                </option>
+
+                <option value="numeric">
+                    Numeric
+                </option>
+
+                <option value="text">
+                    Text
+                </option>
+
+            </select>
+
+        </td>
+
+        <td class="text-center">
+
+            <input
+                type="checkbox"
+                name="photo_required[]"
+                value="${index}">
+
+        </td>
+
+        <td class="text-center">
+
+            <input
+                type="checkbox"
+                name="critical[]"
+                value="${index}">
+
+        </td>
+
+        <td>
+
+            <button
+                type="button"
+                class="btn btn-danger btn-sm"
+                onclick="removeRow(this)">
+
+                <i class="fas fa-trash"></i>
+
+            </button>
+
+        </td>
+
+    </tr>
+    `;
+
+    tbody.insertAdjacentHTML(
+        "beforeend",
+        row
+    );
+
+}
+
+function removeRow(btn) {
+
+    btn.closest("tr").remove();
+
+}
+
+window.onload = function() {
+
+    addQuestion();
+
+};
+
+</script>
+{% endblock %}

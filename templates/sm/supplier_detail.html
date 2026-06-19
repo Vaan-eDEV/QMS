@@ -3,6 +3,99 @@
 
 {% block content %}
 
+<style>
+
+.card{
+
+    border-radius:18px;
+
+}
+
+.workflow-wrapper{
+
+    display:flex;
+
+    justify-content:space-between;
+
+    gap:20px;
+
+    overflow-x:auto;
+
+}
+
+.workflow-step{
+
+    text-align:center;
+
+    min-width:100px;
+
+}
+
+.workflow-circle{
+
+    width:55px;
+
+    height:55px;
+
+    border-radius:50%;
+
+    background:#d1d5db;
+
+    color:#fff;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    margin:auto;
+
+    font-weight:bold;
+
+}
+.workflow-circle.pending{
+
+    background:#d1d5db;
+
+}
+.workflow-circle.completed{
+
+    background:#22c55e;
+
+}
+
+.workflow-circle.active{
+
+    background:#2563eb;
+
+}
+.card-body::-webkit-scrollbar {
+    width: 8px;
+}
+
+.card-body::-webkit-scrollbar-track {
+    background: #f1f5f9;
+}
+
+.card-body::-webkit-scrollbar-thumb {
+    background: #94a3b8;
+    border-radius: 10px;
+}
+
+.card-body::-webkit-scrollbar-thumb:hover {
+    background: #64748b;
+}
+.workflow-label{
+
+    margin-top:10px;
+
+    font-size:13px;
+
+}
+
+</style>
+
 <div class="container-fluid py-4">
 
     <!-- ===================================== -->
@@ -47,7 +140,12 @@
                 Evaluation
 
             </a>
-
+            <a
+                href="{% url 'risk_classification' supplier.id %}"
+                class="btn btn-danger"
+            >
+                Risk Classification
+            </a>
             <a
                 href="{% url 'upload_document' supplier.id %}"
                 class="btn btn-primary"
@@ -56,6 +154,19 @@
                 Upload Document
 
             </a>
+            <!-- <a
+    href="{% url 'supplier_audit_dashboard' supplier.id %}"
+    class="btn btn-info text-white"
+>
+    Audit Dashboard
+</a>
+
+<a
+    href="{% url 'create_audit_request' supplier.id %}"
+    class="btn btn-success"
+>
+    Create Audit Request
+</a> -->
 
         </div>
 
@@ -354,314 +465,116 @@
 
         <div class="col-lg-8">
 
-            <!-- WORKFLOW -->
 
-            <div class="card border-0 shadow-sm mb-4">
+<ul class="nav nav-tabs mb-3" id="supplierTabs">
 
-                <div class="card-header bg-white">
+    <li class="nav-item">
+        <button
+            class="nav-link active"
+            data-bs-toggle="tab"
+            data-bs-target="#overview-tab"
+        >
+            Overview
+        </button>
+    </li>
 
-                    <h5 class="mb-0">
+    <li class="nav-item">
+        <button
+            class="nav-link"
+            data-bs-toggle="tab"
+            data-bs-target="#evaluation-tab"
+        >
+            Evaluation
+        </button>
+    </li>
 
-                        Workflow Progress
+    <li class="nav-item">
+        <button
+            class="nav-link"
+            data-bs-toggle="tab"
+            data-bs-target="#risk-tab"
+        >
+            Risk
+        </button>
+    </li>
+    <li class="nav-item">
+    <button
+        class="nav-link"
+        data-bs-toggle="tab"
+        data-bs-target="#audit-tab"
+    >
+        Audits
+    </button>
+</li>
+    <li class="nav-item">
+        <button
+            class="nav-link"
+            data-bs-toggle="tab"
+            data-bs-target="#documents-tab"
+        >
+            Documents
+        </button>
+    </li>
 
-                    </h5>
+    <li class="nav-item">
+        <button
+            class="nav-link"
+            data-bs-toggle="tab"
+            data-bs-target="#history-tab"
+        >
+            History
+        </button>
+    </li>
 
-                </div>
+</ul>
 
-                <div class="card-body">
+<div class="tab-content">
 
-                    <div class="workflow-wrapper">
+    <!-- OVERVIEW -->
 
-                        {% for stage in stages %}
+    <div
+        class="tab-pane fade show active"
+        id="overview-tab"
+    >
 
-                            <div class="workflow-step">
+        <div class="card shadow-sm border-0">
 
-                                <div class="
-    workflow-circle
+            <div class="card-header bg-white">
 
-    {% if stage.status == 'completed' %}
-        completed
-    {% elif stage.status == 'in_progress' %}
-        active
-    {% else %}
-        pending
-    {% endif %}
-">
-
-                                    {{ stage.stage_no }}
-
-                                </div>
-
-                                <div class="workflow-label">
-
-                                    {{ stage.stage_name }}
-
-                                </div>
-
-                            </div>
-
-                        {% endfor %}
-
-                    </div>
-
-                </div>
+                <h5>Workflow Progress</h5>
 
             </div>
 
-            <!-- EVALUATION -->
+            <div class="card-body">
 
-            <!-- ===================================== -->
-<!-- EVALUATION SUMMARY -->
-<!-- ===================================== -->
+                <div class="progress mb-4" style="height:12px;">
 
-<div class="card border-0 shadow-sm mb-4">
-
-    <div class="card-header bg-white">
-
-        <h5 class="mb-0">
-
-            Evaluation Summary
-
-        </h5>
-
-    </div>
-
-    <div class="card-body">
-
-        {% if evaluation %}
-
-            <div class="row g-3">
-
-                <!-- QUALITY -->
-
-                <div class="col-md-4">
-
-                    <div class="border rounded p-3 text-center">
-
-                        <h3 class="text-primary">
-
-                            {{ evaluation.quality_score }}/20
-
-                        </h3>
-
-                        <small>
-
-                            Quality
-
-                        </small>
-
-                    </div>
+                    <div
+                        class="progress-bar bg-success"
+                        style="width: {{ progress_percentage }}%;"
+                    ></div>
 
                 </div>
 
-                <!-- DELIVERY -->
+                <div class="row text-center">
 
-                <div class="col-md-4">
+                    {% for stage in stages %}
 
-                    <div class="border rounded p-3 text-center">
+                    <div class="col">
 
-                        <h3 class="text-success">
+                        <span class="badge bg-primary">
 
-                            {{ evaluation.delivery_score }}/15
+                            {{ stage.stage_no }}
 
-                        </h3>
+                        </span>
 
-                        <small>
+                        <div class="small mt-2">
 
-                            Delivery
-
-                        </small>
-
-                    </div>
-
-                </div>
-
-                <!-- TECHNICAL -->
-
-                <div class="col-md-4">
-
-                    <div class="border rounded p-3 text-center">
-
-                        <h3 class="text-info">
-
-                            {{ evaluation.technical_score }}/15
-
-                        </h3>
-
-                        <small>
-
-                            Technical
-
-                        </small>
-
-                    </div>
-
-                </div>
-
-                <!-- DOCUMENTATION -->
-
-                <div class="col-md-4">
-
-                    <div class="border rounded p-3 text-center">
-
-                        <h3 class="text-warning">
-
-                            {{ evaluation.documentation_score }}/15
-
-                        </h3>
-
-                        <small>
-
-                            Documentation
-
-                        </small>
-
-                    </div>
-
-                </div>
-
-                <!-- COMPLIANCE -->
-
-                <div class="col-md-4">
-
-                    <div class="border rounded p-3 text-center">
-
-                        <h3 class="text-danger">
-
-                            {{ evaluation.compliance_score }}/15
-
-                        </h3>
-
-                        <small>
-
-                            Compliance
-
-                        </small>
-
-                    </div>
-
-                </div>
-
-                <!-- COMMERCIAL -->
-
-                <div class="col-md-4">
-
-                    <div class="border rounded p-3 text-center">
-
-                        <h3 class="text-dark">
-
-                            {{ evaluation.commercial_score }}/10
-
-                        </h3>
-
-                        <small>
-
-                            Commercial
-
-                        </small>
-
-                    </div>
-
-                </div>
-
-            </div>
-
-            <!-- TOTAL -->
-
-            <div class="mt-4">
-
-                <div class="border rounded p-4 bg-light text-center">
-
-                    <h1 class="fw-bold text-success">
-
-                        {{ evaluation.total_score }}/90
-
-                    </h1>
-
-                    <p class="mb-0 text-muted">
-
-                        Overall Supplier Score
-
-                    </p>
-
-                </div>
-
-            </div>
-
-        {% else %}
-
-            <div class="text-center py-5">
-
-                <h5 class="text-muted">
-
-                    No evaluation completed
-
-                </h5>
-
-                <a
-                    href="{% url 'supplier_evaluation' supplier.id %}"
-                    class="btn btn-primary mt-3"
-                >
-
-                    Start Evaluation
-
-                </a>
-
-            </div>
-
-        {% endif %}
-
-    </div>
-
-</div>
-
-            <!-- ACTIVITY -->
-
-            <div class="card border-0 shadow-sm">
-
-                <div class="card-header bg-white">
-
-                    <h5 class="mb-0">
-
-                        Activity History
-
-                    </h5>
-
-                </div>
-
-                <div class="card-body">
-
-                    {% for activity in activities %}
-
-                        <div class="border-start border-4 border-primary ps-3 mb-4">
-
-                            <div class="fw-semibold">
-
-                                {{ activity.activity }}
-
-                            </div>
-
-                            <small class="text-muted">
-
-                                {{ activity.created_at }}
-
-                            </small>
-
-                            <p class="mb-0 mt-2">
-
-                                {{ activity.description }}
-
-                            </p>
+                            {{ stage.stage_name }}
 
                         </div>
 
-                    {% empty %}
-
-                        <p class="text-muted">
-
-                            No activity found
-
-                        </p>
+                    </div>
 
                     {% endfor %}
 
@@ -673,84 +586,697 @@
 
     </div>
 
+    <!-- EVALUATION -->
+
+    <div
+        class="tab-pane fade"
+        id="evaluation-tab"
+    >
+
+        <div class="card shadow-sm border-0">
+
+            <div class="card-header bg-white">
+
+                <h5>Evaluation Summary</h5>
+
+            </div>
+
+            <div class="card-body">
+
+                {% if evaluation %}
+
+                    <h1 class="text-success">
+
+                        {{ evaluation.total_score }}/90
+
+                    </h1>
+
+                {% else %}
+
+                    No evaluation completed
+
+                {% endif %}
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- RISK -->
+
+    <div
+        class="tab-pane fade"
+        id="risk-tab"
+    >
+
+        <div class="card shadow-sm border-0">
+
+            <div class="card-header bg-white">
+
+                <h5>Risk Classification</h5>
+
+            </div>
+
+            <div class="card-body">
+
+                <p>
+                    <strong>Risk Level:</strong>
+                    {{ supplier.risk_level }}
+                </p>
+
+                <p>
+                    <strong>Risk Score:</strong>
+                    {{ supplier.risk_score }}
+                </p>
+
+                <p>
+                    <strong>Review Frequency:</strong>
+                    {{ supplier.review_frequency }}
+                </p>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- DOCUMENTS -->
+
+    <div
+        class="tab-pane fade"
+        id="documents-tab">
+
+        <div class="card shadow-sm border-0">
+
+            <div class="card-header bg-white">
+
+                <h5>Documents</h5>
+
+            </div>
+
+            <div class="card-body">
+
+                {% for document in documents %}
+
+                    <div class="border rounded p-3 mb-2">
+
+                        {{ document.document_name }}
+
+                    </div>
+
+                {% empty %}
+
+                    No documents uploaded
+
+                {% endfor %}
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <div
+    class="tab-pane fade"
+    id="audit-tab"
+>
+
+    <div class="card shadow-sm border-0">
+
+        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+
+            <h5 class="mb-0">
+                Supplier Audit Management
+            </h5>
+
+            <a
+                href="{% url 'create_audit_request' supplier.id %}"
+                class="btn btn-primary"
+            >
+                Request Audit
+            </a>
+
+        </div>
+
+        <div class="card-body">
+
+            <div class="row mb-4">
+
+                <div class="col-md-4">
+
+                    <div class="border rounded p-3">
+
+                        <small>Total Audits</small>
+
+                        <h3>{{ total_audits }}</h3>
+
+                    </div>
+
+                </div>
+
+                <div class="col-md-4">
+
+                    <div class="border rounded p-3">
+
+                        <small>Open Audits</small>
+
+                        <h3 class="text-warning">
+
+                            {{ open_audits }}
+
+                        </h3>
+
+                    </div>
+
+                </div>
+
+                <div class="col-md-4">
+
+                    <div class="border rounded p-3">
+
+                        <small>Completed Audits</small>
+
+                        <h3 class="text-success">
+
+                            {{ completed_audits }}
+
+                        </h3>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            <div class="table-responsive">
+
+                <table class="table table-hover">
+
+                    <thead class="table-light">
+
+                        <tr>
+
+                            <th>Request No</th>
+
+                            <th>Audit Type</th>
+
+                            <th>Priority</th>
+
+                            <th>Status</th>
+
+                            <th>Date</th>
+
+                            <th>Action</th>
+
+                        </tr>
+
+                    </thead>
+
+                    <tbody>
+
+                        {% for audit in audits %}
+
+                        <tr>
+
+                            <td>
+                                {{ audit.request_no }}
+                            </td>
+
+                            <td>
+                                {{ audit.get_audit_type_display }}
+                            </td>
+
+                            <td>
+                                {{ audit.get_priority_display }}
+                            </td>
+
+                            <td>
+
+                                <span class="badge bg-primary">
+
+                                    {{ audit.get_status_display }}
+
+                                </span>
+
+                            </td>
+
+                            <td>
+
+                                {{ audit.created_at|date:"d-M-Y" }}
+
+                            </td>
+
+                            <td>
+
+    <button
+        type="button"
+        class="btn btn-sm btn-outline-primary"
+        data-bs-toggle="modal"
+        data-bs-target="#auditModal{{ audit.id }}"
+    >
+        <i class="fas fa-eye"></i>
+    </button>
+
+</td>
+
+                        </tr>
+
+                      
+
+
+                        {% empty %}
+
+                        <tr>
+
+                            <td colspan="5">
+
+                                No Audit Requests Found
+
+                            </td>
+
+                        </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+<!-- AUDIT DETAIL MODAL -->
+{% for audit in audits %}
+<div
+    class="modal fade"
+    id="auditModal{{ audit.id }}"
+    tabindex="-1"
+    aria-hidden="true"
+>
+
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+
+        <div class="modal-content">
+
+            <div class="modal-header bg-primary text-white">
+
+                <h5 class="modal-title">
+
+                    Audit Request Details
+
+                </h5>
+
+                <button
+                    type="button"
+                    class="btn-close btn-close-white"
+                    data-bs-dismiss="modal"
+                ></button>
+
+            </div>
+
+            <div class="modal-body">
+
+                <div class="row">
+
+                    <div class="col-md-6">
+
+                        <table class="table table-bordered">
+
+                            <tr>
+                                <th width="40%">Request No</th>
+                                <td>{{ audit.request_no }}</td>
+                            </tr>
+
+                            <tr>
+                                <th>Audit Type</th>
+                                <td>{{ audit.get_audit_type_display }}</td>
+                            </tr>
+
+                            <tr>
+                                <th>Audit Category</th>
+                                <td>{{ audit.get_audit_category_display }}</td>
+                            </tr>
+
+                            <tr>
+                                <th>Audit Criteria</th>
+                                <td>{{ audit.get_audit_criteria_display }}</td>
+                            </tr>
+
+                            <tr>
+                                <th>Audit Trigger</th>
+                                <td>{{ audit.get_audit_trigger_display }}</td>
+                            </tr>
+
+                            <tr>
+                                <th>Priority</th>
+                                <td>{{ audit.get_priority_display }}</td>
+                            </tr>
+
+                            <tr>
+                                <th>Status</th>
+                                <td>
+                                    <span class="badge bg-primary">
+                                        {{ audit.get_status_display }}
+                                    </span>
+                                </td>
+                            </tr>
+
+                        </table>
+
+                    </div>
+
+                    <div class="col-md-6">
+
+                        <table class="table table-bordered">
+
+                            <tr>
+                                <th width="40%">Requested By</th>
+                                <td>{{ audit.requested_by }}</td>
+                            </tr>
+
+                            <tr>
+                                <th>Approved By</th>
+                                <td>
+                                    {{ audit.approved_by|default:"Not Approved Yet" }}
+                                </td>
+                            </tr>
+
+                            <tr>
+                                <th>Created Date</th>
+                                <td>
+                                    {{ audit.created_at|date:"d-M-Y H:i" }}
+                                </td>
+                            </tr>
+
+                            <tr>
+                                <th>Preferred Audit Date</th>
+                                <td>
+                                    {{ audit.preferred_audit_date }}
+                                </td>
+                            </tr>
+
+                        </table>
+
+                    </div>
+
+                </div>
+
+                <hr>
+
+                <h6 class="fw-bold">
+                    Audit Objectives
+                </h6>
+
+                <div class="alert alert-light border">
+
+                    {{ audit.objectives|linebreaks }}
+
+                </div>
+
+                <h6 class="fw-bold">
+                    Audit Justification
+                </h6>
+
+                <div class="alert alert-light border">
+
+                    {{ audit.reason|linebreaks }}
+
+                </div>
+
+                <h6 class="fw-bold">
+                    Additional Notes
+                </h6>
+
+                <div class="alert alert-light border">
+
+                    {{ audit.additional_notes|default:"No Notes"|linebreaks }}
+
+                </div>
+
+                <!-- DOCUMENTS -->
+
+                <h6 class="fw-bold mt-4">
+
+                    Audit Attachments
+
+                </h6>
+
+                <table class="table table-bordered">
+
+                    <thead>
+
+                        <tr>
+
+                            <th>File Name</th>
+
+                            <th>Action</th>
+
+                        </tr>
+
+                    </thead>
+
+                    <tbody>
+
+                        {% for attachment in audit.attachments.all %}
+
+                        <tr>
+
+                            <td>
+
+                                {{ attachment.file.name }}
+
+                            </td>
+
+                            <td>
+
+                                <a
+                                    href="{{ attachment.file.url }}"
+                                    target="_blank"
+                                    class="btn btn-sm btn-primary"
+                                >
+                                    View
+                                </a>
+
+                            </td>
+
+                        </tr>
+
+                        {% empty %}
+
+                        <tr>
+
+                            <td colspan="2">
+
+                                No Attachments Uploaded
+
+                            </td>
+
+                        </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+            <div class="modal-footer">
+
+                <button
+                    type="button"
+                    class="btn btn-secondary"
+                    data-bs-dismiss="modal"
+                >
+                    Close
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+{% endfor %}
+            </div>
+
+        </div>
+
+    </div>
+
 </div>
 
-<style>
+    <!-- HISTORY -->
 
-.card{
+    <div
+        class="tab-pane fade"
+        id="history-tab">
 
-    border-radius:18px;
+        <div class="card shadow-sm border-0">
 
-}
+            <div class="card-header bg-white">
 
-.workflow-wrapper{
+                <h5>Activity History</h5>
 
-    display:flex;
+            </div>
 
-    justify-content:space-between;
+            <div class="card-body">
 
-    gap:20px;
+                <table class="table">
 
-    overflow-x:auto;
+                    <thead>
 
-}
+                        <tr>
 
-.workflow-step{
+                            <th>Date</th>
+                            <th>Activity</th>
+                            <th>Description</th>
 
-    text-align:center;
+                        </tr>
 
-    min-width:100px;
+                    </thead>
 
-}
+                    <tbody>
 
-.workflow-circle{
+                        {% for activity in activities %}
 
-    width:55px;
+                        <tr>
 
-    height:55px;
+                            <td>
+                                {{ activity.created_at }}
+                            </td>
 
-    border-radius:50%;
+                            <td>
+                                {{ activity.activity }}
+                            </td>
 
-    background:#d1d5db;
+                            <td>
+                                {{ activity.description }}
+                            </td>
 
-    color:#fff;
+                        </tr>
 
-    display:flex;
+                        {% endfor %}
 
-    align-items:center;
+                    </tbody>
 
-    justify-content:center;
+                </table>
 
-    margin:auto;
+            </div>
 
-    font-weight:bold;
+        </div>
 
-}
-.workflow-circle.pending{
+    </div>
 
-    background:#d1d5db;
+</div>
 
-}
-.workflow-circle.completed{
 
-    background:#22c55e;
+</div>
 
-}
 
-.workflow-circle.active{
+            <!-- ACTIVITY -->
 
-    background:#2563eb;
+            <div class="card border-0 shadow-sm">
 
-}
+    <div class="card-header bg-white d-flex justify-content-between align-items-center">
 
-.workflow-label{
+        <h5 class="mb-0">
 
-    margin-top:10px;
+            Activity History
 
-    font-size:13px;
+        </h5>
 
-}
+        <span class="badge bg-primary">
 
-</style>
+            {{ activities.count }}
+
+        </span>
+
+    </div>
+
+    <div
+        class="card-body"
+        style="
+            max-height:400px;
+            overflow-y:auto;
+        "
+    >
+
+        {% for activity in activities %}
+
+        <div class="d-flex mb-4">
+
+            <div class="me-3">
+
+                <div
+                    class="bg-primary rounded-circle"
+                    style="
+                        width:14px;
+                        height:14px;
+                        margin-top:6px;
+                    "
+                ></div>
+
+            </div>
+
+            <div
+                class="border-start border-3 border-primary ps-3 pb-3 w-100"
+            >
+
+                <div class="d-flex justify-content-between">
+
+                    <h6 class="fw-bold mb-1">
+
+                        {{ activity.activity }}
+
+                    </h6>
+
+                    <small class="text-muted">
+
+                        {{ activity.created_at|date:"d-M-Y H:i" }}
+
+                    </small>
+
+                </div>
+
+                <p class="text-muted mb-0">
+
+                    {{ activity.description }}
+
+                </p>
+
+            </div>
+
+        </div>
+
+        {% empty %}
+
+        <div class="text-center py-5">
+
+            <i
+                class="fas fa-history text-secondary"
+                style="font-size:40px;"
+            ></i>
+
+            <p class="mt-3 text-muted">
+
+                No Activity Found
+
+            </p>
+
+        </div>
+
+        {% endfor %}
+
+    </div>
+
+</div>
+
+
+
+        </div>
+
+    </div>
+
+</div>
 
 {% endblock %}

@@ -24,7 +24,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-v@oe8m&mpek0zp04m5vn+arzijdr((xfzy%dvbf-u)qq=x6#3-'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
 ALLOWED_HOSTS = ["192.168.111.90", "183.82.250.59","183.82.250.59:8452","eqms.vaan.space", "127.0.0.1", "localhost",]
 
@@ -69,6 +69,8 @@ INSTALLED_APPS = [
     'visitors',
     'feedback',
     'sm',
+    'routine',
+    'quality'
 ]
 
 MIDDLEWARE = [

@@ -38,4 +38,12 @@ urlpatterns = [
     path("rfq/",views.rfq_list,name="rfq_list"),
     path("rfq/<int:rfq_id>/",views.rfq_detail,name="rfq_detail"),
     path("rfq/<int:rfq_id>/edit/",views.edit_rfq,name="edit_rfq"),
+    path("rfq/<int:rfq_id>/pdf/",views.generate_rfq_pdf,name="generate_rfq_pdf",),
+    # =========================== QA =============================
+    path("qa/create/<int:wo_id>/",views.create_qa_inspection,name="create_qa"),
+    path("qa/",views.qa_list,name="qa_list"),
+    path("qa/<int:qa_id>/",views.qa_detail,name="qa_detail"),
+    path("qa/<int:qa_id>/edit/",views.edit_qa,name="edit_qa"),
+    path("qa/<int:qa_id>/pdf/",views.generate_qa_pdf,name="qa_pdf"),
+
 ]

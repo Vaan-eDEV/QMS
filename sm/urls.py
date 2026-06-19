@@ -1,9 +1,11 @@
 from django.urls import path
-
 from . import views
 
-
 urlpatterns = [
+
+    # =====================================
+    # EXISTING URLS
+    # =====================================
 
     path(
         '',
@@ -48,9 +50,37 @@ urlpatterns = [
     ),
 
     path(
+        'supplier/<int:supplier_id>/risk/',
+        views.risk_classification,
+        name='risk_classification'
+    ),
+
+    path(
         'supplier/<int:supplier_id>/delete/',
         views.delete_supplier,
         name='delete_supplier'
+    ),
+
+    # =====================================
+    # SUPPLIER AUDIT MODULE
+    # =====================================
+
+    path(
+        'supplier-audits/',
+        views.supplier_audit_list,
+        name='supplier_audit_list'
+    ),
+
+    path(
+        'supplier/<int:supplier_id>/audit/',
+        views.supplier_audit_dashboard,
+        name='supplier_audit_dashboard'
+    ),
+
+    path(
+        'supplier/<int:supplier_id>/audit-request/',
+        views.create_audit_request,
+        name='create_audit_request'
     ),
 
 ]

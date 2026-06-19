@@ -1,0 +1,229 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="container-fluid">
+
+    <!-- HEADER -->
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+
+        <div>
+
+            <h2 class="fw-bold mb-0">
+                Add Calibration Record
+            </h2>
+
+            <small class="text-muted">
+                Record Instrument Calibration Details
+            </small>
+
+        </div>
+
+        <a href="{% url 'calibration_list' %}"
+           class="btn btn-secondary">
+
+            Back
+
+        </a>
+
+    </div>
+
+
+    <!-- FORM -->
+
+    <div class="card shadow-sm border-0">
+
+        <div class="card-body">
+
+            <form method="post"
+                  enctype="multipart/form-data">
+
+                {% csrf_token %}
+
+                <div class="row g-3">
+
+                    <!-- Instrument -->
+
+                    <div class="col-md-6">
+
+                        <label class="form-label">
+                            Instrument
+                        </label>
+
+                        <select
+                            name="instrument"
+                            class="form-select"
+                            required>
+
+                            <option value="">
+                                Select Instrument
+                            </option>
+
+                            {% for instrument in instruments %}
+
+                            <option value="{{ instrument.id }}">
+
+                                {{ instrument.instrument_id }}
+                                -
+                                {{ instrument.name }}
+
+                            </option>
+
+                            {% endfor %}
+
+                        </select>
+
+                    </div>
+
+                    <!-- Result -->
+
+                    <div class="col-md-6">
+
+                        <label class="form-label">
+                            Result
+                        </label>
+
+                        <select
+                            name="result"
+                            class="form-select"
+                            required>
+
+                            <option value="PASS">
+                                PASS
+                            </option>
+
+                            <option value="FAIL">
+                                FAIL
+                            </option>
+
+                        </select>
+
+                    </div>
+
+                    <!-- Calibration Date -->
+
+                    <div class="col-md-6">
+
+                        <label class="form-label">
+                            Calibration Date
+                        </label>
+
+                        <input
+                            type="date"
+                            name="calibration_date"
+                            class="form-control"
+                            required>
+
+                    </div>
+
+                    <!-- Next Due -->
+
+                    <div class="col-md-6">
+
+                        <label class="form-label">
+                            Next Due Date
+                        </label>
+
+                        <input
+                            type="date"
+                            name="next_due_date"
+                            class="form-control"
+                            required>
+
+                    </div>
+
+                    <!-- Certificate Number -->
+
+                    <div class="col-md-6">
+
+                        <label class="form-label">
+                            Certificate Number
+                        </label>
+
+                        <input
+                            type="text"
+                            name="certificate_number"
+                            class="form-control"
+                            required>
+
+                    </div>
+
+                    <!-- Calibration Agency -->
+
+                    <div class="col-md-6">
+
+                        <label class="form-label">
+                            Calibration Agency
+                        </label>
+
+                        <input
+                            type="text"
+                            name="calibration_agency"
+                            class="form-control"
+                            required>
+
+                    </div>
+
+                    <!-- Certificate Upload -->
+
+                    <div class="col-md-12">
+
+                        <label class="form-label">
+                            Calibration Certificate
+                        </label>
+
+                        <input
+                            type="file"
+                            name="certificate_file"
+                            class="form-control">
+
+                    </div>
+
+                    <!-- Remarks -->
+
+                    <div class="col-md-12">
+
+                        <label class="form-label">
+                            Remarks
+                        </label>
+
+                        <textarea
+                            name="remarks"
+                            rows="4"
+                            class="form-control"></textarea>
+
+                    </div>
+
+                </div>
+
+                <hr>
+
+                <div class="text-end">
+
+                    <a href="{% url 'calibration_list' %}"
+                       class="btn btn-light">
+
+                        Cancel
+
+                    </a>
+
+                    <button
+                        type="submit"
+                        class="btn btn-success">
+
+                        Save Calibration
+
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

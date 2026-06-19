@@ -31,7 +31,8 @@ urlpatterns = [
     path('visitors/', include('visitors.urls')),
     path('feedback/',include('feedback.urls')),
     path('sm/',include('sm.urls')),
-
+    path('routine/',include('routine.urls')),
+    path('quality/',include('quality.urls')),
 
 ]
 if settings.DEBUG:

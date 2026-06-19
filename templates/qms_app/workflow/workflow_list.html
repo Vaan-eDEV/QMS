@@ -32,10 +32,6 @@
             <strong>{{ b.form__name }}</strong><br>
             <small class="text-muted">Batch: {{ b.submission_batch }}</small>
         </div>
-        <a href="{% url 'view_form_batch' b.form_id b.submission_batch %}"
-           class="btn btn-sm btn-primary">
-            Open Workflow.
-        </a>
         <a href="{% url 'view_form_batch' c.form_id c.submission_batch %}"
             class="btn btn-sm btn-primary">
             Open Data page
@@ -48,8 +44,121 @@
          class="btn btn-sm btn-primary">
             Register Page
         </a>
+        <td>Quality Performance</td>
+        <td>incoming rejection % NCR count</td>
+        <td>30%</td>
+
+        <td>On-time Delivery</td>
+        <td>% deliveries on time vs. PO date</td>
+        <td>20</td>
+
+        <td>Cost Competitiveness</td>
+        <td>Price stability, value for money</td>
+        <td>10%</td>
+
+        <td>Response & Communication</td>
+        <td>Response to queries, complaint closure</td>
+        <td>10%</td>
+
+        <td>Documentation Compliance</td>
+        <td>Test reports, COA/ COC, certificates</td>
+        <td>10%</td>
+
+        <td>Technical Capability</td>
+        <td>Process capability, infrastructure, skill</td>
+        <td>10%</td>
+
+        <td>Regulatory / QMS Compliance</td>
+        <td>ISO 9001/13485 certificates, audits</td>
+        <td>10%</td>
+
+        <select id="data">
+            <option>90-100 ( Excellent )
+                <p>Fully Approved</p>
+            </option>
+            <option>75-89 ( Good )
+                <p>Approved</p>
+            </option>
+            <option>60-74 ( Moderate ) 
+                <p>Conditional Approved</p>
+            </option>
+            <option> 60 ( Poor )
+                <p>Not Approved</p>
+            </option>
+        </select>
+
+        <table>
+
+            <thead>
+
+                <th>Criteria</th>
+                <th>measurement Method</th>
+                <th>Weight (%)</th>
+                <th>Score(1-5)</th>
+                <th>Weight Score</th>
+
+            </thead>
+            <tbody>
+                <td>Quality Performance</td>
+                <td>Incoming rejection % , NCR count</td>
+                <td>30%</td>
+                <td>4</td>
+                <td>1.2</td>
+
+                <td>On-Time Delivery</td>
+                <td>% deliveries on time vs, PO Date</td>
+                <td>20%</td>
+                <td>5</td>
+                <td>1</td>
+
+                <td>Cost Competitivess</td>
+                <td>Price stability, Value for money</td>
+                <td>10%</td>
+                <td>4</td>
+                <td>0.4</td>
+                
+                <td>Documentation Compliance</td>
+                <td>Test reports, COA/COC, certifiacte</td>
+                <td>10%</td>
+                <td>3</td>
+                <td>0.3</td>
+
+                <td></td>
+
+                <td>Regulatory / QMS Compliance</td>
+                <td>ISo 9001/ 13485 certificate, audits</td>
+                <td>10%</td>
+                <td>3</td>
+                <d>0.3</d>
 
 
+                <td></td>
+
+            </tbody>
+
+        </table>
+
+        <script>
+            const mixedChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    datasets: [{
+                        label: 'Bar Dataset',
+                        data: [10, 20, 30, 40],
+                        // this dataset is drawn below
+                        order: 2
+                    }, {
+                        label: 'Line Dataset',
+                        data: [10, 10, 10, 10],
+                        type: 'line',
+                        // this dataset is drawn on top
+                        order: 1
+                    }],
+                    labels: ['January', 'February', 'March', 'April']
+                },
+                options: options
+            });
+        </script>
         <a class="{% url 'production' a.form.id.submission batch %}"
             class="btn btn-sm btn-primary">
             Rfq Detail Page
@@ -63,19 +172,29 @@
         </div>
         {% endif %}
 
-
         <a href="{% url 'production' a.form.id.submission_batch %} "
          class="btn btn-sm btn-primary">
             profile label
         </a>
+
         <a href="{% url 'flow' a.form.id.submission_part_batch %} "
          class="btn btn-sm btn-primary">
             profile label
         </a>
+
         <a href="{% url 'flow_id' a.form.id.submission_part %} "
          class="btn btn-sm btn-primary">
             Register profie.
         </a>
+
+        <a href="{% url 'flow.id' a.form.id.submission_part %}">
+            Register profile list
+        </a>
+
+        <a href="{% url 'production' a.form.id.submission_part %}">
+            Profiles
+        </a>
+
         <div>
             <a class="rfq" onclick="openDate('{{ card.ref }}','{{ card.company }}')">
                 <strong>{{ card.ref }}</strong>
@@ -89,16 +208,125 @@
          class="btn btn-sm btn-primary">
             profile label
         </a>
+        <a href="{% url 'production' a. %}"
+            class="btn btn-sm btn-primary">
+            profile Photo
+        </a>
+        <a href="{% url 'production' a. %}"
+            class="btn btn-sm btn-primary">
+            profile Photo
+        </a>
         <a href="">
         </a>
         <a href="{% url 'register_detail_api' a.form id.submission_batch %}"
             class="btn btn-sm btn-primary">
             work
         </a>
+
+
+        <a href="{% url 'register_detail_api' a.form id.submission_batch %}"
+            class="btn btn-sm btn-primary">
+                work
+        </a>
+        <li class="list-group-item text-muted">Raw material</li>
+        <li class="list-group-item text-muted">Cutting Tools & Consumbles</li>
+        <li class="list-group-item text-muted">Packaging material</li>
+        <li class="list-group-item text-muted">PPE Kit</li>
+        <li class="list-group-item text-muted">Reference Block</li>
+        <li class="list-group-item text-muted">Electronic Inventory</li>        
     </li>
     {% empty %}
     <li class="list-group-item text-muted">
         No workflow found
     </li>
+    <div class="dropdown">
+        <button>Select The category</button>
+
+        <ul>
+            <li>Raw Material</li>
+            <li>Cutting Tools & Consumables</li>
+            <li>Packaging Material</li>
+            <li>Stationary Items</li>
+            <li>Measuring Instruments</li>
+            <li>PPE Kit</li>
+            <li>Reference Block</li>
+            <li>Customer Returne Material</li>
+            <li>Electronic Inventory</li>
+            <li>Customer-Supplied Material</li>
+            <li>Tooling Inventory</li>
+            <li>Medical Inventory</li>
+        </ul>
+        <ul>
+             
+            <li>Cutting Tools & Consumables</li>
+            <li>Packaging Material</li>
+            <li>Stationary Items</li>
+            <li>Measuring Instruments</li>
+            <li>PPE Kit</li>
+            <li>Reference Block</li>
+            <li>Customer Returne Material</li>
+            <li>Electronic Inventory</li>
+            <li>Customer-Supplied Material</li>
+            <li>Tooling Inventory</li>
+            <li>Medical Inventory</li>
+        </ul>
+    </div>
+
+<script>
+
+{
+  test: /\.(scss)$/,
+  use: [{
+    loader: 'style-loader'
+  }, {
+    loader: 'css-loader'
+  }, {
+    loader: 'postcss-loader',
+    options: {
+      postcssOptions: {
+        plugins: function () {
+          return [
+            require('autoprefixer')
+          ];
+        }
+      }
+    }
+  }, {
+    loader: 'sass-loader'
+  }]
+}
+</script>
+
+<button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#exampleModal" data-bs-whatever="@mdo">Open modal for @mdo</button>
+<button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#exampleModal" data-bs-whatever="@fat">Open modal for @fat</button>
+<button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#exampleModal" data-bs-whatever="@getbootstrap">Open modal for @getbootstrap</button>
+
+<div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="exampleModalLabel">New message</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form>
+          <div class="mb-3">
+            <label for="recipient-name" class="col-form-label">Recipient:</label>
+            <input type="text" class="form-control" id="recipient-name">
+          </div>
+          <div class="mb-3">
+            <label for="message-text" class="col-form-label">Message:</label>
+            <textarea class="form-control" id="message-text"></textarea>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary">Send message</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 {% endfor %}
 

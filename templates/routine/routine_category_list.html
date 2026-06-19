@@ -1,0 +1,204 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+
+<div class="container-fluid py-4">
+
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+
+        <div>
+
+            <h2 class="fw-bold mb-1">
+                Routine Categories
+            </h2>
+
+            <p class="text-muted mb-0">
+                Manage routine checklist categories
+            </p>
+
+        </div>
+
+        <a href="{% url 'routine:create_category' %}"
+           class="btn btn-primary">
+
+            <i class="fas fa-plus me-1"></i>
+            Add Category
+
+        </a>
+
+    </div>
+
+    <!-- Messages -->
+    {% if messages %}
+
+        {% for message in messages %}
+
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+
+                {{ message }}
+
+                <button
+                    type="button"
+                    class="btn-close"
+                    data-bs-dismiss="alert">
+                </button>
+
+            </div>
+
+        {% endfor %}
+
+    {% endif %}
+
+    <!-- Card -->
+
+    <div class="card border-0 shadow-sm">
+
+        <div class="card-header bg-white">
+
+            <h5 class="mb-0">
+                Category List
+            </h5>
+
+        </div>
+
+        <div class="card-body">
+
+            <div class="table-responsive">
+
+                <table class="table table-hover align-middle">
+
+                    <thead class="table-light">
+
+                        <tr>
+
+                            <th width="80">
+                                #
+                            </th>
+
+                            <th>
+                                Category Name
+                            </th>
+
+                            <th>
+                                Description
+                            </th>
+
+                            <th width="120">
+                                Status
+                            </th>
+
+                            <th width="180">
+                                Created Date
+                            </th>
+
+                            <th width="150">
+                                Actions
+                            </th>
+
+                        </tr>
+
+                    </thead>
+
+                    <tbody>
+
+                        {% for category in categories %}
+
+                        <tr>
+
+                            <td>
+
+                                {{ forloop.counter }}
+
+                            </td>
+
+                            <td>
+
+                                <strong>
+                                    {{ category.category_name }}
+                                </strong>
+
+                            </td>
+
+                            <td>
+
+                                {{ category.description|default:"-"|truncatechars:80 }}
+
+                            </td>
+
+                            <td>
+
+                                {% if category.is_active %}
+
+                                    <span class="badge bg-success">
+                                        Active
+                                    </span>
+
+                                {% else %}
+
+                                    <span class="badge bg-danger">
+                                        Inactive
+                                    </span>
+
+                                {% endif %}
+
+                            </td>
+
+                            <td>
+
+                                {{ category.created_at|date:"d M Y" }}
+
+                            </td>
+
+                            <td>
+
+                                <a href="#"
+                                   class="btn btn-sm btn-warning">
+
+                                    <i class="fas fa-edit"></i>
+
+                                </a>
+
+                                <a href="#"
+                                   class="btn btn-sm btn-danger">
+
+                                    <i class="fas fa-trash"></i>
+
+                                </a>
+
+                            </td>
+
+                        </tr>
+
+                        {% empty %}
+
+                        <tr>
+
+                            <td colspan="6" class="text-center py-4">
+
+                                <div class="text-muted">
+
+                                    No categories found.
+
+                                </div>
+
+                            </td>
+
+                        </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

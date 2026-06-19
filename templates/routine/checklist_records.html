@@ -1,0 +1,368 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+
+<div class="container-fluid py-4">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+
+        <div>
+
+            <h2 class="fw-bold">
+                Checklist Records
+            </h2>
+
+            <p class="text-muted mb-0">
+                View all routine checklist responses and audit records.
+            </p>
+
+        </div>
+
+    </div>
+
+    <!-- FILTERS -->
+
+    <div class="card border-0 shadow-sm mb-4">
+
+        <div class="card-body">
+
+            <form method="get">
+
+                <div class="row">
+
+                    <div class="col-md-2">
+
+                        <label class="form-label">
+                            From Date
+                        </label>
+
+                        <input
+                            type="date"
+                            name="from_date"
+                            value="{{ request.GET.from_date }}"
+                            class="form-control">
+
+                    </div>
+
+                    <div class="col-md-2">
+
+                        <label class="form-label">
+                            To Date
+                        </label>
+
+                        <input
+                            type="date"
+                            name="to_date"
+                            value="{{ request.GET.to_date }}"
+                            class="form-control">
+
+                    </div>
+
+                    <div class="col-md-2">
+
+                        <label class="form-label">
+                            Department
+                        </label>
+
+                        <input
+                            type="text"
+                            name="department"
+                            value="{{ request.GET.department }}"
+                            class="form-control">
+
+                    </div>
+
+                    <div class="col-md-2">
+
+                        <label class="form-label">
+                            Status
+                        </label>
+
+                        <select
+                            name="status"
+                            class="form-select">
+
+                            <option value="">
+                                All
+                            </option>
+
+                            <option value="Pass">
+                                Pass
+                            </option>
+
+                            <option value="Fail">
+                                Fail
+                            </option>
+
+                            <option value="Yes">
+                                Yes
+                            </option>
+
+                            <option value="No">
+                                No
+                            </option>
+
+                        </select>
+
+                    </div>
+
+                    <div class="col-md-3">
+
+                        <label class="form-label">
+                            Search
+                        </label>
+
+                        <input
+                            type="text"
+                            name="search"
+                            value="{{ request.GET.search }}"
+                            placeholder="Routine Name"
+                            class="form-control">
+
+                    </div>
+
+                    <div class="col-md-1 d-flex align-items-end">
+
+                        <button
+                            type="submit"
+                            class="btn btn-primary w-100">
+
+                            Filter
+
+                        </button>
+
+                    </div>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+    <!-- RECORDS -->
+
+    <div class="card border-0 shadow-sm">
+
+        <div class="card-header bg-white">
+
+            <h5 class="mb-0">
+
+                Checklist Records
+
+            </h5>
+
+        </div>
+
+        <div class="card-body">
+
+            <div class="table-responsive">
+
+                <table class="table table-hover table-bordered">
+
+                    <thead class="table-light">
+
+                        <tr>
+
+                            <!-- <th>ID</th> -->
+
+                            <th>Routine</th>
+
+                            <th>Department</th>
+
+                            <th>Question</th>
+
+                            <th>Response</th>
+
+                            <th>Comment</th>
+
+                            <th>Checked By</th>
+
+                            <th>Date</th>
+
+                            <th>Time</th>
+
+                            <th>Photo</th>
+
+                        </tr>
+
+                    </thead>
+
+                    <tbody>
+
+                        {% for response in responses %}
+
+                        <tr>
+
+                            <!-- <td>
+
+                                {{ response.execution.execution_no }}
+
+                            </td> -->
+
+                            <td>
+
+                                {{ response.checklist_item.routine.routine_name }}
+
+                            </td>
+
+                            <td>
+
+                                {{ response.checklist_item.routine.department }}
+
+                            </td>
+
+                            <td>
+
+                                {{ response.checklist_item.question }}
+
+                            </td>
+
+                            <td>
+
+                                {% if response.response == "Pass" %}
+
+                                    <span class="badge bg-success">
+
+                                        Pass
+
+                                    </span>
+
+                                {% elif response.response == "Fail" %}
+
+                                    <span class="badge bg-danger">
+
+                                        Fail
+
+                                    </span>
+
+                                {% else %}
+
+                                    {{ response.response }}
+
+                                {% endif %}
+
+                            </td>
+
+                            <td>
+
+                                {{ response.comments|default:"-" }}
+
+                            </td>
+
+                            <td>
+
+                                {{ response.submitted_by }}
+
+                            </td>
+
+                            <td>
+
+                                {{ response.submitted_at|date:"d-M-Y" }}
+
+                            </td>
+
+                            <td>
+
+                                {{ response.submitted_at|time:"H:i A" }}
+
+                            </td>
+
+                            <td>
+
+    {% if response.routinephoto_set.first %}
+
+        <button
+            type="button"
+            class="btn btn-sm btn-primary"
+            data-bs-toggle="modal"
+            data-bs-target="#photoModal{{ response.id }}">
+
+            View
+
+        </button>
+
+        <!-- Photo Modal -->
+
+        <div class="modal fade"
+             id="photoModal{{ response.id }}"
+             tabindex="-1">
+
+            <div class="modal-dialog modal-lg modal-dialog-centered">
+
+                <div class="modal-content">
+
+                    <div class="modal-header">
+
+                        <h5 class="modal-title">
+
+                            Photo Evidence
+
+                        </h5>
+
+                        <button
+                            type="button"
+                            class="btn-close"
+                            data-bs-dismiss="modal">
+                        </button>
+
+                    </div>
+
+                    <div class="modal-body text-center">
+
+                        <img
+                            src="{{ response.routinephoto_set.first.photo.url }}"
+                            class="img-fluid rounded shadow">
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    {% else %}
+
+        <span class="text-muted">
+
+            No Photo
+
+        </span>
+
+    {% endif %}
+
+</td>
+
+                        </tr>
+
+                        {% empty %}
+
+                        <tr>
+
+                            <td colspan="10"
+                                class="text-center text-muted">
+
+                                No records found.
+
+                            </td>
+
+                        </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

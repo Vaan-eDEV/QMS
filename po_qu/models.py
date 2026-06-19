@@ -6,6 +6,7 @@ from io import BytesIO
 from django.core.files import File
 from django.utils import timezone
 import uuid
+from goods_entry.models import Product
 
 class PurchaseOrder(models.Model):
 
@@ -57,16 +58,17 @@ class PurchaseOrder(models.Model):
 
     # 🔹 Status
     status = models.CharField(
-        max_length=20,
+        max_length=30,
         choices=[
             ('draft', 'Draft'),
             ('approved', 'Approved'),
             ('sent', 'Sent'),
+            ('partial_received', 'Partially Received'),
             ('received', 'Received')
         ],
         default='draft'
     )
-
+   
     # 🔹 USERS (EXISTING)
     prepared_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -195,19 +197,52 @@ class PurchaseOrderItem(models.Model):
         on_delete=models.CASCADE,
         related_name="items"
     )
-
+    product = models.ForeignKey(
+        Product,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True
+    )
     product_code = models.CharField(max_length=100)
+
     description = models.TextField()
+
     unit = models.CharField(max_length=50)
-    quantity = models.DecimalField(max_digits=10, decimal_places=2)
-    rate = models.DecimalField(max_digits=10, decimal_places=2)
-    amount = models.DecimalField(max_digits=12, decimal_places=2, blank=True)
+
+    quantity = models.DecimalField(
+        max_digits=10,
+        decimal_places=2
+    )
+
+    # NEW FIELD
+    received_quantity = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=0
+    )
+
+    rate = models.DecimalField(
+        max_digits=10,
+        decimal_places=2
+    )
+
+    amount = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        blank=True
+    )
+
+    @property
+    def balance_quantity(self):
+        return self.quantity - self.received_quantity
 
     def save(self, *args, **kwargs):
+
         self.amount = self.quantity * self.rate
+
         super().save(*args, **kwargs)
 
-    def _str_(self):
+    def __str__(self):
         return f"{self.product_code} ({self.po.po_number})"
 # ==================================================================================================
 # ================================== Quotation Main Model ==========================================
@@ -246,7 +281,11 @@ class Quotation(models.Model):
 
     igst_percentage = models.DecimalField(max_digits=5, decimal_places=2, default=0)
     igst_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0)
-
+    qr_code = models.ImageField(
+        upload_to="quotation_qr/",
+        blank=True,
+        null=True
+    )
     grand_total = models.DecimalField(max_digits=12, decimal_places=2, default=0)
 
     # 🔹 Notes
@@ -314,6 +353,27 @@ class Quotation(models.Model):
     # ==============================
     # DIGITAL ID
     # ==============================
+    def generate_qr_code(self):
+
+        qr_data = f"""
+            Quotation Number: {self.quotation_number}
+            Customer: {self.customer_name}
+            Date: {self.date}
+            Grand Total: {self.grand_total}
+        """
+
+        qr = qrcode.make(qr_data)
+
+        buffer = BytesIO()
+        qr.save(buffer, format="PNG")
+
+        file_name = f"{self.quotation_number}_qr.png"
+
+        self.qr_code.save(
+            file_name,
+            File(buffer),
+            save=False
+        )
     def generate_digital_id(self):
         if not self.digital_id:
             self.digital_id = f"QT-{uuid.uuid4().hex[:12].upper()}"
@@ -327,24 +387,31 @@ class Quotation(models.Model):
 
         super().save(*args, **kwargs)
 
-        # 🔥 Generate quotation number
+        # Generate quotation number
         if is_new and not self.quotation_number:
             self.quotation_number = f"QT{self.id:04d}"
             super().save(update_fields=['quotation_number'])
 
-        # 🔥 Calculate totals
+        # Calculate totals
         self.calculate_totals()
 
-        # 🔥 Generate digital ID
+        # Generate digital ID
         self.generate_digital_id()
 
-        super().save(update_fields=[
-            'subtotal', 'discount_amount',
-            'cgst_amount', 'sgst_amount',
-            'igst_amount', 'grand_total',
-            'digital_id'
-        ])
+        # Generate QR Code
+        if not self.qr_code:
+            self.generate_qr_code()
 
+        super().save(update_fields=[
+            'subtotal',
+            'discount_amount',
+            'cgst_amount',
+            'sgst_amount',
+            'igst_amount',
+            'grand_total',
+            'digital_id',
+            'qr_code'
+        ])
     # ==============================
     # CALCULATE TOTALS
     # ==============================
@@ -437,6 +504,7 @@ class DeliveryChallan(models.Model):
     to_phone = models.CharField(max_length=20, blank=True, null=True)
     to_email = models.EmailField(blank=True, null=True)
 
+    qr_code = models.ImageField( upload_to="dc_qr/", blank=True, null=True )
     note = models.TextField(blank=True, null=True)
 
     created_by = models.ForeignKey(
@@ -488,6 +556,29 @@ class DeliveryChallan(models.Model):
     def generate_digital_id(self):
         if not self.digital_id:
             self.digital_id = f"DC-{uuid.uuid4().hex[:12].upper()}"
+    def generate_qr_code(self):
+
+        qr_data = f"""
+            Delivery Challan Number: {self.dc_number}
+            Date: {self.date}
+
+            From: {self.from_name}
+
+            To: {self.to_name}
+
+            Digital ID: {self.digital_id}
+            """
+
+        qr = qrcode.make(qr_data)
+
+        buffer = BytesIO()
+        qr.save(buffer, format="PNG")
+
+        self.qr_code.save(
+            f"{self.dc_number}_qr.png",
+            File(buffer),
+            save=False
+        )
     # ==============================
     # SAVE
     # ==============================
@@ -497,16 +588,27 @@ class DeliveryChallan(models.Model):
 
         super().save(*args, **kwargs)
 
-        # 🔥 Auto DC number
+        # Generate DC Number
         if is_new and not self.dc_number:
             self.dc_number = f"DC-{self.id:04d}"
-            super().save(update_fields=['dc_number'])
 
-        # 🔥 Generate Digital ID
+            super().save(
+                update_fields=["dc_number"]
+            )
+
+        # Generate Digital ID
         self.generate_digital_id()
 
-        super().save(update_fields=['digital_id'])
+        # Generate QR Code
+        if not self.qr_code:
+            self.generate_qr_code()
 
+        super().save(
+            update_fields=[
+                "digital_id",
+                "qr_code"
+            ]
+        )
 
 # ==============================
 # ITEMS
@@ -546,6 +648,12 @@ class WorkOrder(models.Model):
     documentation_notes = models.TextField(blank=True)
     other_notes = models.TextField(blank=True, null=True)
     rfq_ref = models.CharField(max_length=200, blank=True, null=True)
+
+    qr_code = models.ImageField(
+        upload_to="workorder_qr/",
+        blank=True,
+        null=True
+    )
 
     status = models.CharField(
         max_length = 20,
@@ -605,6 +713,27 @@ class WorkOrder(models.Model):
         if not self.digital_id:
             self.digital_id = f"WO-{uuid.uuid4().hex[:10].upper()}"
 
+    def generate_qr_code(self):
+
+        qr_data = f"""
+            Work Order Number: {self.wo_number}
+            Customer: {self.customer_name}
+            Date: {self.date}
+            Digital ID: {self.digital_id}
+        """
+
+        qr = qrcode.make(qr_data)
+
+        buffer = BytesIO()
+        qr.save(buffer, format="PNG")
+
+        file_name = f"{self.wo_number}_qr.png"
+
+        self.qr_code.save(
+            file_name,
+            File(buffer),
+            save=False
+        )
     def save(self, *args, **kwargs):
         is_new = self.pk is None
         super().save(*args, **kwargs)
@@ -615,7 +744,15 @@ class WorkOrder(models.Model):
 
         self.generate_digital_id()
 
-        super().save(update_fields=['digital_id'])
+        if not self.qr_code:
+            self.generate_qr_code()
+
+        super().save(
+            update_fields=[
+                'digital_id',
+                'qr_code'
+            ]
+        )
 
 class WorkOrderItem(models.Model):
 
@@ -961,7 +1098,11 @@ class RFQ(models.Model):
 
         default="draft"
     )
-
+    qr_code = models.ImageField(
+        upload_to="rfq_qr/",
+        blank=True,
+        null=True
+    )
     # =========================================================
     # USERS
     # =========================================================
@@ -1072,7 +1213,34 @@ class RFQ(models.Model):
             self.digital_id = (
                 f"RFQ-{uuid.uuid4().hex[:12].upper()}"
             )
+    def generate_qr_code(self):
 
+        qr_data = f"""
+            RFQ Number: {self.rfq_number}
+            Company: {self.company_name}
+            Contact Person: {self.contact_person}
+            RFQ Date: {self.rfq_date}
+            Digital ID: {self.digital_id}
+        """
+
+        qr = qrcode.make(qr_data)
+
+        buffer = BytesIO()
+
+        qr.save(
+            buffer,
+            format="PNG"
+        )
+
+        file_name = (
+            f"{self.rfq_number}_qr.png"
+        )
+
+        self.qr_code.save(
+            file_name,
+            File(buffer),
+            save=False
+        )
     # =========================================================
     # SAVE
     # =========================================================
@@ -1087,7 +1255,9 @@ class RFQ(models.Model):
 
         if is_new and not self.rfq_number:
 
-            self.rfq_number = f"RFQ-{self.id:04d}"
+            self.rfq_number = (
+                f"RFQ-{self.id:04d}"
+            )
 
             super().save(
                 update_fields=["rfq_number"]
@@ -1097,10 +1267,21 @@ class RFQ(models.Model):
 
         self.generate_digital_id()
 
-        super().save(
-            update_fields=["digital_id"]
-        )
+        # QR CODE
 
+        if (
+            not self.qr_code
+            or not self.qr_code.name
+        ):
+
+            self.generate_qr_code()
+
+        super().save(
+            update_fields=[
+                "digital_id",
+                "qr_code"
+            ]
+        )
 
 # ================================================================================
 # ==================================== RFQ ITEM ==================================
@@ -1252,4 +1433,498 @@ class RFQAttachment(models.Model):
             f"{self.rfq.rfq_number}"
 
             f" Attachment"
+        )
+
+
+#
+# =================================== QA Inspection ========================================
+#
+
+class QAInspection(models.Model):
+
+    work_order = models.ForeignKey(
+        WorkOrder,
+        on_delete=models.CASCADE,
+        related_name="qa_inspections"
+    )
+
+    inspection_no = models.CharField(
+        max_length=50,
+        unique=True
+    )
+
+    inspection_date = models.DateField()
+
+    # =====================
+    # PART IDENTIFICATION
+    # =====================
+
+    part_number = models.CharField(max_length=200)
+    revision = models.CharField(max_length=50, blank=True)
+    drawing_reference = models.CharField(max_length=200, blank=True)
+    cad_model_filename = models.CharField(max_length=255, blank=True)
+
+    batch_lot_no = models.CharField(
+        max_length=100,
+        blank=True
+    )
+
+    inspection_stage = models.CharField(
+        max_length=30,
+        choices=[
+            ("final_release", "Final Release"),
+            ("pre_shipment", "Pre Shipment"),
+        ]
+    )
+
+    # =====================
+    # EQUIPMENT
+    # =====================
+
+    cmm_model = models.CharField(
+        max_length=255,
+        blank=True
+    )
+
+    cmm_calibration_valid = models.BooleanField(
+        default=False
+    )
+
+    calibration_expiry = models.DateField(
+        null=True,
+        blank=True
+    )
+
+    program_loaded = models.BooleanField(
+        default=False
+    )
+
+    program_filename = models.CharField(
+        max_length=255,
+        blank=True
+    )
+
+    drawing_revision_verified = models.BooleanField(
+        default=False
+    )
+
+    revision_match = models.CharField(
+        max_length=100,
+        blank=True
+    )
+
+    fixture_setup_verified = models.BooleanField(
+        default=False
+    )
+
+    fixture_id = models.CharField(
+        max_length=100,
+        blank=True
+    )
+
+    environmental_conditions_stable = models.BooleanField(
+        default=False
+    )
+
+    environmental_log = models.TextField(
+        blank=True
+    )
+
+    # =====================
+    # DISPOSITION
+    # =====================
+
+    all_features_within_tolerance = models.BooleanField(
+        default=False
+    )
+
+    tolerance_remarks = models.TextField(
+        blank=True
+    )
+
+    surface_condition = models.CharField(
+        max_length=20,
+        choices=[
+            ("ok", "OK"),
+            ("damaged", "Damaged"),
+        ],
+        blank=True
+    )
+
+    labeling_verified = models.BooleanField(
+        default=False
+    )
+
+    ncr_initiated = models.BooleanField(
+        default=False
+    )
+
+    ncr_number = models.CharField(
+        max_length=100,
+        blank=True
+    )
+
+    hold_tagged = models.BooleanField(
+        default=False
+    )
+
+    hold_location = models.CharField(
+        max_length=255,
+        blank=True
+    )
+
+    inspector_notified = models.BooleanField(
+        default=False
+    )
+
+    notification_time = models.DateTimeField(
+        null=True,
+        blank=True
+    )
+
+    remarks = models.TextField(blank=True)
+
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True
+    )
+    # =====================
+    # PART IDENTIFICATION
+    # =====================
+
+    customer_name = models.CharField(
+        max_length=255,
+        blank=True
+    )
+
+    drawing_revision = models.CharField(
+        max_length=100,
+        blank=True
+    )
+
+    # =====================
+    # PART SERIALS
+    # =====================
+
+    part1_id = models.CharField(
+        max_length=100,
+        blank=True
+    )
+
+    part2_id = models.CharField(
+        max_length=100,
+        blank=True
+    )
+
+    part3_id = models.CharField(
+        max_length=100,
+        blank=True
+    )
+
+    part4_id = models.CharField(
+        max_length=100,
+        blank=True
+    )
+
+    part5_id = models.CharField(
+        max_length=100,
+        blank=True
+    )
+
+    # =====================
+    # DOCUMENTATION
+    # =====================
+
+    final_inspection_sheet_completed = models.BooleanField(
+        default=False
+    )
+
+    final_inspection_sheet_no = models.CharField(
+        max_length=100,
+        blank=True
+    )
+
+    cmm_report_generated = models.BooleanField(
+        default=False
+    )
+
+    cmm_report_attached = models.BooleanField(
+        default=False
+    )
+
+    cmm_report_no = models.CharField(
+        max_length=255,
+        blank=True
+    )
+
+    release_authorized = models.BooleanField(
+        default=False
+    )
+
+    release_authorization_no = models.CharField(
+        max_length=100,
+        blank=True
+    )
+
+    metadata_updated = models.BooleanField(
+        default=False
+    )
+
+    operator_initials = models.CharField(
+        max_length=20,
+        blank=True
+    )
+
+    metadata_date = models.DateField(
+        null=True,
+        blank=True
+    )
+    def __str__(self):
+        return self.inspection_no
+
+ 
+
+class QAInspectionMeasurement(models.Model):
+
+    inspection = models.ForeignKey(
+        QAInspection,
+        on_delete=models.CASCADE,
+        related_name="measurements"
+    )
+
+    # =====================================
+    # FEATURE
+    # =====================================
+
+    feature_name = models.CharField(
+        max_length=255
+    )
+
+    specification = models.CharField(
+        max_length=255,
+        blank=True
+    )
+
+    # =====================================
+    # PART 1
+    # =====================================
+
+    part1_value = models.CharField(
+        max_length=50,
+        blank=True
+    )
+
+    part1_status = models.CharField(
+        max_length=10,
+        choices=[
+            ("PASS", "PASS"),
+            ("FAIL", "FAIL")
+        ],
+        default="PASS"
+    )
+
+    # =====================================
+    # PART 2
+    # =====================================
+
+    part2_value = models.CharField(
+        max_length=50,
+        blank=True
+    )
+
+    part2_status = models.CharField(
+        max_length=10,
+        choices=[
+            ("PASS", "PASS"),
+            ("FAIL", "FAIL")
+        ],
+        default="PASS"
+    )
+
+    # =====================================
+    # PART 3
+    # =====================================
+
+    part3_value = models.CharField(
+        max_length=50,
+        blank=True
+    )
+
+    part3_status = models.CharField(
+        max_length=10,
+        choices=[
+            ("PASS", "PASS"),
+            ("FAIL", "FAIL")
+        ],
+        default="PASS"
+    )
+
+    # =====================================
+    # PART 4
+    # =====================================
+
+    part4_value = models.CharField(
+        max_length=50,
+        blank=True
+    )
+
+    part4_status = models.CharField(
+        max_length=10,
+        choices=[
+            ("PASS", "PASS"),
+            ("FAIL", "FAIL")
+        ],
+        default="PASS"
+    )
+
+    # =====================================
+    # PART 5
+    # =====================================
+
+    part5_value = models.CharField(
+        max_length=50,
+        blank=True
+    )
+
+    part5_status = models.CharField(
+        max_length=10,
+        choices=[
+            ("PASS", "PASS"),
+            ("FAIL", "FAIL")
+        ],
+        default="PASS"
+    )
+
+    # =====================================
+    # REMARKS
+    # =====================================
+
+    remarks = models.TextField(
+        blank=True
+    )
+
+    def __str__(self):
+        return self.feature_name
+
+
+
+
+class QAInspectionDocument(models.Model):
+
+    DOCUMENT_TYPE_CHOICES = [
+
+        ("final_inspection_sheet", "Final Inspection Sheet"),
+
+        ("cmm_report", "CMM Report"),
+
+        ("ncr", "NCR"),
+
+        ("release_authorization", "Release Authorization"),
+
+        ("metadata", "Metadata Updated"),
+
+        ("other", "Other"),
+
+    ]
+
+    STATUS_CHOICES = [
+
+        ("pending", "Pending"),
+
+        ("completed", "Completed"),
+
+        ("generated", "Generated"),
+
+        ("attached", "Attached"),
+
+        ("logged", "Logged"),
+
+        ("approved", "Approved"),
+
+        ("yes", "Yes"),
+
+        ("no", "No"),
+
+    ]
+
+    inspection = models.ForeignKey(
+        QAInspection,
+        on_delete=models.CASCADE,
+        related_name="documents"
+    )
+
+    # =====================================
+    # DOCUMENT
+    # =====================================
+
+    document_type = models.CharField(
+        max_length=50,
+        choices=DOCUMENT_TYPE_CHOICES
+    )
+
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default="pending"
+    )
+
+    # =====================================
+    # IDENTIFICATION
+    # =====================================
+
+    identifier = models.CharField(
+        max_length=255,
+        blank=True
+    )
+
+    revision = models.CharField(
+        max_length=50,
+        blank=True
+    )
+
+    issue_date = models.DateField(
+        null=True,
+        blank=True
+    )
+
+    # =====================================
+    # FILE
+    # =====================================
+
+    attachment = models.FileField(
+        upload_to="qa_documents/",
+        blank=True,
+        null=True
+    )
+
+    # =====================================
+    # REMARKS
+    # =====================================
+
+    remarks = models.TextField(
+        blank=True
+    )
+
+    # =====================================
+    # AUDIT
+    # =====================================
+
+    created_at = models.DateTimeField(
+        auto_now_add=True
+    )
+
+    updated_at = models.DateTimeField(
+        auto_now=True
+    )
+
+    def __str__(self):
+
+        return (
+            f"{self.get_document_type_display()} - "
+            f"{self.identifier}"
         )

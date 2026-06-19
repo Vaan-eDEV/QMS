@@ -9,6 +9,7 @@ from .models import (
     TableCellConfig,
     FormResponse
 )
+from .services import build_traceability_data
 import json
 from qms_app.decorators import require_page_permission
 from django.http import JsonResponse
@@ -1755,7 +1756,381 @@ def company_rfq_list(request, company):
         "rfqs": rfq_list
     })
 
-import json
+
+
+
+# import json
+# @login_required
+# def data_detail(request, ref_id):
+
+#     company = request.GET.get("company")
+
+#     if not company:
+#         return HttpResponse(
+#             "Company missing in URL",
+#             status=400
+#         )
+
+#     responses = (
+#         FormResponse.objects
+#         .filter(
+#             ref_id=ref_id,
+#             company=company
+#         )
+#         .select_related("form")
+#         .order_by("id")
+#     )
+
+#     # =========================================
+#     # SIGNATURE CONVERTER
+#     # =========================================
+
+#     def convert_signature(val):
+
+#         if (
+#             isinstance(val, str)
+#             and "signed_by" in val
+#         ):
+
+#             try:
+
+#                 val = val.replace("'", '"')
+
+#                 return json.loads(val)
+
+#             except:
+
+#                 return val
+
+#         return val
+
+#     # =========================================
+#     # FINAL DATA
+#     # =========================================
+
+#     final_data = {}
+
+#     # =========================================
+#     # LOOP RESPONSES
+#     # =========================================
+
+#     for res in responses:
+
+#         process = res.form.process
+
+#         if process not in final_data:
+
+#             final_data[process] = []
+
+#         cleaned_data = {}
+
+#         # =====================================
+#         # SAME ORDER AS KANBAN
+#         # =====================================
+
+#         combined = []
+
+#         # =====================================
+#         # FIELDS
+#         # =====================================
+
+#         for field in Field.objects.filter(
+#             stage__form=res.form
+#         ):
+
+#             combined.append({
+
+#                 "type": "field",
+
+#                 "order": field.order,
+
+#                 "key": field.label,
+
+#                 "value": res.data.get(field.label)
+
+#             })
+
+#         # =====================================
+#         # TABLES
+#         # =====================================
+
+#         for table in Table.objects.filter(
+#             stage__form=res.form
+#         ):
+
+#             combined.append({
+
+#                 "type": "table",
+
+#                 "order": table.order,
+
+#                 "key": table.name,
+
+#                 "value": res.data.get(table.name)
+
+#             })
+
+#         # =====================================
+#         # FINAL SORT
+#         # =====================================
+
+#         combined = sorted(
+#             combined,
+#             key=lambda x: x["order"]
+#         )
+
+#         # =====================================
+#         # LOOP ORDERED ITEMS
+#         # =====================================
+
+#         for item in combined:
+
+#             key = item["key"]
+
+#             val = item["value"]
+
+#             if key not in res.data:
+#                 continue
+
+#             # =================================
+#             # SKIP HEADER META
+#             # =================================
+
+#             if key.endswith("_row_header_name"):
+#                 continue
+
+#             # =================================
+#             # TABLE DATA
+#             # =================================
+
+#             if (
+#                 isinstance(val, list)
+#                 and
+#                 val
+#                 and
+#                 isinstance(val[0], dict)
+#                 and
+#                 "row_name" in val[0]
+#             ):
+
+#                 new_rows = []
+
+#                 # =============================
+#                 # FIND TABLE
+#                 # =============================
+
+#                 table_obj = Table.objects.filter(
+#                     name=key
+#                 ).first()
+
+#                 # =============================
+#                 # ORDERED COLUMNS
+#                 # =============================
+
+#                 ordered_columns = []
+
+#                 if table_obj:
+
+#                     ordered_columns = list(
+
+#                         table_obj.tablecolumn_set.all()
+#                         .order_by("order", "id")
+#                         .values_list("name", flat=True)
+
+#                     )
+
+#                 # =============================
+#                 # PROCESS ROWS
+#                 # =============================
+
+#                 for row in val:
+
+#                     if not isinstance(row, dict):
+#                         continue
+
+#                     # =========================
+#                     # FILTER EMPTY ROW
+#                     # =========================
+
+#                     # if not any(
+#                     #     str(v).strip()
+#                     #     not in ["", "None", "null"]
+#                     #     for v in row.values()
+#                     # ):
+#                     #     continue
+
+#                     ordered_row = {}
+
+#                     # =========================
+#                     # ROW NAME FIRST
+#                     # =========================
+
+#                     ordered_row["row_name"] = (
+#                         row.get("row_name", "")
+#                     )
+
+#                     # =========================
+#                     # KEEP COLUMN ORDER
+#                     # =========================
+
+#                     for col in ordered_columns:
+
+#                         if col in row:
+
+#                             ordered_row[col] = (
+#                                 convert_signature(
+#                                     row[col]
+#                                 )
+#                             )
+
+#                     # =========================
+#                     # EXTRA COLUMNS
+#                     # =========================
+
+#                     for k, v in row.items():
+
+#                         if (
+#                             k != "row_name"
+#                             and
+#                             k not in ordered_columns
+#                         ):
+
+#                             ordered_row[k] = (
+#                                 convert_signature(v)
+#                             )
+
+#                     new_rows.append(ordered_row)
+
+#                 # =============================
+#                 # STORE TABLE
+#                 # =============================
+
+#                 # =============================
+#                 # STORE TABLE
+#                 # =============================
+
+#                 if new_rows:
+
+#                     # =====================================
+#                     # TOTAL COLUMN SUPPORT
+#                     # =====================================
+
+#                     has_total = False
+
+#                     total_column_name = ""
+
+#                     if table_obj:
+
+#                         total_col = (
+#                             table_obj.tablecolumn_set
+#                             .filter(is_total=True)
+#                             .first()
+#                         )
+
+#                         if total_col:
+
+#                             has_total = True
+
+#                             total_column_name = (
+#                                 total_col.name
+#                             )
+
+#                     # =====================================
+#                     # FIND TOTAL VALUE
+#                     # =====================================
+
+#                     total_value = (
+
+#                         res.data.get(f"{key}_total")
+
+#                         or
+
+#                         res.data.get(
+#                             f"{key.lower()}_total"
+#                         )
+
+#                         or
+
+#                         res.data.get(
+#                             f"{key.upper()}_total"
+#                         )
+
+#                         or
+
+#                         ""
+#                     )
+
+#                 # =====================================
+#                 # STORE TABLE
+#                 # =====================================
+
+#                 cleaned_data[key] = {
+
+#                     "type": "table",
+
+#                     "header": res.data.get(
+
+#                         f"{key}_row_header_name",
+
+#                         (
+#                             table_obj.row_header_name
+#                             if table_obj
+#                             else "Row Name"
+#                         )
+#                     ),
+
+#                     "rows": new_rows,
+
+#                     # =================================
+#                     # TOTAL SUPPORT
+#                     # =================================
+
+#                     "show_total": has_total,
+
+#                     "total_column": total_column_name,
+
+#                     "total_value": total_value
+#                 }
+#             # =================================
+#             # NORMAL FIELD
+#             # =================================
+
+#             else:
+
+#                 cleaned_data[key] = (
+#                     convert_signature(val)
+#                 )
+
+#         # =====================================
+#         # FINAL APPEND
+#         # =====================================
+
+#         final_data[process].append({
+
+#             "form_name": res.form.name,
+
+#             "data": cleaned_data
+
+#         })
+
+#     # =========================================
+#     # RENDER
+#     # =========================================
+
+#     return render(
+
+#         request,
+
+#         "form_builder/data_detail.html",
+
+#         {
+#             "data": final_data,
+#             "ref_id": ref_id,
+#             "company": company
+#         }
+#     )
+
+
 
 @login_required
 def data_detail(request, ref_id):
@@ -1768,365 +2143,26 @@ def data_detail(request, ref_id):
             status=400
         )
 
-    responses = (
-        FormResponse.objects
-        .filter(
-            ref_id=ref_id,
-            company=company
-        )
-        .select_related("form")
-        .order_by("id")
+    final_data = build_traceability_data(
+        ref_id=ref_id,
+        company=company
     )
 
-    # =========================================
-    # SIGNATURE CONVERTER
-    # =========================================
-
-    def convert_signature(val):
-
-        if (
-            isinstance(val, str)
-            and "signed_by" in val
-        ):
-
-            try:
-
-                val = val.replace("'", '"')
-
-                return json.loads(val)
-
-            except:
-
-                return val
-
-        return val
-
-    # =========================================
-    # FINAL DATA
-    # =========================================
-
-    final_data = {}
-
-    # =========================================
-    # LOOP RESPONSES
-    # =========================================
-
-    for res in responses:
-
-        process = res.form.process
-
-        if process not in final_data:
-
-            final_data[process] = []
-
-        cleaned_data = {}
-
-        # =====================================
-        # SAME ORDER AS KANBAN
-        # =====================================
-
-        combined = []
-
-        # =====================================
-        # FIELDS
-        # =====================================
-
-        for field in Field.objects.filter(
-            stage__form=res.form
-        ):
-
-            combined.append({
-
-                "type": "field",
-
-                "order": field.order,
-
-                "key": field.label,
-
-                "value": res.data.get(field.label)
-
-            })
-
-        # =====================================
-        # TABLES
-        # =====================================
-
-        for table in Table.objects.filter(
-            stage__form=res.form
-        ):
-
-            combined.append({
-
-                "type": "table",
-
-                "order": table.order,
-
-                "key": table.name,
-
-                "value": res.data.get(table.name)
-
-            })
-
-        # =====================================
-        # FINAL SORT
-        # =====================================
-
-        combined = sorted(
-            combined,
-            key=lambda x: x["order"]
-        )
-
-        # =====================================
-        # LOOP ORDERED ITEMS
-        # =====================================
-
-        for item in combined:
-
-            key = item["key"]
-
-            val = item["value"]
-
-            if key not in res.data:
-                continue
-
-            # =================================
-            # SKIP HEADER META
-            # =================================
-
-            if key.endswith("_row_header_name"):
-                continue
-
-            # =================================
-            # TABLE DATA
-            # =================================
-
-            if (
-                isinstance(val, list)
-                and
-                val
-                and
-                isinstance(val[0], dict)
-                and
-                "row_name" in val[0]
-            ):
-
-                new_rows = []
-
-                # =============================
-                # FIND TABLE
-                # =============================
-
-                table_obj = Table.objects.filter(
-                    name=key
-                ).first()
-
-                # =============================
-                # ORDERED COLUMNS
-                # =============================
-
-                ordered_columns = []
-
-                if table_obj:
-
-                    ordered_columns = list(
-
-                        table_obj.tablecolumn_set.all()
-                        .order_by("order", "id")
-                        .values_list("name", flat=True)
-
-                    )
-
-                # =============================
-                # PROCESS ROWS
-                # =============================
-
-                for row in val:
-
-                    if not isinstance(row, dict):
-                        continue
-
-                    # =========================
-                    # FILTER EMPTY ROW
-                    # =========================
-
-                    # if not any(
-                    #     str(v).strip()
-                    #     not in ["", "None", "null"]
-                    #     for v in row.values()
-                    # ):
-                    #     continue
-
-                    ordered_row = {}
-
-                    # =========================
-                    # ROW NAME FIRST
-                    # =========================
-
-                    ordered_row["row_name"] = (
-                        row.get("row_name", "")
-                    )
-
-                    # =========================
-                    # KEEP COLUMN ORDER
-                    # =========================
-
-                    for col in ordered_columns:
-
-                        if col in row:
-
-                            ordered_row[col] = (
-                                convert_signature(
-                                    row[col]
-                                )
-                            )
-
-                    # =========================
-                    # EXTRA COLUMNS
-                    # =========================
-
-                    for k, v in row.items():
-
-                        if (
-                            k != "row_name"
-                            and
-                            k not in ordered_columns
-                        ):
-
-                            ordered_row[k] = (
-                                convert_signature(v)
-                            )
-
-                    new_rows.append(ordered_row)
-
-                # =============================
-                # STORE TABLE
-                # =============================
-
-                # =============================
-                # STORE TABLE
-                # =============================
-
-                if new_rows:
-
-                    # =====================================
-                    # TOTAL COLUMN SUPPORT
-                    # =====================================
-
-                    has_total = False
-
-                    total_column_name = ""
-
-                    if table_obj:
-
-                        total_col = (
-                            table_obj.tablecolumn_set
-                            .filter(is_total=True)
-                            .first()
-                        )
-
-                        if total_col:
-
-                            has_total = True
-
-                            total_column_name = (
-                                total_col.name
-                            )
-
-                    # =====================================
-                    # FIND TOTAL VALUE
-                    # =====================================
-
-                    total_value = (
-
-                        res.data.get(f"{key}_total")
-
-                        or
-
-                        res.data.get(
-                            f"{key.lower()}_total"
-                        )
-
-                        or
-
-                        res.data.get(
-                            f"{key.upper()}_total"
-                        )
-
-                        or
-
-                        ""
-                    )
-
-                # =====================================
-                # STORE TABLE
-                # =====================================
-
-                cleaned_data[key] = {
-
-                    "type": "table",
-
-                    "header": res.data.get(
-
-                        f"{key}_row_header_name",
-
-                        (
-                            table_obj.row_header_name
-                            if table_obj
-                            else "Row Name"
-                        )
-                    ),
-
-                    "rows": new_rows,
-
-                    # =================================
-                    # TOTAL SUPPORT
-                    # =================================
-
-                    "show_total": has_total,
-
-                    "total_column": total_column_name,
-
-                    "total_value": total_value
-                }
-            # =================================
-            # NORMAL FIELD
-            # =================================
-
-            else:
-
-                cleaned_data[key] = (
-                    convert_signature(val)
-                )
-
-        # =====================================
-        # FINAL APPEND
-        # =====================================
-
-        final_data[process].append({
-
-            "form_name": res.form.name,
-
-            "data": cleaned_data
-
-        })
-
-    # =========================================
-    # RENDER
-    # =========================================
-
     return render(
-
         request,
-
         "form_builder/data_detail.html",
-
         {
             "data": final_data,
             "ref_id": ref_id,
-            "company": company
+            "company": company,
         }
     )
-    
+
+
+
+
+
+
 from audit_log.models import AuditLog
 
 def delete_stage(request, stage_id):

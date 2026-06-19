@@ -1,0 +1,302 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+
+<div class="container-fluid py-4">
+
+    <!-- Header -->
+
+    <div class="card border-0 shadow-sm mb-4">
+
+        <div class="card-body">
+
+            <div class="d-flex justify-content-between align-items-center">
+
+                <div>
+
+                    <h2 class="fw-bold mb-1">
+
+                        My Checklists
+
+                    </h2>
+
+                    <p class="text-muted mb-0">
+
+                        Assigned routine inspections pending your action.
+
+                    </p>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- KPI CARDS -->
+
+    <div class="row mb-4">
+
+        <div class="col-md-4">
+
+            <div class="card border-0 shadow-sm">
+
+                <div class="card-body text-center">
+
+                    <h6 class="text-muted">
+
+                        Pending
+
+                    </h6>
+
+                    <h2 class="text-primary fw-bold">
+
+                        {{ pending_count }}
+
+                    </h2>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="col-md-4">
+
+            <div class="card border-0 shadow-sm">
+
+                <div class="card-body text-center">
+
+                    <h6 class="text-muted">
+
+                        In Progress
+
+                    </h6>
+
+                    <h2 class="text-warning fw-bold">
+
+                        {{ in_progress_count }}
+
+                    </h2>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="col-md-4">
+
+            <div class="card border-0 shadow-sm">
+
+                <div class="card-body text-center">
+
+                    <h6 class="text-muted">
+
+                        Overdue
+
+                    </h6>
+
+                    <h2 class="text-danger fw-bold">
+
+                        {{ overdue_count }}
+
+                    </h2>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- CHECKLIST TABLE -->
+
+    <div class="card border-0 shadow-sm">
+
+        <div class="card-header bg-white">
+
+            <h5 class="mb-0">
+
+                Assigned Checklists
+
+            </h5>
+
+        </div>
+
+        <div class="card-body p-0">
+
+            <div class="table-responsive">
+
+                <table class="table table-hover align-middle mb-0">
+
+                    <thead class="table-light">
+
+                        <tr>
+
+                            <th>Execution No</th>
+
+                            <th>Routine</th>
+
+                            <th>Assigned To</th>
+
+                            <th>Department</th>
+
+                            <th>Frequency</th>
+
+                            <th>Due Date</th>
+
+                            <th>Status</th>
+
+                            <th width="180">
+
+                                Action
+
+                            </th>
+
+                        </tr>
+
+                    </thead>
+
+                    <tbody>
+
+                        {% for execution in executions %}
+
+                        <tr>
+
+                            <td>
+
+                                <strong>
+
+                                    {{ execution.execution_no }}
+
+                                </strong>
+
+                            </td>
+
+                            <td>
+
+                                {{ execution.schedule.routine.routine_name }}
+
+                            </td>
+                            <td>
+    {{ execution.assigned_to }}
+</td>
+                            <td>
+
+                                {{ execution.schedule.routine.department }}
+
+                            </td>
+
+                            <td>
+
+                                {{ execution.schedule.get_frequency_display }}
+
+                            </td>
+
+                            <td>
+
+                                {{ execution.due_date|date:"d-M-Y H:i" }}
+
+                            </td>
+
+                            <td>
+
+                                {% if execution.status == 'pending' %}
+
+                                    <span class="badge bg-primary">
+
+                                        Pending
+
+                                    </span>
+
+                                {% elif execution.status == 'in_progress' %}
+
+                                    <span class="badge bg-warning">
+
+                                        In Progress
+
+                                    </span>
+
+                                {% elif execution.status == 'overdue' %}
+
+                                    <span class="badge bg-danger">
+
+                                        Overdue
+
+                                    </span>
+
+                                {% else %}
+
+                                    <span class="badge bg-secondary">
+
+                                        {{ execution.status }}
+
+                                    </span>
+
+                                {% endif %}
+
+                            </td>
+
+                            <td>
+
+                                {% if execution.schedule and execution.schedule.routine %}
+
+<a href="{% url 'routine:checklist_item_list' execution.schedule.routine.id %}"
+   class="btn btn-success btn-sm">
+
+    <i class="fas fa-play me-1"></i>
+
+    Start Checklist
+
+</a>
+
+{% else %}
+
+<span class="badge bg-danger">
+
+    Invalid Schedule
+
+</span>
+
+{% endif %}
+
+                            </td>
+
+                        </tr>
+
+                        {% empty %}
+
+                        <tr>
+
+                            <td colspan="7"
+                                class="text-center py-5">
+
+                                <div class="text-muted">
+
+                                    No pending checklists assigned.
+
+                                </div>
+
+                            </td>
+
+                        </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

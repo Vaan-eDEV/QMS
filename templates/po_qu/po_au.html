@@ -266,7 +266,10 @@ body{
                 <h3>{{ workorders|length }}</h3>
                 <p>Work Orders</p>
             </div>
-
+            <div class="stat-card">
+                <h3>{{ qa_reports|length }}</h3>
+                <p>QA Reports</p>
+            </div>
         </div>
 
     </div>
@@ -308,7 +311,12 @@ body{
             Work Orders
 
         </button>
+        <button class="doc-tab"
+            onclick="showTab('qaTab', this)">
 
+            QA Reports
+
+        </button>
     </div>
 
     <!-- ===================== PO ===================== -->
@@ -882,7 +890,11 @@ body{
                                     View
 
                                 </a>
-
+                                   <a href="{% url 'po_qu:create_qa' wo.id %}"
+       class="view-btn"
+       style="margin-left:5px;">
+        QA
+    </a>
                             </td>
 
                         </tr>
@@ -914,6 +926,124 @@ body{
         </div>
 
     </div>
+    <!-- ===================== QA ===================== -->
+<div id="qaTab" style="display:none;">
+
+    <div class="section-card">
+
+        <div class="section-header">
+
+            <h5>
+                QA Inspection Reports
+            </h5>
+
+      
+
+        </div>
+
+        <div class="table-responsive">
+
+            <table class="table table-modern">
+
+                <thead>
+
+                    <tr>
+
+                        <th>QA Number</th>
+                        <th>Part Number</th>
+                        <th>Revision</th>
+                        <th>Date</th>
+                        <th>Status</th>
+                        <th>Action</th>
+
+                    </tr>
+
+                </thead>
+
+                <tbody>
+
+                    {% for qa in qa_reports %}
+
+                    <tr>
+
+                        <td class="doc-number">
+                            {{ qa.qa_number }}
+                        </td>
+
+                        <td>
+                            {{ qa.part_number }}
+                        </td>
+
+                        <td>
+                            {{ qa.revision }}
+                        </td>
+
+                        <td>
+                            {{ qa.created_at|date:"d M Y" }}
+                        </td>
+
+                        <td>
+
+                            {% if qa.status == "approved" %}
+
+                                <span class="status-badge status-approved">
+                                    Approved
+                                </span>
+
+                            {% elif qa.status == "prepared" %}
+
+                                <span class="status-badge status-prepared">
+                                    Prepared
+                                </span>
+
+                            {% else %}
+
+                                <span class="status-badge status-draft">
+                                    Draft
+                                </span>
+
+                            {% endif %}
+
+                        </td>
+
+                        <td>
+
+                            <a href="{% url 'po_qu:qa_detail' qa.id %}"
+                               class="view-btn">
+
+                                View
+
+                            </a>
+
+                        </td>
+
+                    </tr>
+
+                    {% empty %}
+
+                    <tr>
+
+                        <td colspan="6">
+
+                            <div class="empty-box">
+                                No QA Reports Found
+                            </div>
+
+                        </td>
+
+                    </tr>
+
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+</div>
 
 </div>
 
@@ -921,7 +1051,7 @@ body{
 
 function showTab(tabId, btn){
 
-    ["poTab", "rfqTab", "qtTab", "dcTab", "woTab"].forEach(id => {
+    ["poTab", "rfqTab", "qtTab", "dcTab", "woTab", "qaTab"].forEach(id => {
 
         document.getElementById(id).style.display = "none";
 

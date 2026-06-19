@@ -306,7 +306,12 @@ class FormBatch(models.Model):
         blank=True,
         related_name="origin_batches"
     )
-
+    rfq_ref_id = models.CharField(
+        max_length=100,
+        blank=True,
+        null=True,
+        db_index=True
+    )
     is_active = models.BooleanField(default=True)
     class Meta:
         ordering = ["-created_at"]

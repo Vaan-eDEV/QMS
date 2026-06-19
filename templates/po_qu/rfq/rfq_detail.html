@@ -80,7 +80,13 @@
         + New RFQ
 
     </a>
-
+    <a
+    href="{% url 'po_qu:generate_rfq_pdf' rfq.id %}"
+    target="_blank"
+    class="btn btn-danger"
+>
+    Download PDF
+</a>
     <a href="{% url 'po_qu:edit_rfq' rfq.id %}"
        class="btn btn-warning">
 

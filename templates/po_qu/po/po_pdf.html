@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html>
 <head>
@@ -7,49 +8,76 @@
 <style>
 @page {
     size: A4;
-    margin: 15mm;
+    margin: 10mm;
 
     @bottom-center {
-        content: "© VAAN Aerospace — Page " counter(page) " of " counter(pages);
-        font-size: 10px;
+        content: "© VAAN — Page " counter(page) " of " counter(pages);
+        font-size: 9px;
         color: #666;
     }
 }
 
 body {
-    font-family: Arial, sans-serif;
+    font-family: Arial, Helvetica, sans-serif;
     font-size: 11px;
     color: #222;
+    line-height: 1.4;
+}
+
+/* WATERMARK */
+.watermark {
+    position: fixed;
+    top: 45%;
+    left: 50%;
+    width: 280px;
+    transform: translate(-50%, -50%);
+    opacity: 0.08;
 }
 
 /* HEADER */
 .header {
     text-align: center;
-    margin-bottom: 15px;
+    margin-bottom: 12px;
 }
 
-.logo-text {
-    font-size: 40px;
-    letter-spacing: 6px;
-    color: #2b7cff;
+.company-logo {
+    height: 60px;
 }
 
 .company-info {
     font-size: 10px;
+    line-height: 1.5;
     margin-top: 5px;
+}
+.page-watermark {
+    position: fixed;
+
+    top: 50%;
+    left: 50%;
+
+    width: 650px;
+    
+
+    transform: translate(-50%, -50%);
+
+    opacity: 0.06;
+
+    z-index: -1;
 }
 
 /* TITLE */
 .title {
+    text-align: left;
     color: #2b7cff;
-    font-size: 20px;
+    font-size: 28px;
     font-weight: bold;
-    margin: 20px 0;
+    margin: 15px 0;
 }
 
-/* TOP GRID */
+/* TOP */
 .top-section {
     width: 100%;
+    border-collapse: collapse;
 }
 
 .top-section td {
@@ -61,36 +89,51 @@ body {
 }
 
 .qr img {
-    width: 100px;
+    width: 90px;
 }
 
-/* ADDRESS BLOCK */
+/* SECTIONS */
 .block-title {
     font-weight: bold;
-    margin-bottom: 5px;
+    font-size: 14px;
+    color: #2b7cff;
+    margin-bottom: 4px;
 }
 
 .section {
     margin-top: 10px;
 }
 
-/* TABLE */
+/* ADDRESS */
+.address-table {
+    width: 100%;
+    margin-top: 15px;
+    border-collapse: collapse;
+}
+
+.address-table td {
+    vertical-align: top;
+    padding: 4px;
+}
+
+/* ITEM TABLE */
 .table {
     width: 100%;
+    margin-top: 18px;
     border-collapse: collapse;
-    margin-top: 20px;
 }
 
 .table th {
     background: #2b7cff;
-    color: #fff;
-    padding: 6px;
+    color: white;
+    padding: 7px;
     font-size: 10px;
+    text-align: left;
 }
 
 .table td {
-    padding: 6px;
     border-bottom: 1px solid #ddd;
+    padding: 6px;
 }
 
 .num {
@@ -99,84 +142,159 @@ body {
 
 /* TOTAL */
 .total {
-    width: 40%;
+    width: 45%;
     margin-left: auto;
-    margin-top: 10px;
+    margin-top: 15px;
+    border-collapse: collapse;
 }
 
 .total td {
-    padding: 4px;
+    padding: 5px;
+    border-bottom: 1px solid #ddd;
 }
 
-.total .bold {
+.grand-total td {
+    font-weight: bold;
+    font-size: 12px;
+    background: #f5f9ff;
+    border-top: 2px solid #2b7cff;
+    border-bottom: 2px solid #2b7cff;
+}
+
+/* SIGNATURE SECTION */
+.signature-table {
+    width: 60%;
+    margin-top: 10px;
+    border-collapse: separate;
+    border-spacing: 3px;
+}
+
+.signature-table td {
+    width: 33.33%;
+    vertical-align: top;
+}
+
+/* SIGN BOX */
+.digital-sign-box {
+    position: relative;
+    overflow: hidden;
+    padding: 3px;
+    min-height: 35px;
+    text-align: center;
+}
+
+/* WATERMARK */
+.sign-watermark {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 60px;
+    transform: translate(-50%, -50%);
+    opacity: 0.6;
+    z-index: 0;
+}
+
+.sign-watermark
+
+
+
+/* TEXT ABOVE WATERMARK */
+.digital-sign-title,
+.digital-sign-name,
+.digital-sign-date,
+.digital-sign-id,
+.signature-role {
+    position: relative;
+    z-index: 10;
+}
+
+/* TEXT STYLES */
+.digital-sign-title {
+    font-size: 6px;
+    color: #444;
+    margin-bottom: 1px;
+}
+
+.digital-sign-name {
+    font-size: 8px;
+    font-weight: bold;
+    margin-bottom: 1px;
+}
+
+.digital-sign-date {
+    font-size: 6px;
+    color: #333;
+    margin-bottom: 1px;
+}
+
+.digital-sign-id {
+    font-size: 5px;
+    color: #666;
+    line-height: 1.1;
+    word-break: break-word;
+}
+
+.signature-role {
+    font-size: 6px;
+    color: #666;
+    margin-top: 1px;
     font-weight: bold;
 }
-
-/* SIGNATURE */
-.signature-section {
-    margin-top: 30px;
-    display: flex;
-    justify-content: space-between;
-}
-
-.sign-box {
-    width: 45%;
-    text-align: center;
-}
-
-.sign-line {
-    border-top: 1px dashed #999;
-    margin-top: 25px;
-    padding-top: 5px;
-    font-size: 10px;
-}
-
+/* NOTES */
 .notes-terms {
     position: fixed;
-    bottom: 40px;   /* 👈 adjust spacing */
-    left: 15mm;
-    right: 15mm;
-    font-size: 10px;
+    bottom: 12mm;
+    padding-top: 8px;
+    font-size: 9px;
 }
 
-.footer {
-    position: fixed;
-    bottom: 10px;
-    text-align: center;
-    font-size: 10px;
-    color: #666;
+.notes-terms b {
+    color: #2b7cff;
+}
+
+/* PRE */
+.footer-note pre {
+    margin: 0;
+    white-space: pre-wrap;
+    font-family: inherit;
 }
 </style>
 </head>
 
 <body>
 
+<!-- WATERMARK -->
+<img src="{{logo_path }}" class="page-watermark">
+
 <!-- HEADER -->
 <div class="header">
 
     {% if logo_path %}
-    <img src="{{ logo_path }}" style="height:70px;">
+        <img src="{{ logo_path }}" class="company-logo">
     {% endif %}
 
     <div class="company-info">
-        183A, Fifth street, Cross Cut Road, Gandhipuram, Coimbatore - 641012<br>
-        GSTIN: 33AACV4149D1ZF | Phone: 7397624456
+        183A, Fifth Street, Cross Cut Road, Gandhipuram,
+        Coimbatore - 641012<br>
+        GSTIN: 33AACV4149D1ZF | 33AALCV0503H1ZN<br>
+        Phone: 7397624456
     </div>
+
 </div>
 
 <!-- TITLE -->
 <div class="title">
-    Purchase Order #{{ po.po_number }}
+    #{{ po.po_number }}
 </div>
 
-<!-- TOP -->
+<!-- TOP SECTION -->
 <table class="top-section">
 <tr>
 
 <td width="60%">
     <b>Reference:</b> {{ po.reference }}<br>
     <b>Date:</b> {{ po.date }}
-    
+
     <div class="section">
         <div class="block-title">Supplier</div>
         {{ po.supplier_name }}<br>
@@ -188,19 +306,19 @@ body {
 
 <td width="40%" class="qr">
     {% if qr_code_path %}
-    <img src="{{ qr_code_path }}">
+        <img src="{{ qr_code_path }}">
     {% endif %}
 </td>
 
 </tr>
 </table>
 
-<!-- BILLING / SHIPPING -->
-<table width="100%" style="margin-top:15px;">
+<!-- ADDRESSES -->
+<table class="address-table">
 <tr>
 
 <td width="50%">
-    <div class="block-title">Billing</div>
+    <div class="block-title">Billing Address</div>
     {{ po.billing_name }}<br>
     {{ po.billing_address }}<br>
     Phone: {{ po.billing_phone }}<br>
@@ -208,7 +326,7 @@ body {
 </td>
 
 <td width="50%" style="text-align:right;">
-    <div class="block-title">Shipping</div>
+    <div class="block-title">Shipping Address</div>
     {{ po.shipping_name }}<br>
     {{ po.shipping_address }}<br>
     Phone: {{ po.shipping_phone }}<br>
@@ -222,69 +340,154 @@ body {
 <table class="table">
 <thead>
 <tr>
-<th>#</th>
-<th>Product</th>
-<th>Description</th>
-<th>Unit</th>
-<th>Qty</th>
-<th>Rate</th>
-<th>Amount</th>
+    <th>#</th>
+    <th>Product</th>
+    <th>Description</th>
+    <th>Unit</th>
+    <th>Qty</th>
+    <th>Rate</th>
+    <th>Amount</th>
 </tr>
 </thead>
 
 <tbody>
 {% for item in po.items.all %}
 <tr>
-<td>{{ forloop.counter }}</td>
-<td>{{ item.product_code }}</td>
-<td>{{ item.description }}</td>
-<td>{{ item.unit }}</td>
-<td class="num">{{ item.quantity }}</td>
-<td class="num">{{ item.rate }}</td>
-<td class="num">{{ item.amount }}</td>
+    <td>{{ forloop.counter }}</td>
+    <td>{{ item.product_code }}</td>
+    <td>{{ item.description }}</td>
+    <td>{{ item.unit }}</td>
+    <td class="num">{{ item.quantity }}</td>
+    <td class="num">{{ item.rate }}</td>
+    <td class="num">{{ item.amount }}</td>
 </tr>
 {% endfor %}
 </tbody>
 </table>
 
-<!-- TOTAL -->
+<!-- TOTALS -->
 <table class="total">
-<tr><td>Subtotal</td><td class="num">₹ {{ po.subtotal }}</td></tr>
-<tr><td>Discount ({{ po.discount_percentage }}%)</td><td class="num">₹ {{ po.discount_amount }}</td></tr>
-<tr><td>CGST ({{ po.cgst_percentage }}%)</td><td class="num">₹ {{ po.cgst_amount }}</td></tr>
-<tr><td>SGST ({{ po.sgst_percentage }}%)</td><td class="num">₹ {{ po.sgst_amount }}</td></tr>
-<tr><td>IGST ({{ po.igst_percentage }}%)</td><td class="num">₹ {{ po.igst_amount }}</td></tr>
-<tr class="bold">
-    <td>Grand Total</td>
+<tr>
+    <td>Subtotal</td>
+    <td class="num">₹ {{ po.subtotal }}</td>
+</tr>
+
+<tr>
+    <td>Discount ({{ po.discount_percentage }}%)</td>
+    <td class="num">₹ {{ po.discount_amount }}</td>
+</tr>
+
+<tr>
+    <td>CGST ({{ po.cgst_percentage }}%)</td>
+    <td class="num">₹ {{ po.cgst_amount }}</td>
+</tr>
+
+<tr>
+    <td>SGST ({{ po.sgst_percentage }}%)</td>
+    <td class="num">₹ {{ po.sgst_amount }}</td>
+</tr>
+
+<tr>
+    <td>IGST ({{ po.igst_percentage }}%)</td>
+    <td class="num">₹ {{ po.igst_amount }}</td>
+</tr>
+
+<tr class="grand-total">
+    <td><b>Grand Total</b></td>
     <td class="num"><b>₹ {{ po.grand_total }}</b></td>
 </tr>
 </table>
 
-<!-- SIGNATURE -->
-<div class="signature-section">
+<!-- SIGNATURES -->
+<table class="signature-table">
+<tr>
 
-<div class="sign-box">
-    <div class="sign-line">
-        Prepared By<br>
-        {{ po.prepared_by }}<br>
-        {{ po.prepared_at|date:"d M Y H:i" }}<br>
-        {{ po.prepared_signature_id }}
+<td>
+    <div class="digital-sign-box">
+        <img src="{{ logo_path }}" class="sign-watermark">
+        <div class="digital-sign-title">
+            ✓ Digitally Signed
+        </div>
+
+        <div class="digital-sign-name">
+            {{ po.prepared_by.first_name }} {{ po.prepared_by.last_name }}
+        </div>
+
+        <div class="digital-sign-date">
+            {{ po.prepared_at|date:"d M Y, g:i a" }}
+        </div>
+
+        <div class="digital-sign-id">
+            {{ po.prepared_signature_id|default:"-" }}
+        </div>
+
+        <div class="signature-role">
+            Prepared By
+        </div>
+
     </div>
-</div>
+</td>
 
-<div class="sign-box">
-    <div class="sign-line">
-        Approved By<br>
-        {{ po.approved_by }}<br>
-        {{ po.approved_at|date:"d M Y H:i" }}<br>
-        {{ po.approved_signature_id }}
+<td>
+    <div class="digital-sign-box">
+        <img src="{{ logo_path }}" class="sign-watermark">
+        <div class="digital-sign-title">
+            ✓ Digitally Signed
+        </div>
+
+        <div class="digital-sign-name">
+            {{ po.reviewed_by.first_name }} {{ po.reviewed_by.last_name }}
+        </div>
+
+        <div class="digital-sign-date">
+            {{ po.reviewed_at|date:"d M Y, g:i a" }}
+        </div>
+
+        <div class="digital-sign-id">
+            {{ po.reviewed_signature_id|default:"-" }}
+        </div>
+
+        <div class="signature-role">
+            Reviewed By
+        </div>
+
     </div>
-</div>
+</td>
+
+<td>
+    <div class="digital-sign-box">
+
+    <img src="{{ logo_path }}" class="sign-watermark">
+
+    <div class="digital-sign-title">
+        ✓ Digitally Signed
+    </div>
+
+    <div class="digital-sign-name">
+        {{ po.approved_by.first_name }} {{ po.approved_by.last_name }}
+    </div>
+
+    <div class="digital-sign-date">
+        {{ po.approved_at|date:"d M Y, g:i a" }}
+    </div>
+
+    <div class="digital-sign-id">
+        {{ po.approved_signature_id|default:"-" }}
+    </div>
+
+    <div class="signature-role">
+        Approved By
+    </div>
 
 </div>
+</td>
 
-<!-- NOTES & TERMS FIXED -->
+</tr>
+</table>
+
+<!-- NOTES -->
 <div class="notes-terms">
+
     <div>
         <b>Note</b><br>
         {{ po.note|default:"-" }}
@@ -294,12 +497,8 @@ body {
         <b>Terms</b><br>
         {{ po.terms|default:"-" }}
     </div>
-</div>
 
-<!-- FOOTER
-<div class="footer">
-    Created by QMS | Digital ID: {{ po.digital_id }}
-</div> -->
+</div>
 
 </body>
 </html>

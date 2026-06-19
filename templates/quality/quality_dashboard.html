@@ -1,0 +1,313 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="container-fluid">
+
+    <!-- PAGE HEADER -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+
+        <div>
+            <h2 class="fw-bold mb-0">
+                Quality Engineering Dashboard
+            </h2>
+
+            <small class="text-muted">
+                Calibration • MSA • SPC • Six Sigma
+            </small>
+        </div>
+
+        <div>
+            <a href="{% url 'instrument_create' %}"
+               class="btn btn-primary">
+                + New Instrument
+            </a>
+
+            <a href="{% url 'calibration_create' %}"
+               class="btn btn-success">
+                + Calibration Entry
+            </a>
+        </div>
+
+    </div>
+
+
+    <!-- KPI CARDS -->
+
+    <div class="row g-3 mb-4">
+
+        <div class="col-md-3">
+
+            <div class="card shadow-sm border-0 h-100">
+
+                <div class="card-body">
+
+                    <small class="text-muted">
+                        Total Instruments
+                    </small>
+
+                    <h2 class="fw-bold">
+                        {{ total_instruments }}
+                    </h2>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="col-md-3">
+
+            <div class="card shadow-sm border-0 h-100">
+
+                <div class="card-body">
+
+                    <small class="text-muted">
+                        Due Within 30 Days
+                    </small>
+
+                    <h2 class="fw-bold text-warning">
+                        {{ due_count }}
+                    </h2>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="col-md-3">
+
+            <div class="card shadow-sm border-0 h-100">
+
+                <div class="card-body">
+
+                    <small class="text-muted">
+                        Overdue Instruments
+                    </small>
+
+                    <h2 class="fw-bold text-danger">
+                        {{ overdue_count }}
+                    </h2>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="col-md-3">
+
+            <div class="card shadow-sm border-0 h-100">
+
+                <div class="card-body">
+
+                    <small class="text-muted">
+                        Calibration Records
+                    </small>
+
+                    <h2 class="fw-bold">
+                        {{ calibration_count|default:"0" }}
+                    </h2>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- QUICK ACCESS -->
+
+    <div class="row g-3 mb-4">
+
+        <div class="col-md-3">
+
+            <a href="{% url 'instrument_list' %}"
+               class="text-decoration-none">
+
+                <div class="card border-0 shadow-sm h-100">
+
+                    <div class="card-body text-center">
+
+                        <h1>📏</h1>
+
+                        <h5>
+                            Instruments
+                        </h5>
+
+                    </div>
+
+                </div>
+
+            </a>
+
+        </div>
+
+        <div class="col-md-3">
+
+            <a href="{% url 'calibration_list' %}"
+               class="text-decoration-none">
+
+                <div class="card border-0 shadow-sm h-100">
+
+                    <div class="card-body text-center">
+
+                        <h1>🧪</h1>
+
+                        <h5>
+                            Calibration
+                        </h5>
+
+                    </div>
+
+                </div>
+
+            </a>
+
+        </div>
+
+        <div class="col-md-3">
+
+            <div class="card border-0 shadow-sm h-100">
+                <a href="{% url 'msa_dashboard' %}"
+               class="text-decoration-none">
+                    <div class="card-body text-center">
+
+                        <h1>📊</h1>
+
+                        <h5>
+                            MSA
+                        </h5>
+
+                </div>
+                </a>
+
+            </div>
+
+        </div>
+
+        <div class="col-md-3">
+
+            <div class="card border-0 shadow-sm h-100">
+
+                <div class="card-body text-center">
+
+                    <h1>📈</h1>
+
+                    <h5>
+                        SPC
+                    </h5>
+
+                    <small class="text-muted">
+                        Coming Soon
+                    </small>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- RECENT CALIBRATIONS -->
+
+    <div class="card shadow-sm border-0">
+
+        <div class="card-header bg-white">
+
+            <h5 class="mb-0">
+                Recent Calibration Records
+            </h5>
+
+        </div>
+
+        <div class="card-body">
+
+            {% if recent_calibrations %}
+
+            <div class="table-responsive">
+
+                <table class="table table-hover">
+
+                    <thead>
+
+                        <tr>
+
+                            <th>Instrument</th>
+                            <th>Calibration Date</th>
+                            <th>Next Due</th>
+                            <th>Result</th>
+
+                        </tr>
+
+                    </thead>
+
+                    <tbody>
+
+                        {% for calibration in recent_calibrations %}
+
+                        <tr>
+
+                            <td>
+                                {{ calibration.instrument.name }}
+                            </td>
+
+                            <td>
+                                {{ calibration.calibration_date }}
+                            </td>
+
+                            <td>
+                                {{ calibration.next_due_date }}
+                            </td>
+
+                            <td>
+
+                                {% if calibration.result == "PASS" %}
+                                    <span class="badge bg-success">
+                                        PASS
+                                    </span>
+                                {% else %}
+                                    <span class="badge bg-danger">
+                                        FAIL
+                                    </span>
+                                {% endif %}
+
+                            </td>
+
+                        </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+            {% else %}
+
+                <div class="text-center p-4">
+
+                    <h6 class="text-muted">
+                        No calibration records found.
+                    </h6>
+
+                </div>
+
+            {% endif %}
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

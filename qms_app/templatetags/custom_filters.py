@@ -4,11 +4,18 @@ register = template.Library()
 
 @register.filter
 def get_item(dictionary, key):
-    if not dictionary:
+
+    if not isinstance(dictionary, dict):
         return ""
-    return dictionary.get(key.lower().replace(" ", ""), "")
 
+    key = str(key).strip()
 
+    for k, v in dictionary.items():
+
+        if str(k).strip() == key:
+            return v
+
+    return ""
 @register.filter
 def split_comma(value):
     if not value:

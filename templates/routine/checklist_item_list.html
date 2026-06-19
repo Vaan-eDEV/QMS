@@ -1,0 +1,600 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+
+<div class="container-fluid py-4">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+
+        <div>
+
+            <h2 class="fw-bold">
+                {{ routine.routine_name }}
+            </h2>
+
+            <p class="text-muted mb-0">
+                Complete the checklist and upload photo evidence.
+            </p>
+
+        </div>
+
+        <a href="{% url 'routine:routine_list' %}"
+           class="btn btn-secondary">
+
+            Back
+
+        </a>
+
+    </div>
+
+    {% if messages %}
+
+        {% for message in messages %}
+
+            <div class="alert alert-{{ message.tags }}">
+
+                {{ message }}
+
+            </div>
+
+        {% endfor %}
+
+    {% endif %}
+
+    <form method="post"
+          enctype="multipart/form-data">
+
+        {% csrf_token %}
+
+        {% for item in checklist_items %}
+
+        <div class="card border-0 shadow-sm mb-4">
+
+            <div class="card-header bg-white">
+
+                <div class="d-flex justify-content-between">
+
+                    <h5 class="mb-0">
+
+                        {{ item.sequence }}.
+                        {{ item.question }}
+
+                    </h5>
+
+                    {% if item.is_critical %}
+
+                        <span class="badge bg-danger">
+
+                            Critical
+
+                        </span>
+
+                    {% endif %}
+
+                </div>
+
+            </div>
+
+            <div class="card-body">
+
+                {% if item.expected_result %}
+
+                <div class="mb-3">
+
+                    <small class="text-muted">
+
+                        Expected Result:
+
+                    </small>
+
+                    <div>
+
+                        {{ item.expected_result }}
+
+                    </div>
+
+                </div>
+
+                {% endif %}
+
+                <!-- PASS FAIL -->
+
+                {% if item.response_type == 'pass_fail' %}
+
+                <div class="mb-3">
+
+                    <label class="form-label">
+
+                        Response
+
+                    </label>
+
+                    <div>
+
+                        <div class="form-check form-check-inline">
+
+                            <input
+                                class="form-check-input"
+                                type="radio"
+                                name="response_{{ item.id }}"
+                                value="Pass"
+                                required>
+
+                            <label class="form-check-label">
+
+                                Pass
+
+                            </label>
+
+                        </div>
+
+                        <div class="form-check form-check-inline">
+
+                            <input
+                                class="form-check-input"
+                                type="radio"
+                                name="response_{{ item.id }}"
+                                value="Fail">
+
+                            <label class="form-check-label">
+
+                                Fail
+
+                            </label>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                {% endif %}
+
+                <!-- YES NO -->
+
+                {% if item.response_type == 'yes_no' %}
+
+                <div class="mb-3">
+
+                    <label class="form-label">
+
+                        Response
+
+                    </label>
+
+                    <div>
+
+                        <div class="form-check form-check-inline">
+
+                            <input
+                                class="form-check-input"
+                                type="radio"
+                                name="response_{{ item.id }}"
+                                value="Yes"
+                                required>
+
+                            <label class="form-check-label">
+
+                                Yes
+
+                            </label>
+
+                        </div>
+
+                        <div class="form-check form-check-inline">
+
+                            <input
+                                class="form-check-input"
+                                type="radio"
+                                name="response_{{ item.id }}"
+                                value="No">
+
+                            <label class="form-check-label">
+
+                                No
+
+                            </label>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                {% endif %}
+
+                <!-- NUMERIC -->
+
+                {% if item.response_type == 'numeric' %}
+
+                <div class="mb-3">
+
+                    <label class="form-label">
+
+                        Value
+
+                    </label>
+
+                    <input
+                        type="number"
+                        step="any"
+                        class="form-control"
+                        name="response_{{ item.id }}"
+                        required>
+
+                </div>
+
+                {% endif %}
+
+                <!-- TEXT -->
+
+                {% if item.response_type == 'text' %}
+
+                <div class="mb-3">
+
+                    <label class="form-label">
+
+                        Response
+
+                    </label>
+
+                    <textarea
+                        name="response_{{ item.id }}"
+                        class="form-control"
+                        rows="3"
+                        required></textarea>
+
+                </div>
+
+                {% endif %}
+
+                <!-- COMMENTS -->
+
+                <div class="mb-3">
+
+                    <label class="form-label">
+
+                        Comments
+
+                    </label>
+
+                    <textarea
+                        name="comment_{{ item.id }}"
+                        class="form-control"
+                        rows="2"></textarea>
+
+                </div>
+
+                <!-- PHOTO -->
+
+{% if item.photo_required %}
+
+<div class="mb-3">
+
+    <label class="form-label">
+        Photo Evidence
+    </label>
+
+    <div>
+
+        <button
+            type="button"
+            class="btn btn-primary"
+            onclick="openCamera('{{ item.id }}')">
+
+            <i class="fas fa-camera"></i>
+            Capture Image
+
+        </button>
+
+    </div>
+
+    <input
+        type="hidden"
+        name="photo_data_{{ item.id }}"
+        id="photo_data_{{ item.id }}">
+
+    <div class="mt-3">
+
+    <img
+        id="preview_{{ item.id }}"
+        class="img-fluid rounded border"
+        style="display:none;max-height:250px;">
+
+    <div
+        id="recapture_div_{{ item.id }}"
+        style="display:none;"
+        class="mt-2">
+
+        <button
+            type="button"
+            class="btn btn-warning btn-sm"
+            onclick="openCamera('{{ item.id }}')">
+
+            <i class="fas fa-redo"></i>
+            Recapture
+
+        </button>
+
+    </div>
+
+</div>
+    <small class="text-danger d-block mt-2">
+
+        Photo required for this question.
+
+    </small>
+
+</div>
+
+{% endif %}
+
+            </div>
+
+        </div>
+
+        {% endfor %}
+
+        <div class="text-end">
+
+            <button
+                type="submit"
+                class="btn btn-success btn-lg">
+
+                Submit Checklist
+
+            </button>
+
+        </div>
+
+    </form>
+
+</div>
+
+
+<!-- CAMERA MODAL -->
+
+<div class="modal fade"
+     id="cameraModal"
+     tabindex="-1"
+     aria-hidden="true">
+
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+
+        <div class="modal-content">
+
+            <div class="modal-header">
+
+                <h5 class="modal-title">
+
+                    <i class="fas fa-camera"></i>
+                    Capture Photo
+
+                </h5>
+
+                <button
+                    type="button"
+                    class="btn-close"
+                    data-bs-dismiss="modal">
+                </button>
+
+            </div>
+
+            <div class="modal-body">
+
+                <video
+                    id="cameraVideo"
+                    autoplay
+                    playsinline
+                    class="w-100 border rounded">
+                </video>
+
+                <canvas
+                    id="cameraCanvas"
+                    style="display:none;">
+                </canvas>
+
+            </div>
+
+            <div class="modal-footer">
+
+                <button
+                    type="button"
+                    class="btn btn-secondary"
+                    onclick="closeCamera()">
+
+                    Cancel
+
+                </button>
+
+                <button
+                    type="button"
+                    class="btn btn-success"
+                    onclick="capturePhoto()">
+
+                    <i class="fas fa-camera"></i>
+                    Capture
+
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+
+let stream = null;
+let currentQuestion = null;
+
+async function openCamera(questionId){
+
+    currentQuestion = questionId;
+
+    const modal = new bootstrap.Modal(
+        document.getElementById(
+            'cameraModal'
+        )
+    );
+
+    modal.show();
+
+    try{
+
+        stream =
+            await navigator.mediaDevices.getUserMedia({
+
+                video:{
+                    facingMode:{
+                        ideal:'environment'
+                    }
+                },
+
+                audio:false
+
+            });
+
+        const video =
+            document.getElementById(
+                'cameraVideo'
+            );
+
+        video.srcObject = stream;
+
+    }
+    catch(error){
+
+        console.error(error);
+
+        alert(
+            "Unable to access camera."
+        );
+
+    }
+
+}
+
+function capturePhoto(){
+
+    const video =
+        document.getElementById(
+            'cameraVideo'
+        );
+
+    const canvas =
+        document.getElementById(
+            'cameraCanvas'
+        );
+
+    const ctx =
+        canvas.getContext('2d');
+
+    canvas.width =
+        video.videoWidth;
+
+    canvas.height =
+        video.videoHeight;
+
+    ctx.drawImage(
+        video,
+        0,
+        0,
+        canvas.width,
+        canvas.height
+    );
+
+    const imageData =
+        canvas.toDataURL(
+            'image/jpeg',
+            0.9
+        );
+
+    document.getElementById(
+        'photo_data_' + currentQuestion
+    ).value = imageData;
+
+    const preview =
+        document.getElementById(
+            'preview_' + currentQuestion
+        );
+
+    preview.src = imageData;
+    preview.style.display = 'block';
+
+    const recaptureDiv =
+        document.getElementById(
+            'recapture_div_' + currentQuestion
+        );
+
+    if(recaptureDiv){
+
+        recaptureDiv.style.display =
+            'block';
+
+    }
+
+    closeCamera();
+
+}
+
+function closeCamera(){
+
+    if(stream){
+
+        stream
+            .getTracks()
+            .forEach(
+                track => track.stop()
+            );
+
+        stream = null;
+
+    }
+
+    const modalElement =
+        document.getElementById(
+            'cameraModal'
+        );
+
+    const modal =
+        bootstrap.Modal.getInstance(
+            modalElement
+        );
+
+    if(modal){
+
+        modal.hide();
+
+    }
+
+}
+
+document
+.getElementById(
+    'cameraModal'
+)
+.addEventListener(
+    'hidden.bs.modal',
+    function(){
+
+        if(stream){
+
+            stream
+                .getTracks()
+                .forEach(
+                    track => track.stop()
+                );
+
+            stream = null;
+
+        }
+
+    }
+);
+
+</script>
+{% endblock %}

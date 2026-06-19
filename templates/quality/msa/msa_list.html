@@ -1,0 +1,592 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="container-fluid">
+
+    <!-- HEADER -->
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+
+        <div>
+
+            <h2 class="fw-bold mb-0">
+                MSA Studies
+            </h2>
+
+            <small class="text-muted">
+                Measurement System Analysis
+            </small>
+
+        </div>
+
+        <div>
+
+            <a href="{% url 'quality_dashboard' %}"
+               class="btn btn-secondary">
+
+                Dashboard
+
+            </a>
+
+            <button
+    class="btn btn-primary"
+    data-bs-toggle="modal"
+    data-bs-target="#msaModal">
+
+    + New MSA Study
+
+</button>
+
+        </div>
+
+    </div>
+
+    <!-- TABLE -->
+
+    <div class="card shadow-sm border-0">
+
+        <div class="card-body">
+
+            <div class="table-responsive">
+
+                <table class="table table-hover align-middle">
+
+                    <thead class="table-light">
+
+                        <tr>
+
+                            <th>MSA No</th>
+
+                            <th>Instrument</th>
+
+                            <th>Study Type</th>
+
+                            <th>Study Date</th>
+
+                            <th>Created By</th>
+
+                            <th width="180">
+                                Actions
+                            </th>
+
+                        </tr>
+
+                    </thead>
+
+                    <tbody>
+
+                        {% for study in studies %}
+
+                        <tr>
+
+                            <td>
+
+                                <strong>
+                                    {{ study.msa_no }}
+                                </strong>
+
+                            </td>
+
+                            <td>
+
+                                {{ study.instrument.instrument_id }}
+
+                                <br>
+
+                                <small class="text-muted">
+                                    {{ study.instrument.name }}
+                                </small>
+
+                            </td>
+
+                            <td>
+
+                                <span class="badge bg-info">
+
+                                    {{ study.get_study_type_display }}
+
+                                </span>
+
+                            </td>
+
+                            <td>
+
+                                {{ study.study_date }}
+
+                            </td>
+
+                            <td>
+
+                                {{ study.created_by }}
+
+                            </td>
+
+                            <td>
+
+                                <button
+    class="btn btn-sm btn-primary"
+    data-bs-toggle="modal"
+    data-bs-target="#msaDetail{{ study.id }}">
+
+    View
+
+</button>
+
+                                <a href="{% url 'msa_add_reading' study.id %}"
+                                   class="btn btn-sm btn-success">
+
+                                    Add Reading
+
+                                </a>
+
+                            </td>
+
+                        </tr>
+                        <div class="modal fade"
+     id="msaDetail{{ study.id }}"
+     tabindex="-1">
+
+    <div class="modal-dialog modal-lg">
+
+        <div class="modal-content">
+
+            <div class="modal-header">
+
+                <h5 class="modal-title">
+
+                    {{ study.msa_no }}
+
+                </h5>
+
+                <button
+                    type="button"
+                    class="btn-close"
+                    data-bs-dismiss="modal">
+                </button>
+
+            </div>
+
+            <div class="modal-body">
+
+    <div class="row">
+
+        <div class="col-md-6 mb-3">
+
+            <strong>MSA Number</strong>
+            <br>
+            {{ study.msa_no }}
+
+        </div>
+
+        <div class="col-md-6 mb-3">
+
+            <strong>Study Type</strong>
+            <br>
+            {{ study.get_study_type_display }}
+
+        </div>
+
+        <div class="col-md-6 mb-3">
+
+            <strong>Instrument</strong>
+            <br>
+            {{ study.instrument.instrument_id }}
+            -
+            {{ study.instrument.name }}
+
+        </div>
+
+        <div class="col-md-6 mb-3">
+
+            <strong>Study Date</strong>
+            <br>
+            {{ study.study_date }}
+
+        </div>
+
+        <div class="col-md-3 mb-3">
+
+            <strong>Part Number</strong>
+            <br>
+            {{ study.part_number|default:"-" }}
+
+        </div>
+
+        <div class="col-md-3 mb-3">
+
+            <strong>Operators</strong>
+            <br>
+            {{ study.operator_count }}
+
+        </div>
+
+        <div class="col-md-3 mb-3">
+
+            <strong>Parts</strong>
+            <br>
+            {{ study.part_count }}
+
+        </div>
+
+        <div class="col-md-3 mb-3">
+
+            <strong>Trials</strong>
+            <br>
+            {{ study.trial_count }}
+
+        </div>
+
+        <div class="col-md-4 mb-3">
+
+            <strong>Total Readings</strong>
+            <br>
+            {{ study.readings.count }}
+
+        </div>
+
+        <div class="col-md-4 mb-3">
+
+            <strong>Status</strong>
+            <br>
+
+            {% if study.study_status == "ACCEPTED" %}
+
+                <span class="badge bg-success">
+                    ACCEPTED
+                </span>
+
+            {% elif study.study_status == "REJECTED" %}
+
+                <span class="badge bg-danger">
+                    REJECTED
+                </span>
+
+            {% else %}
+
+                <span class="badge bg-warning text-dark">
+                    PENDING
+                </span>
+
+            {% endif %}
+
+        </div>
+
+        <div class="col-md-4 mb-3">
+
+            <strong>GRR %</strong>
+            <br>
+
+            {% if study.grr_percentage %}
+                {{ study.grr_percentage }} %
+            {% else %}
+                -
+            {% endif %}
+
+        </div>
+
+        <div class="col-md-12">
+
+            <strong>Remarks</strong>
+
+            <div class="border rounded p-3 mt-2">
+
+                {{ study.remarks|default:"No Remarks" }}
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+            <div class="modal-footer">
+
+                <a href="{% url 'msa_add_reading' study.id %}"
+                   class="btn btn-success">
+
+                    Add Reading
+
+                </a>
+
+                <button
+                    type="button"
+                    class="btn btn-secondary"
+                    data-bs-dismiss="modal">
+
+                    Close
+
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+                        {% empty %}
+
+                        <tr>
+
+                            <td colspan="6"
+                                class="text-center py-5">
+
+                                <h5 class="text-muted">
+
+                                    No MSA Studies Found
+
+                                </h5>
+
+                                <a href="{% url 'msa_create' %}"
+                                   class="btn btn-primary mt-2">
+
+                                    Create First Study
+
+                                </a>
+
+                            </td>
+
+                        </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+<!-- CREATE MSA MODAL -->
+
+<div class="modal fade"
+     id="msaModal"
+     tabindex="-1">
+
+    <div class="modal-dialog modal-lg">
+
+        <div class="modal-content">
+
+            <form method="post"
+                  action="{% url 'msa_create' %}">
+
+                {% csrf_token %}
+
+                <div class="modal-header">
+
+                    <h5 class="modal-title">
+
+                        Create MSA Study
+
+                    </h5>
+
+                    <button
+                        type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal">
+                    </button>
+
+                </div>
+
+                <div class="modal-body">
+
+                    <div class="row g-3">
+
+                        <div class="col-md-6">
+
+                            <label class="form-label">
+                                MSA Number
+                            </label>
+
+                            <input
+                                type="text"
+                                name="msa_no"
+                                class="form-control"
+                                required>
+
+                        </div>
+
+                        <div class="col-md-6">
+
+                            <label class="form-label">
+                                Study Date
+                            </label>
+
+                            <input
+                                type="date"
+                                name="study_date"
+                                class="form-control"
+                                required>
+
+                        </div>
+
+                        <div class="col-md-6">
+
+                            <label class="form-label">
+                                Instrument
+                            </label>
+
+                            <select
+                                name="instrument"
+                                class="form-select"
+                                required>
+
+                                <option value="">
+                                    Select Instrument
+                                </option>
+
+                                {% for instrument in instruments %}
+
+                                <option value="{{ instrument.id }}">
+                                    {{ instrument.instrument_id }}
+                                    -
+                                    {{ instrument.name }}
+                                </option>
+
+                                {% endfor %}
+
+                            </select>
+
+                        </div>
+
+                        <div class="col-md-6">
+
+                            <label class="form-label">
+                                Study Type
+                            </label>
+
+                            <select
+                                name="study_type"
+                                class="form-select"
+                                required>
+
+                                <option value="GRR">
+                                    Gauge R&R
+                                </option>
+
+                                <option value="BIAS">
+                                    Bias
+                                </option>
+
+                                <option value="LINEARITY">
+                                    Linearity
+                                </option>
+
+                                <option value="STABILITY">
+                                    Stability
+                                </option>
+
+                            </select>
+
+                        </div>
+
+                        <div class="col-md-6">
+
+                            <label class="form-label">
+                                Part Number
+                            </label>
+
+                            <input
+                                type="text"
+                                name="part_number"
+                                class="form-control">
+
+                        </div>
+
+                        <div class="col-md-2">
+
+                            <label class="form-label">
+                                Operators
+                            </label>
+
+                            <input
+                                type="number"
+                                name="operator_count"
+                                value="3"
+                                min="1"
+                                class="form-control">
+
+                        </div>
+
+                        <div class="col-md-2">
+
+                            <label class="form-label">
+                                Parts
+                            </label>
+
+                            <input
+                                type="number"
+                                name="part_count"
+                                value="10"
+                                min="1"
+                                class="form-control">
+
+                        </div>
+
+                        <div class="col-md-2">
+
+                            <label class="form-label">
+                                Trials
+                            </label>
+
+                            <input
+                                type="number"
+                                name="trial_count"
+                                value="3"
+                                min="1"
+                                class="form-control">
+
+                        </div>
+                        <div class="col-12">
+
+                            <label class="form-label">
+                                Remarks
+                            </label>
+
+                            <textarea
+                                name="remarks"
+                                rows="4"
+                                class="form-control">
+                            </textarea>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <div class="modal-footer">
+
+                    <button
+                        type="button"
+                        class="btn btn-secondary"
+                        data-bs-dismiss="modal">
+
+                        Close
+
+                    </button>
+
+                    <button
+                        type="submit"
+                        class="btn btn-primary">
+
+                        Create Study
+
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+</div>
+{% endblock %}

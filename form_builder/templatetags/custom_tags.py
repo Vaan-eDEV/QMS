@@ -9,12 +9,25 @@ register = template.Library()
 # ================================
 # ✅ GET DICT VALUE
 # ================================
+# @register.filter
+# def get_item(dictionary, key):
+#     if isinstance(dictionary, dict):
+#         return dictionary.get(key)
+#     return None
 @register.filter
 def get_item(dictionary, key):
-    if isinstance(dictionary, dict):
-        return dictionary.get(key)
-    return None
 
+    if not isinstance(dictionary, dict):
+        return ""
+
+    key = str(key).strip()
+
+    for k, v in dictionary.items():
+
+        if str(k).strip() == key:
+            return v
+
+    return ""
 
 # ================================
 # ✅ LOOP RANGE

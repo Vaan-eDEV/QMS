@@ -371,14 +371,53 @@
     </div>
   {% endif %}
 
-  {% if request.user.is_superuser or access and access.can_goods_entry %}
-    <hr class="text-secondary mx-2">
-    <div class="submenu-toggle">Goods Entry ▾</div>
-    <div class="submenu">
-        <a href="{% url 'goods_entry' %}">New Entry</a>
-        <a href="{% url 'receivable_page' %}">Receivable</a>
-    </div>
-  {% endif %}
+
+
+
+
+
+
+
+
+
+
+
+
+
+{% if request.user.is_superuser or access and access.can_goods_entry %}
+<hr class="text-secondary mx-2">
+
+<div class="submenu-toggle">
+    Goods Entry ▾
+</div>
+
+<div class="submenu">
+
+    <a href="{% url 'goods_entry' %}">
+        New Entry
+    </a>
+
+    <a href="{% url 'receivable_page' %}">
+        Receivable
+    </a>
+
+    <a href="{% url 'inventory_dashboard' %}">
+        Inventory Dashboard
+    </a>
+    <a href="{% url 'material_issue' %}">
+      Material Issue
+    </a>
+</div>
+
+{% endif %}
+
+
+
+
+
+
+
+
 
 
 
@@ -441,35 +480,93 @@
 
 
 <hr class="text-secondary mx-2">
+<div class="submenu-toggle">
+    Feedback ▾
+</div>
+<div class="submenu">
+    <a href="{% url 'feedback_list' %}">
+        Feedback List
+    </a>
+    <a href="{% url 'feedback_dashboard' %}">
+        Feedback Dashboard
+    </a>
+</div>
+
+
+
+
+<hr class="text-secondary mx-2">
+<div class="submenu-toggle">
+    Supplier Management ▾
+</div>
+<div class="submenu">
+    <a href="{% url 'sm_dashboard' %}">
+        SM Dashboard
+    </a>
+
+</div>
+
+
+<hr class="text-secondary mx-2">
 
 <div class="submenu-toggle">
-
-    Feedback ▾
-
+    Routine Management ▾
 </div>
 
 <div class="submenu">
 
-    <a href="{% url 'feedback_list' %}">
+    <!-- Dashboard -->
 
-        Feedback List
-
+    <a href="{% url 'routine:dashboard' %}">
+        <i class="fas fa-chart-line me-2"></i>
+        Dashboard
     </a>
 
-    <a href="{% url 'feedback_dashboard' %}">
+    <!-- Categories -->
 
-        Feedback Dashboard
-
+    <a href="{% url 'routine:category_list' %}">
+        <i class="fas fa-tags me-2"></i>
+        Categories
     </a>
 
-    <a href="{% url 'sm_dashboard' %}">
+    <!-- Routine Master -->
 
-        SM Dashboard
+    <a href="{% url 'routine:routine_list' %}">
+        <i class="fas fa-clipboard-list me-2"></i>
+        Routine Master
+    </a>
 
+    <!-- Create Routine -->
+
+    <!-- <a href="{% url 'routine:create_routine' %}">
+        <i class="fas fa-plus-circle me-2"></i>
+        Create Routine
+    </a> -->
+
+    <!-- Schedule Routine -->
+
+    <!-- <a href="#">
+        <i class="fas fa-calendar-alt me-2"></i>
+        Schedule Routine
+    </a> -->
+    <!-- Checklist Records -->
+<!-- 
+    <a href="{% url 'routine:checklist_records' %}">
+        <i class="fas fa-history me-2"></i>
+        Checklist Records
+    </a> -->
+    <a href="{% url 'routine:my_checklists' %}">
+    <i class="fas fa-check-circle me-2"></i>
+    My Checklists
+</a>
+    <!-- Reports -->
+
+    <a href="#">
+        <i class="fas fa-chart-bar me-2"></i>
+        Reports
     </a>
 
 </div>
-
 
 
   {% if request.user.is_superuser %}
@@ -486,6 +583,53 @@
 
 
 
+<hr class="text-secondary mx-2">
+
+<div class="submenu-toggle">
+    Quality Engineering ▾
+</div>
+
+<div class="submenu">
+
+    <!-- Dashboard -->
+
+    <a href="{% url 'quality_dashboard' %}">
+        📊 Dashboard
+    </a>
+
+    <!-- Calibration -->
+
+    <a href="{% url 'instrument_list' %}">
+        📏 Instruments
+    </a>
+
+    <a href="{% url 'calibration_list' %}">
+        🧪 Calibration
+    </a>
+
+    <hr class="text-secondary mx-2">
+
+    <!-- MSA -->
+
+    <a href="{% url 'msa_list' %}">
+        📐 MSA Studies
+    </a>
+
+    <!-- SPC -->
+
+    <a href="#">
+        📈 SPC Control Plans
+    </a>
+
+    <!-- Six Sigma -->
+
+    <a href="#">
+        🎯 Six Sigma Projects
+    </a>
+
+
+
+</div>
 
 
 </div>

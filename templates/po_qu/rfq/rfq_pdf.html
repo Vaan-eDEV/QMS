@@ -5,294 +5,650 @@
 <title>Quotation {{ quotation.quotation_number }}</title>
 
 <style>
-
 /* ================= PAGE ================= */
+
 @page {
     size: A4;
-    margin: 10mm 15mm 20mm 15mm;
+    margin: 18mm;
 
     @bottom-center {
-        content: "Page " counter(page) " of " counter(pages);
-        font-size: 10px;
-        color: #555;
+        content: "© VAAN Aerospace — Page " counter(page) " of " counter(pages);
+        font-size: 9px;
+        color: #666;
     }
 }
 
 body {
-    font-family: "Helvetica Neue", Arial, sans-serif;
-    font-size: 12px;
-    color: #333;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 11px;
+    color: #222;
+    line-height: 1.4;
 }
 
-/* WATERMARK (optional) */
-body::before {
-    content: "";
+/* ================= WATERMARK ================= */
+
+.page-watermark {
     position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-image: url("{{ watermark|default:'' }}");
-    background-repeat: no-repeat;
-    background-position: center;
-    background-size: 80%;
-    opacity: 0.08;
+    top: 50%;
+    left: 50%;
+    width: 650px;
+    transform: translate(-50%, -50%);
+    opacity: 0.04;
     z-index: -1;
 }
 
-/* LOGO */
+/* ================= HEADER ================= */
+
+.header {
+    text-align: center;
+    margin-bottom: 15px;
+}
+
 .logo {
     height: 70px;
 }
 
-/* TABLE */
+.company-info {
+    font-size: 10px;
+    color: #555;
+    margin-top: 5px;
+    line-height: 1.5;
+}
+
+/* ================= TITLE ================= */
+
+.title {
+    color: #2b7cff;
+    font-size: 28px;
+    font-weight: bold;
+    margin: 20px 0;
+}
+
+/* ================= TOP SECTION ================= */
+
+.top-section {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+}
+
+.top-section td {
+    vertical-align: top;
+}
+
+.block-title {
+    color: #2b7cff;
+    font-size: 13px;
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.qr {
+    text-align: right;
+}
+
+.qr img {
+    width: 100px;
+    border: 1px solid #ddd;
+    padding: 3px;
+}
+.section-title {
+    color: #2b7cff;
+    font-size: 14px;
+    font-weight: bold;
+    margin-top: 15px;
+    margin-bottom: 8px;
+}
+
+.info-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 15px;
+}
+
+.info-table td {
+    padding: 8px;
+   
+    vertical-align: top;
+    width: 25%;
+}
+/* ================= RFQ ITEMS ================= */
+
 .po-items {
     width: 100%;
     border-collapse: collapse;
-    margin-bottom: 10px;
+    margin-top: 15px;
 }
 
 .po-items th {
-    background-color: #3399ff;
+    background: #2b7cff;
     color: white;
-    padding: 6px;
-    font-size: 11px;
-    text-align: center;
+    padding: 8px;
+    font-size: 10px;
+    text-align: left;
 }
 
 .po-items td {
-    border-bottom: 1px solid #dad9d9;
     padding: 7px;
-    font-size: 11px;
+    border-bottom: 1px solid #ddd;
+    font-size: 10px;
+}
+
+.po-items tr:nth-child(even) {
+    background: #fafafa;
 }
 
 .num {
     text-align: right;
 }
 
-/* SIGNATURE */
-.signatures {
-    display: flex;
-    gap: 40px;
+/* ================= TOTAL ================= */
+
+.total-table {
+    width: 35%;
+    margin-left: auto;
+    margin-top: 15px;
+    border-collapse: collapse;
+}
+
+.total-table td {
+    padding: 8px;
+    border-bottom: 1px solid #ddd;
+}
+
+.grand-total td {
+    background: #f5f9ff;
+    border-top: 2px solid #2b7cff;
+    border-bottom: 2px solid #2b7cff;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+/* ================= NOTES ================= */
+
+.notes-section {
     margin-top: 20px;
 }
 
-.signatures img {
-    max-width: 120px;
+.note-box {
+    margin-bottom: 10px;
+    padding: 8px;
+    border-left: 3px solid #2b7cff;
+    background: #fafafa;
 }
 
-/* FOOTER */
-.footer-note {
-    position: fixed;
-    bottom: 25px;
-    left: 15mm;
-    right: 15mm;
-    font-size: 10px;
+.note-title {
+    color: #2b7cff;
+    font-weight: bold;
+    margin-bottom: 4px;
+}
+
+.note-content {
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
+/* ================= SIGNATURES ================= */
+
+.signature-table {
+    width: 100%;
+    margin-top: 20px;
+    border-collapse: separate;
+    border-spacing: 5px;
+}
+
+.signature-table td {
+    width: 33.33%;
+    vertical-align: top;
+}
+
+.digital-sign-box {
+    position: relative;
+    text-align: center;
+    min-height: 60px;
+    padding: 5px;
+    overflow: hidden;
+}
+
+.sign-watermark {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 60px;
+    transform: translate(-50%, -50%);
+    opacity: 0.08;
+    z-index: 0;
+}
+
+.digital-sign-title,
+.digital-sign-name,
+.digital-sign-date,
+.digital-sign-id,
+.signature-role {
+    position: relative;
+    z-index: 5;
+}
+
+.digital-sign-title {
+    font-size: 7px;
     color: #444;
 }
 
+.digital-sign-name {
+    font-size: 9px;
+    font-weight: bold;
+}
 
+.digital-sign-date {
+    font-size: 7px;
+}
+
+.digital-sign-id {
+    font-size: 6px;
+    color: #666;
+}
+
+.signature-role {
+    font-size: 7px;
+    font-weight: bold;
+    color: #666;
+}
+
+/* ================= FOOTER ================= */
+
+.footer {
+    position: fixed;
+    bottom: 5mm;
+    left: 18mm;
+    right: 18mm;
+    text-align: center;
+    font-size: 9px;
+    color: #666;
+}
+
+/* ================= HELPERS ================= */
+
+pre {
+    margin: 0;
+    white-space: pre-wrap;
+    font-family: inherit;
+}
+
+.break-line {
+    white-space: pre-wrap;
+}
 </style>
 </head>
 
 <body>
 
-<!-- ================= COMPANY ================= -->
-<div style="text-align:center; margin-bottom:20px;">
-    {% if logo_path %}
-    <img src="{{ logo_path }}" class="logo">
-    {% endif %}
+<!-- WATERMARK -->
 
-    <div style="font-size:10px; color:#555;">
-        {{ company_address }} <br>
-        Phone: {{ company_phone }} | Email: {{ company_email }}
-    </div>
+<img src="{{ logo_path }}" class="page-watermark">
+
+<!-- COMPANY -->
+
+<div class="header">
+
+
+{% if logo_path %}
+<img src="{{ logo_path }}" class="logo">
+{% endif %}
+
+<div class="company-info">
+    {{ company_address }}<br>
+    GSTIN: {{ company_gstin }} |
+    Phone: {{ company_phone }}
 </div>
 
-<!-- ================= HEADER ================= -->
-<table style="width:100%; margin-bottom:15px;">
+
+</div>
+
+<!-- RFQ HEADER -->
+<table width="100%" style="table-layout:fixed; margin-bottom:20px; border-collapse:collapse;">
 <tr>
 
-<td>
-    <span style="color:#3399ff; font-size:28px; font-weight:bold;">
-        RFQ #{{ rfq.rfq_number }}
-    </span><br><br>
+    <td style="width:90%; vertical-align:middle;">
 
-    <small>Date: {{ rfq.date|date:"d M Y" }}</small><br><br>
+        <div class="title">
+            RFQ #{{ rfq.rfq_number }}
+        </div>
 
-    <strong>Customer</strong><br>
-    <b>{{ rfq.customer_name }}</b><br>
+        <strong>RFQ Date:</strong>
+        {{ rfq.rfq_date|date:"d M Y" }}
 
-    <span style="white-space: pre-line;">
-        {{ rfq.customer_address }}
-    </span><br>
+    </td>
 
-    <small>Email: {{ rfq.customer_email }}</small><br>
-    <small>Phone: {{ rfq.customer_phone }}</small>
-</td>
+    <td style="width:10%; text-align:right; vertical-align:top;">
 
-<td style="text-align:right;">
+        {% if qr_code_path %}
+            <img src="{{ qr_code_path }}"
+                 style="width:100px; border:1px solid #ddd; padding:3px;">
+        {% endif %}
 
-    {% if qr_code_path %}
-    <img src="{{ qr_code_path }}" style="width:100px; border:1px solid #eee; padding:2px;">
-    {% endif %}
-
-    <br><br>
-
-    <strong>Bank Details</strong><br>
-    <small>Bank: {{ rfq.bank_name }}</small><br>
-    <small>A/C: {{ rfq.bank_account }}</small><br>
-    <small>IFSC: {{ rfq.ifsc }}</small>
-
-</td>
+    </td>
 
 </tr>
 </table>
 
-<!-- ================= ITEMS ================= -->
+<!-- COMPANY DETAILS -->
+<div class="section-title">
+    Company Details
+</div>
+
+<table class="info-table">
+
+<tr>
+    <td>
+        <strong>Company</strong><br>
+        {{ rfq.company_name }}
+    </td>
+
+    <td>
+        <strong>Contact Person</strong><br>
+        {{ rfq.contact_person }}
+    </td>
+
+    <td>
+        <strong>Email</strong><br>
+        {{ rfq.email }}
+    </td>
+
+    <td>
+        <strong>Phone</strong><br>
+        {{ rfq.phone }}
+    </td>
+</tr>
+
+</table>
+
+<!-- MATERIAL REQUIREMENT -->
+
+<div class="section-title">
+    Material Requirement
+</div>
+
 <table class="po-items">
+
 <thead>
+
 <tr>
     <th>#</th>
-    <th>Description</th>
-    <th>HSN/SAC</th>
-    <th>Unit</th>
+    <th>Material</th>
+    <th>Code / Grade</th>
+    <th>Dimensions</th>
     <th>Qty</th>
-    <th>Rate</th>
-    <th>Amount</th>
+    <th>Weight</th>
+    <th>Price/Kg</th>
+    <th>Total</th>
 </tr>
+
 </thead>
 
 <tbody>
-{% for item in items %}
+
+{% for item in rfq.items.all %}
+
 <tr>
-    <td>{{ forloop.counter }}</td>
-    <td>{{ item.description }}</td>
-    <td>{{ item.hsn_code }}</td>
-    <td>{{ item.unit }}</td>
-    <td class="num">{{ item.quantity }}</td>
-    <td class="num">{{ item.rate|floatformat:2 }}</td>
-    <td class="num">{{ item.amount|floatformat:2 }}</td>
+
+
+<td>{{ forloop.counter }}</td>
+
+<td>{{ item.material_name }}</td>
+
+<td>{{ item.material_code_grade }}</td>
+
+<td>{{ item.material_dimensions }}</td>
+
+<td>{{ item.quantity }}</td>
+
+<td>{{ item.total_weight }}</td>
+
+<td>₹ {{ item.price_per_kg }}</td>
+
+<td>₹ {{ item.total_price }}</td>
+
+
 </tr>
+
 {% endfor %}
+
 </tbody>
+
 </table>
 
-<!-- ================= TOTAL ================= -->
-<table class="po-items">
-<tr>
-    <td colspan="6"></td>
-    <td class="num"><b>Subtotal : ₹ {{rfq.subtotal|floatformat:2 }}</b></td>
-</tr>
+<!-- GRAND TOTAL -->
 
-<tr>
-    <td colspan="6"></td>
+<table class="total-table">
+
+<tr class="grand-total">
+    <td><b>Grand Total</b></td>
     <td class="num">
-        Discount ({{ rfq.discount_percent }}%) :
-        ₹ -{{ rfq.discount_amount|floatformat:2 }}
+        ₹ {{ grand_total|floatformat:2 }}
     </td>
 </tr>
 
-<tr>
-    <td colspan="6"></td>
-    <td class="num">CGST : ₹ {{ rfq.cgst_amount|floatformat:2 }}</td>
-</tr>
-
-<tr>
-    <td colspan="6"></td>
-    <td class="num">AGST: ₹ {{ rfq.agst_amount | floatformat:2}} </td>
-    <td class="num">CGST : ₹ {{ rfq.cgst_amount|floatformat:2 }}</td>
-</tr>
-
-
-<tr>
-    <td colspan="6"></td>
-    <td class="num">SGST : ₹ {{ rfq.sgst_amount|floatformat:2 }}</td>
-</tr>
-
-<tr>
-    <td colspan="6"></td>
-    <td class="num">IGST : ₹ {{ rfq.igst_amount|floatformat:2 }}</td>
-</tr>
-
-<tr>
-    <td colspan="6"></td>
-    <td class="num">
-        <b>Grand Total : ₹ {{ rfq.grand_total|floatformat:2 }}</b>
-    </td>
-</tr>
 </table>
 
-<!-- ================= SIGNATURE ================= -->
-<div class="signatures">
+<!-- TECHNICAL REQUIREMENTS -->
 
-    <div style="text-align:center;">
-        <div style="font-size:11px;">
-            <b>Prepared By</b><br>
-            {{ rfq.prepared_by|default:"—" }}<br>
-            {{ rfq.prepared_at|date:"d M Y H:i"|default:"—" }}<br>
+<div class="section-title">
+    Technical Requirements
+</div>
 
-            {% if rfq.prepared_signature_id %}
-            ID: {{ rfq.prepared_signature_id }}
-            {% endif %}
-        </div>
+<p><strong>Material Grade:</strong> {{ rfq.material_grade }}</p>
+
+<p><strong>Applicable Standard:</strong> {{ rfq.applicable_standard }}</p>
+
+<p><strong>Heat Treatment:</strong> {{ rfq.heat_treatment }}</p>
+
+<p><strong>Surface Condition:</strong> {{ rfq.surface_condition }}</p>
+
+<p><strong>Packing & Traceability:</strong> {{ rfq.packing_traceability }}</p>
+
+<p><strong>Certification Requirement:</strong> {{ rfq.certification_requirement }}</p>
+
+<p><strong>Counterfeit Prevention:</strong> {{ rfq.counterfeit_prevention }}</p>
+
+
+
+
+<div class="section-title">
+    Commercial Requirements
+</div>
+
+<table class="info-table">
+
+    {% if rfq.commercial_requirements %}
+    <tr>
+        <td width="30%">
+            <strong>Commercial Requirements</strong>
+        </td>
+        <td>
+            {{ rfq.commercial_requirements|linebreaksbr }}
+        </td>
+    </tr>
+    {% endif %}
+
+    {% if rfq.freight_terms %}
+    <tr>
+        <td>
+            <strong>Freight Terms</strong>
+        </td>
+        <td>
+            {{ rfq.freight_terms|linebreaksbr }}
+        </td>
+    </tr>
+    {% endif %}
+
+    {% if rfq.payment_terms %}
+    <tr>
+        <td>
+            <strong>Payment Terms</strong>
+        </td><br>
+        <td>
+            {{ rfq.payment_terms|linebreaksbr }}
+        </td>
+    </tr>
+    {% endif %}
+
+    {% if rfq.quotation_validity %}
+    <tr>
+        <td>
+            <strong>Quotation Validity</strong>
+        </td>
+        <td>
+            {{ rfq.quotation_validity|linebreaksbr }}
+        </td>
+    </tr>
+    {% endif %}
+
+</table>
+
+<!-- DELIVERY -->
+
+<div class="section-title">
+    Delivery Requirements
+</div>
+
+<p>
+    <strong>Required Delivery Date:</strong>
+    {{ rfq.required_delivery_date }}
+</p>
+
+<p>
+    <strong>Partial Delivery:</strong>
+    {{ rfq.partial_delivery }}
+</p>
+
+<p>
+    <strong>Delivery Location:</strong>
+    {{ rfq.delivery_location }}
+</p>
+
+<!-- COMPLIANCE -->
+
+<div class="section-title">
+    Compliance Statement
+</div>
+
+<p>
+    {{ rfq.compliance_statement|linebreaksbr }}
+</p>
+
+<!-- NOTES -->
+
+<div class="section-title">
+    Notes
+</div>
+
+<p>
+    {{ rfq.note|linebreaksbr }}
+</p>
+
+<!-- SIGNATURES -->
+
+<table class="signature-table">
+
+<tr>
+
+<td>
+    <div class="digital-sign-box">
+
+
+    <img src="{{ logo_path }}" class="sign-watermark">
+
+    <div class="digital-sign-title">
+        ✓ Digitally Signed
     </div>
 
-    <div style="text-align:center;">
-        <div style="font-size:11px;">
-            <b>Approved By</b><br>
-            {{ rfq.approved_by|default:"—" }}<br>
-            {{ rfq.approved_at|date:"d M Y H:i"|default:"—" }}<br>
+    <div class="digital-sign-name">
+        {{ rfq.prepared_by }}
+    </div>
 
-            {% if rfq.approved_signature_id %}
-            ID: {{ rfq.approved_signature_id }}
-            {% endif %}
-        </div>
+    <div class="digital-sign-date">
+        {{ rfq.prepared_at|date:"d M Y, g:i a" }}
+    </div>
+
+    <div class="digital-sign-id">
+        {{ rfq.prepared_signature_id }}
+    </div>
+
+    <div class="signature-role">
+        Prepared By
     </div>
 
 </div>
-<!-- ================= NOTES ================= -->
-<div class="footer-note">
 
-    {% if rfq.note %}
-    <div>
-        <b>Note:</b><br>
-        {{ rfq.note|default:"-" }}
-    </div>
-    {% endif %}
 
-    {% if rfq.terms %}
-    <div style="margin-top:6px;">
-        <b>Terms:</b><br>
-        {{ rfq.terms|default:"-" }}
+</td>
+
+<td>
+    <div class="digital-sign-box">
+
+
+    <img src="{{ logo_path }}" class="sign-watermark">
+
+    <div class="digital-sign-title">
+        ✓ Digitally Signed
     </div>
-    {% endif %}
+
+    <div class="digital-sign-name">
+        {{ rfq.reviewed_by }}
+    </div>
+
+    <div class="digital-sign-date">
+        {{ rfq.reviewed_at|date:"d M Y, g:i a" }}
+    </div>
+
+    <div class="digital-sign-id">
+        {{ rfq.reviewed_signature_id }}
+    </div>
+
+    <div class="signature-role">
+        Reviewed By
+    </div>
 
 </div>
 
 
+</td>
+
+<td>
+    <div class="digital-sign-box">
 
 
+    <img src="{{ logo_path }}" class="sign-watermark">
 
-
-<div class="footer-note">
-
-    {% if rfq.note %}
-    <div>
-        <b>Note:</b><br>
-        {{ rfq.note|default:"-" }}
+    <div class="digital-sign-title">
+        ✓ Digitally Signed
     </div>
-    {% endif %}
 
-    {% if rfq.terms %}
-    <div style="margin-top:6px;">
-        <b>Terms:</b><br>
-        {{ rfq.terms|default:"-" }}
+    <div class="digital-sign-name">
+        {{ rfq.approved_by }}
     </div>
-    {% endif %}
+
+    <div class="digital-sign-date">
+        {{ rfq.approved_at|date:"d M Y, g:i a" }}
+    </div>
+
+    <div class="digital-sign-id">
+        {{ rfq.approved_signature_id }}
+    </div>
+
+    <div class="signature-role">
+        Approved By
+    </div>
 
 </div>
 
+
+</td>
+
+</tr>
+
+</table>
 
 </body>
+
 </html>

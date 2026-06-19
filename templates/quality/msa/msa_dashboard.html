@@ -1,0 +1,581 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="container-fluid">
+
+    <!-- PAGE HEADER -->
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+
+        <div>
+
+            <h2 class="fw-bold mb-0">
+                MSA Dashboard
+            </h2>
+
+            <small class="text-muted">
+                Measurement System Analysis Overview
+            </small>
+
+        </div>
+
+        <div>
+
+            <a href="{% url 'msa_list' %}"
+   class="btn btn-primary">
+
+    <i class="fas fa-plus"></i>
+    Create MSA Study
+
+</a>
+
+        </div>
+
+    </div>
+
+
+    <!-- KPI CARDS -->
+
+    <div class="row g-3 mb-4">
+
+        <div class="col-md-3">
+
+            <div class="card border-0 shadow-sm">
+
+                <div class="card-body">
+
+                    <small class="text-muted">
+                        Total Studies
+                    </small>
+
+                    <h2 class="fw-bold">
+                        {{ study_count }}
+                    </h2>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="col-md-3">
+
+            <div class="card border-0 shadow-sm">
+
+                <div class="card-body">
+
+                    <small class="text-muted">
+                        Total Readings
+                    </small>
+
+                    <h2 class="fw-bold">
+                        {{ reading_count }}
+                    </h2>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="col-md-3">
+
+            <div class="card border-0 shadow-sm">
+
+                <div class="card-body">
+
+                    <small class="text-muted">
+                        Gauge R&R Studies
+                    </small>
+
+                    <h2 class="fw-bold text-primary">
+                        {{ grr_count|default:"0" }}
+                    </h2>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="col-md-3">
+
+            <div class="card border-0 shadow-sm">
+
+                <div class="card-body">
+
+                    <small class="text-muted">
+                        Active Instruments
+                    </small>
+
+                    <h2 class="fw-bold text-success">
+                        {{ instrument_count|default:"0" }}
+                    </h2>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- MSA TYPES -->
+
+    <div class="row g-3 mb-4">
+
+        <div class="col-md-3">
+
+            <div class="card border-0 shadow-sm text-center">
+
+                <div class="card-body">
+
+                    <h1>📏</h1>
+
+                    <h6>
+                        Gauge R&R
+                    </h6>
+
+                    <small class="text-muted">
+                        Repeatability & Reproducibility
+                    </small>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="col-md-3">
+
+            <div class="card border-0 shadow-sm text-center">
+
+                <div class="card-body">
+
+                    <h1>🎯</h1>
+
+                    <h6>
+                        Bias
+                    </h6>
+
+                    <small class="text-muted">
+                        Measurement Accuracy
+                    </small>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="col-md-3">
+
+            <div class="card border-0 shadow-sm text-center">
+
+                <div class="card-body">
+
+                    <h1>📈</h1>
+
+                    <h6>
+                        Linearity
+                    </h6>
+
+                    <small class="text-muted">
+                        Range Verification
+                    </small>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="col-md-3">
+
+            <div class="card border-0 shadow-sm text-center">
+
+                <div class="card-body">
+
+                    <h1>⚙️</h1>
+
+                    <h6>
+                        Stability
+                    </h6>
+
+                    <small class="text-muted">
+                        Time-Based Consistency
+                    </small>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- RECENT STUDIES -->
+
+    <div class="card border-0 shadow-sm">
+
+        <div class="card-header bg-white">
+
+            <h5 class="mb-0">
+                Recent MSA Studies
+            </h5>
+
+        </div>
+
+        <div class="card-body">
+
+            <div class="table-responsive">
+
+                <table class="table table-hover">
+
+                    <thead class="table-light">
+
+<tr>
+
+    <th>MSA No</th>
+    <th>Instrument</th>
+    <th>Study Type</th>
+    <th>Study Date</th>
+    <th>Actions</th>
+
+</tr>
+
+</thead>
+
+<tbody>
+
+{% for study in recent_studies %}
+
+<tr>
+
+    <td>
+        <strong>{{ study.msa_no }}</strong>
+    </td>
+
+    <td>
+        {{ study.instrument.instrument_id }}
+        <br>
+        <small class="text-muted">
+            {{ study.instrument.name }}
+        </small>
+    </td>
+
+    <td>
+        <span class="badge bg-info">
+            {{ study.get_study_type_display }}
+        </span>
+    </td>
+
+    <td>
+        {{ study.study_date }}
+    </td>
+
+    <td>
+
+        <button
+            class="btn btn-sm btn-primary"
+            data-bs-toggle="modal"
+            data-bs-target="#msaDetail{{ study.id }}">
+
+            View
+
+        </button>
+
+        <a href="{% url 'msa_add_reading' study.id %}"
+           class="btn btn-sm btn-success">
+
+            Add Reading
+
+        </a>
+
+    </td>
+
+</tr>
+
+<!-- DETAIL MODAL -->
+
+<div class="modal fade"
+     id="msaDetail{{ study.id }}"
+     tabindex="-1">
+
+    <div class="modal-dialog modal-lg">
+
+        <div class="modal-content">
+
+            <div class="modal-header">
+
+                <h5 class="modal-title">
+                    {{ study.msa_no }}
+                </h5>
+
+                <button
+                    type="button"
+                    class="btn-close"
+                    data-bs-dismiss="modal">
+                </button>
+
+            </div>
+
+            <div class="modal-body">
+
+    <div class="row g-3">
+
+        <div class="col-md-6">
+
+            <label class="text-muted small">
+                MSA Number
+            </label>
+
+            <div class="fw-bold">
+                {{ study.msa_no }}
+            </div>
+
+        </div>
+
+        <div class="col-md-6">
+
+            <label class="text-muted small">
+                Study Type
+            </label>
+
+            <div>
+
+                <span class="badge bg-info">
+                    {{ study.get_study_type_display }}
+                </span>
+
+            </div>
+
+        </div>
+
+        <div class="col-md-6">
+
+            <label class="text-muted small">
+                Instrument
+            </label>
+
+            <div class="fw-bold">
+
+                {{ study.instrument.instrument_id }}
+
+            </div>
+
+            <small class="text-muted">
+
+                {{ study.instrument.name }}
+
+            </small>
+
+        </div>
+
+        <div class="col-md-6">
+
+            <label class="text-muted small">
+                Study Date
+            </label>
+
+            <div class="fw-bold">
+                {{ study.study_date }}
+            </div>
+
+        </div>
+
+        <div class="col-md-3">
+
+            <label class="text-muted small">
+                Part Number
+            </label>
+
+            <div class="fw-bold">
+
+                {{ study.part_number|default:"-" }}
+
+            </div>
+
+        </div>
+
+        <div class="col-md-3">
+
+            <label class="text-muted small">
+                Operators
+            </label>
+
+            <div class="fw-bold">
+
+                {{ study.operator_count }}
+
+            </div>
+
+        </div>
+
+        <div class="col-md-3">
+
+            <label class="text-muted small">
+                Parts
+            </label>
+
+            <div class="fw-bold">
+
+                {{ study.part_count }}
+
+            </div>
+
+        </div>
+
+        <div class="col-md-3">
+
+            <label class="text-muted small">
+                Trials
+            </label>
+
+            <div class="fw-bold">
+
+                {{ study.trial_count }}
+
+            </div>
+
+        </div>
+
+        <div class="col-md-4">
+
+            <label class="text-muted small">
+                Total Readings
+            </label>
+
+            <div class="fw-bold">
+
+                {{ study.readings.count }}
+
+            </div>
+
+        </div>
+
+        <div class="col-md-4">
+
+            <label class="text-muted small">
+                GRR %
+            </label>
+
+            <div class="fw-bold">
+
+                {% if study.grr_percentage %}
+                    {{ study.grr_percentage }} %
+                {% else %}
+                    -
+                {% endif %}
+
+            </div>
+
+        </div>
+
+        <div class="col-md-4">
+
+            <label class="text-muted small">
+                Study Status
+            </label>
+
+            <div>
+
+                {% if study.study_status == "ACCEPTED" %}
+
+                    <span class="badge bg-success">
+                        ACCEPTED
+                    </span>
+
+                {% elif study.study_status == "REJECTED" %}
+
+                    <span class="badge bg-danger">
+                        REJECTED
+                    </span>
+
+                {% else %}
+
+                    <span class="badge bg-warning text-dark">
+                        PENDING
+                    </span>
+
+                {% endif %}
+
+            </div>
+
+        </div>
+
+        <div class="col-12">
+
+            <label class="text-muted small">
+                Remarks
+            </label>
+
+            <div class="border rounded p-3 bg-light">
+
+                {{ study.remarks|default:"No Remarks Available" }}
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+           <div class="modal-footer">
+
+    <a href="{% url 'msa_add_reading' study.id %}"
+       class="btn btn-success">
+
+        ➕ Add Reading
+
+    </a>
+
+    <button
+        type="button"
+        class="btn btn-outline-secondary"
+        data-bs-dismiss="modal">
+
+        Close
+
+    </button>
+
+</div>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% empty %}
+
+<tr>
+
+    <td colspan="5"
+        class="text-center text-muted">
+
+        No MSA Studies Found
+
+    </td>
+
+</tr>
+
+{% endfor %}
+
+</tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

@@ -1,0 +1,422 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="container-fluid mt-4">
+
+
+<div class="card shadow-sm">
+
+    <div class="card-header bg-primary text-white">
+
+        <h4 class="mb-0">
+            QA Inspection Report
+        </h4>
+
+        <small>
+            Work Order : {{ work_order.wo_number }}
+        </small>
+
+    </div>
+
+    <div class="card-body">
+
+        <form method="post"
+              enctype="multipart/form-data">
+
+            {% csrf_token %}
+
+            <!-- BASIC -->
+
+            <h5 class="mb-3">
+                Basic Information
+            </h5>
+
+            <div class="row">
+
+                <div class="col-md-4 mb-3">
+                    <label>Inspection No</label>
+                    <input type="text"
+                           name="inspection_no"
+                           class="form-control"
+                           required>
+                </div>
+
+                <div class="col-md-4 mb-3">
+                    <label>Inspection Date</label>
+                    <input type="date"
+                           name="inspection_date"
+                           class="form-control"
+                           required>
+                </div>
+
+                <div class="col-md-4 mb-3">
+                    <label>Inspection Stage</label>
+
+                    <select name="inspection_stage"
+                            class="form-select">
+
+                        <option value="final_release">
+                            Final Release
+                        </option>
+
+                        <option value="pre_shipment">
+                            Pre Shipment
+                        </option>
+
+                    </select>
+
+                </div>
+
+            </div>
+
+            <hr>
+
+            <!-- PART IDENTIFICATION -->
+
+            <h5 class="mb-3">
+                Part Identification
+            </h5>
+
+            <div class="row">
+
+                <div class="col-md-4 mb-3">
+                    <label>Part Number</label>
+                    <input type="text"
+                           name="part_number"
+                           class="form-control">
+                </div>
+
+                <div class="col-md-4 mb-3">
+                    <label>Revision</label>
+                    <input type="text"
+                           name="revision"
+                           class="form-control">
+                </div>
+
+                <div class="col-md-4 mb-3">
+                    <label>Drawing Reference</label>
+                    <input type="text"
+                           name="drawing_reference"
+                           class="form-control">
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    <label>CAD Model Filename</label>
+                    <input type="text"
+                           name="cad_model_filename"
+                           class="form-control">
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    <label>Batch / Lot No</label>
+                    <input type="text"
+                           name="batch_lot_no"
+                           class="form-control">
+                </div>
+
+            </div>
+
+            <hr>
+
+            <!-- EQUIPMENT -->
+
+            <h5 class="mb-3">
+                Equipment & Setup Verification
+            </h5>
+
+            <table class="table table-bordered">
+
+                <tr>
+                    <th>CMM Model</th>
+                    <td>
+                        <input type="text"
+                               name="cmm_model"
+                               class="form-control">
+                    </td>
+                </tr>
+
+                <tr>
+                    <th>CMM Calibration Valid</th>
+                    <td>
+                        <select name="cmm_calibration_valid"
+                                class="form-select">
+                            <option value="yes">Yes</option>
+                            <option value="no">No</option>
+                        </select>
+                    </td>
+                </tr>
+
+                <tr>
+                    <th>Calibration Expiry</th>
+                    <td>
+                        <input type="date"
+                               name="calibration_expiry"
+                               class="form-control">
+                    </td>
+                </tr>
+
+                <tr>
+                    <th>Program Loaded</th>
+                    <td>
+                        <select name="program_loaded"
+                                class="form-select">
+                            <option value="yes">Yes</option>
+                            <option value="no">No</option>
+                        </select>
+                    </td>
+                </tr>
+
+                <tr>
+                    <th>Program Filename</th>
+                    <td>
+                        <input type="text"
+                               name="program_filename"
+                               class="form-control">
+                    </td>
+                </tr>
+
+                <tr>
+                    <th>Drawing Revision Verified</th>
+                    <td>
+                        <select name="drawing_revision_verified"
+                                class="form-select">
+                            <option value="yes">Yes</option>
+                            <option value="no">No</option>
+                        </select>
+                    </td>
+                </tr>
+
+                <tr>
+                    <th>Revision Match</th>
+                    <td>
+                        <input type="text"
+                               name="revision_match"
+                               class="form-control">
+                    </td>
+                </tr>
+
+                <tr>
+                    <th>Fixture Setup Verified</th>
+                    <td>
+                        <select name="fixture_setup_verified"
+                                class="form-select">
+                            <option value="yes">Yes</option>
+                            <option value="no">No</option>
+                        </select>
+                    </td>
+                </tr>
+
+                <tr>
+                    <th>Fixture ID</th>
+                    <td>
+                        <input type="text"
+                               name="fixture_id"
+                               class="form-control">
+                    </td>
+                </tr>
+
+                <tr>
+                    <th>Environmental Conditions Stable</th>
+                    <td>
+                        <select name="environmental_conditions_stable"
+                                class="form-select">
+                            <option value="yes">Yes</option>
+                            <option value="no">No</option>
+                        </select>
+                    </td>
+                </tr>
+
+                <tr>
+                    <th>Environmental Log</th>
+                    <td>
+                        <textarea name="environmental_log"
+                                  class="form-control"></textarea>
+                    </td>
+                </tr>
+
+            </table>
+
+            <hr>
+
+            <!-- MEASUREMENTS -->
+
+            <h5 class="mb-3">
+                Measurement Records
+            </h5>
+
+            <table class="table table-bordered">
+
+                <thead>
+
+                <tr>
+                    <th>Feature</th>
+                    <th>Specification</th>
+
+                    <th>Part 1</th>
+                    <th>Status</th>
+
+                    <th>Part 2</th>
+                    <th>Status</th>
+
+                    <th>Part 3</th>
+                    <th>Status</th>
+
+                    <th>Part 4</th>
+                    <th>Status</th>
+
+                    <th>Part 5</th>
+                    <th>Status</th>
+
+                    <th>Remarks</th>
+                </tr>
+
+                </thead>
+
+                <tbody>
+
+                {% for i in "12345" %}
+
+                <tr>
+
+                    <td>
+                        <input type="text"
+                               name="feature_name[]"
+                               class="form-control">
+                    </td>
+
+                    <td>
+                        <input type="text"
+                               name="specification[]"
+                               class="form-control">
+                    </td>
+
+                    <td><input type="text" name="part1_value[]" class="form-control"></td>
+                    <td><select name="part1_status[]" class="form-select"><option>PASS</option><option>FAIL</option></select></td>
+
+                    <td><input type="text" name="part2_value[]" class="form-control"></td>
+                    <td><select name="part2_status[]" class="form-select"><option>PASS</option><option>FAIL</option></select></td>
+
+                    <td><input type="text" name="part3_value[]" class="form-control"></td>
+                    <td><select name="part3_status[]" class="form-select"><option>PASS</option><option>FAIL</option></select></td>
+
+                    <td><input type="text" name="part4_value[]" class="form-control"></td>
+                    <td><select name="part4_status[]" class="form-select"><option>PASS</option><option>FAIL</option></select></td>
+
+                    <td><input type="text" name="part5_value[]" class="form-control"></td>
+                    <td><select name="part5_status[]" class="form-select"><option>PASS</option><option>FAIL</option></select></td>
+
+                    <td>
+                        <input type="text"
+                               name="measurement_remarks[]"
+                               class="form-control">
+                    </td>
+
+                </tr>
+
+                {% endfor %}
+
+                </tbody>
+
+            </table>
+
+            <hr>
+
+            <!-- DOCUMENTS -->
+
+            <h5 class="mb-3">
+                Documentation & Traceability
+            </h5>
+
+            <table class="table table-bordered">
+
+                <thead>
+
+                <tr>
+                    <th>Document Type</th>
+                    <th>Status</th>
+                    <th>Identifier</th>
+                    <th>Revision</th>
+                    <th>Issue Date</th>
+                    <th>Attachment</th>
+                    <th>Remarks</th>
+                </tr>
+
+                </thead>
+
+                <tbody>
+
+                {% for i in "12345" %}
+
+                <tr>
+
+                    <td>
+                        <input type="text"
+                               name="document_type[]"
+                               class="form-control">
+                    </td>
+
+                    <td>
+                        <input type="text"
+                               name="document_status[]"
+                               class="form-control">
+                    </td>
+
+                    <td>
+                        <input type="text"
+                               name="document_identifier[]"
+                               class="form-control">
+                    </td>
+
+                    <td>
+                        <input type="text"
+                               name="document_revision[]"
+                               class="form-control">
+                    </td>
+
+                    <td>
+                        <input type="date"
+                               name="document_issue_date[]"
+                               class="form-control">
+                    </td>
+
+                    <td>
+                        <input type="file"
+                               name="document_attachment[]"
+                               class="form-control">
+                    </td>
+
+                    <td>
+                        <input type="text"
+                               name="document_remarks[]"
+                               class="form-control">
+                    </td>
+
+                </tr>
+
+                {% endfor %}
+
+                </tbody>
+
+            </table>
+
+            <div class="text-end mt-4">
+
+                <button type="submit"
+                        class="btn btn-success btn-lg">
+
+                    Save QA Inspection
+
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+</div>
+
+{% endblock %}

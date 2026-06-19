@@ -1,0 +1,873 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+
+<div class="container-fluid py-4">
+
+
+<!-- PAGE HEADER -->
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+
+    <div>
+
+        <h2 class="fw-bold mb-1">
+            Risk Classification
+        </h2>
+
+        <p class="text-muted mb-0">
+            {{ supplier.supplier_name }} -
+            {{ supplier.supplier_code }}
+        </p>
+
+    </div>
+
+    <div>
+
+        <a
+            href="{% url 'supplier_detail' supplier.id %}"
+            class="btn btn-light"
+        >
+            Back
+        </a>
+
+    </div>
+
+</div>
+
+<form method="POST">
+
+    {% csrf_token %}
+
+    <!-- SUPPLIER SUMMARY -->
+
+    <div class="card shadow-sm border-0 mb-4">
+
+        <div class="card-body">
+
+            <div class="row text-center">
+
+                <div class="col-md-3">
+
+                    <small class="text-muted">
+                        Supplier Name
+                    </small>
+
+                    <h6 class="mt-2">
+                        {{ supplier.supplier_name }}
+                    </h6>
+
+                </div>
+
+                <div class="col-md-2">
+
+                    <small class="text-muted">
+                        Supplier Code
+                    </small>
+
+                    <h6 class="mt-2">
+                        {{ supplier.supplier_code }}
+                    </h6>
+
+                </div>
+
+                <div class="col-md-2">
+
+                    <small class="text-muted">
+                        Category
+                    </small>
+
+                    <h6 class="mt-2">
+                        {{ supplier.category }}
+                    </h6>
+
+                </div>
+
+                <div class="col-md-3">
+
+                    <small class="text-muted">
+                        Evaluation Score
+                    </small>
+
+                    <h6 class="text-success mt-2">
+                        {{ supplier.evaluation_score }}/90
+                    </h6>
+
+                </div>
+
+                <div class="col-md-2">
+
+                    <small class="text-muted">
+                        Current Risk Level
+                    </small>
+
+                    <h6 class="text-danger mt-2">
+                        {{ supplier.risk_level|title }}
+                    </h6>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="row g-4">
+
+        <!-- LEFT -->
+
+        <div class="col-lg-8">
+
+            <div class="card shadow-sm border-0">
+
+                <div class="card-header bg-white">
+
+                    <h5 class="mb-0">
+
+                        Risk Assessment Details
+
+                    </h5>
+
+                </div>
+
+                <div class="card-body">
+
+                    <div class="row g-3">
+
+                        <div class="col-md-4">
+
+                            <label class="form-label">
+
+                                Assessment Date
+
+                            </label>
+
+                            <input
+                                type="date"
+                                class="form-control"
+                                value="{% now 'Y-m-d' %}"
+                                readonly
+                            >
+
+                        </div>
+
+                        <div class="col-md-4">
+
+                            <label class="form-label">
+
+                                Assessed By
+
+                            </label>
+
+                            <input
+                                type="text"
+                                class="form-control"
+                                value="{{ request.user }}"
+                                readonly
+                            >
+
+                        </div>
+
+                        <div class="col-md-4">
+
+                            <label class="form-label">
+
+                                Business Impact
+
+                            </label>
+
+                            <select name="business_impact" class="form-select">
+
+                                <option value="Low"
+                                    {% if supplier.business_impact == 'Low' %}
+                                        selected
+                                    {% endif %}>
+                                    Low
+                                </option>
+
+                                <option value="Medium"
+                                    {% if supplier.business_impact == 'Medium' %}
+                                        selected
+                                    {% endif %}>
+                                        Medium
+                                </option>
+
+                                <option value="High"
+                                    {% if supplier.business_impact == 'High' %}
+                                        selected
+                                    {% endif %}>
+                                        High
+                                </option>
+
+                            </select>
+
+                        </div>
+
+                        <div class="col-md-4">
+
+                            <label class="form-label">
+
+                                Product / Service Criticality
+
+                            </label>
+
+                            <select name="criticality" class="form-select">
+
+                                <option value="Low"
+                                    {% if supplier.criticality == 'Low' %}
+                                        selected
+                                    {% endif %}>
+                                        Low
+                                </option>
+
+                                <option value="Medium"
+                                    {% if supplier.criticality == 'Medium' %}
+                                        selected
+                                    {% endif %}>
+                                        Medium
+                                </option>
+
+                                <option value="High"
+                                    {% if supplier.criticality == 'High' %}
+                                        selected
+                                    {% endif %}>
+                                        High
+                                </option>
+
+                            </select>
+
+                        </div>
+
+                        <div class="col-md-4">
+
+                            <label class="form-label">
+
+                                Supply Risk
+
+                            </label>
+
+                            <select name="supply_risk" class="form-select">
+
+                                <option value="Low"
+                                    {% if supplier.supply_risk == 'Low' %}
+                                        selected
+                                    {% endif %}>
+                                        Low
+                                </option>
+
+                                <option value="Medium"
+                                    {% if supplier.supply_risk == 'Medium' %}
+                                        selected
+                                    {% endif %}>
+                                        Medium
+                                </option>
+
+                                <option value="High"
+                                    {% if supplier.supply_risk == 'High' %}
+                                        selected
+                                    {% endif %}>
+                                        High
+                                </option>
+
+                            </select>
+
+                        </div>
+
+                        <div class="col-md-4">
+
+                            <label class="form-label">
+
+                                Quality Risk
+
+                            </label>
+
+                            <select name="quality_risk" class="form-select">
+
+                                <option value="Low"
+                                    {% if supplier.quality_risk == 'Low' %}
+                                        selected
+                                    {% endif %}>
+                                        Low
+                                </option>
+
+                                <option value="Medium"
+                                    {% if supplier.quality_risk == 'Medium' %}
+                                        selected
+                                    {% endif %}>
+                                        Medium
+                                </option>
+
+                                <option value="High"
+                                    {% if supplier.quality_risk == 'High' %}
+                                        selected
+                                    {% endif %}>
+                                        High
+                                </option>
+
+                            </select>
+
+                        </div>
+
+                        <div class="col-md-4">
+
+                            <label class="form-label">
+
+                                Compliance Risk
+
+                            </label>
+
+                           <select name="compliance_risk" class="form-select">
+
+                                <option value="Low"
+                                    {% if supplier.compliance_risk == 'Low' %}
+                                        selected
+                                    {% endif %}>
+                                        Low
+                                </option>
+
+                                <option value="Medium"
+                                    {% if supplier.compliance_risk == 'Medium' %}
+                                        selected
+                                    {% endif %}>
+                                        Medium
+                                </option>
+
+                                <option value="High"
+                                    {% if supplier.compliance_risk == 'High' %}
+                                        selected
+                                    {% endif %}>
+                                        High
+                                </option>
+
+                            </select>
+                        </div>
+
+                        <div class="col-md-4">
+
+                            <label class="form-label">
+
+                                Financial Risk
+
+                            </label>
+
+                            <select name="financial_risk" class="form-select">
+
+                                <option value="Low"
+                                    {% if supplier.financial_risk == 'Low' %}
+                                        selected
+                                    {% endif %}>
+                                        Low
+                                </option>
+
+                                <option value="Medium"
+                                    {% if supplier.financial_risk == 'Medium' %}
+                                        selected
+                                    {% endif %}>
+                                        Medium
+                                </option>
+
+                                <option value="High"
+                                    {% if supplier.financial_risk == 'High' %}
+                                        selected
+                                    {% endif %}>
+                                        High
+                                </option>
+
+                            </select>
+
+                        </div>
+
+                        <div class="col-md-4">
+
+                            <label class="form-label">
+
+                                Geographical Risk
+
+                            </label>
+
+                            <select name="geographical_risk" class="form-select">
+
+                                <option value="Low"
+                                    {% if supplier.geographical_risk == 'Low' %}
+                                        selected
+                                    {% endif %}>
+                                        Low
+                                </option>
+
+                                <option value="Medium"
+                                    {% if supplier.geographical_risk == 'Medium' %}
+                                        selected
+                                    {% endif %}>
+                                        Medium
+                                </option>
+
+                                <option value="High"
+                                    {% if supplier.geographical_risk == 'High' %}
+                                        selected
+                                    {% endif %}>
+                                        High
+                                </option>
+
+                            </select>
+                        </div>
+
+                        <div class="col-md-12">
+
+                            <label class="form-label">
+
+                                Justification / Comments
+
+                            </label>
+
+                            <textarea
+                                name="comments"
+                                rows="5"
+                                class="form-control"
+                            >{{ supplier.risk_comments }}</textarea>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            <!-- RISK LEVEL DETERMINATION -->
+
+            <div class="card shadow-sm border-0 mt-4">
+
+                <div class="card-header bg-white">
+
+                    <h5 class="mb-0">
+
+                        Risk Level Determination
+
+                    </h5>
+
+                </div>
+
+                <div class="card-body">
+
+                    <div class="row g-3">
+
+                        <div class="col-md-3">
+
+                            <label>Total Risk Score</label>
+
+                            <input
+                                class="form-control"
+                                value="{{ supplier.risk_score }}"
+                                readonly
+                            >
+
+                        </div>
+
+                        <div class="col-md-3">
+
+                            <label>Risk Level</label>
+
+                            <input
+                                class="form-control"
+                                value="{{ supplier.risk_level }}"
+                                readonly
+                            >
+
+                        </div>
+
+                        <div class="col-md-3">
+
+                            <label>Risk Category</label>
+
+                            <input
+                                name="risk_category"
+                                class="form-control"
+                                value="{{ supplier.risk_category }}"
+                            >
+
+                        </div>
+
+                        <div class="col-md-3">
+
+                            <label>Review Frequency</label>
+
+                            <input
+                                name="review_frequency"
+                                class="form-control"
+                                value="{{ supplier.review_frequency }}"
+                            >
+
+                        </div>
+
+                        <div class="col-md-12">
+
+                            <label>
+
+                                Mitigation Plan / Control Measures
+
+                            </label>
+
+                            <textarea
+                                name="mitigation_plan"
+                                rows="5"
+                                class="form-control"
+                            >{{ supplier.mitigation_plan }}</textarea>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- RIGHT -->
+
+        <div class="col-lg-4">
+
+            <div class="card shadow-sm border-0">
+
+                <div class="card-header bg-white">
+
+                    <h5 class="mb-0">
+                        Risk Matrix
+                    </h5>
+
+                </div>
+
+                <div class="card-body">
+
+                    <div class="table-responsive">
+
+    <table class="table table-bordered text-center align-middle risk-matrix">
+
+        <thead>
+
+            <tr>
+
+                <th class="bg-light">
+                    Likelihood ↓ <br>
+                    Impact →
+                </th>
+
+                <th class="bg-success text-white">
+                    Low
+                </th>
+
+                <th class="bg-warning">
+                    Medium
+                </th>
+
+                <th class="bg-danger text-white">
+                    High
+                </th>
+
+            </tr>
+
+        </thead>
+
+        <tbody>
+
+            <tr>
+
+                <th class="bg-danger text-white">
+                    High
+                </th>
+
+                <td class="bg-warning position-relative">
+
+                    {% if likelihood_value == 3 and impact_value == 1 %}
+                        <span class="risk-marker">📍</span>
+                    {% endif %}
+
+                </td>
+
+                <td class="bg-danger position-relative">
+
+                    {% if likelihood_value == 3 and impact_value == 2 %}
+                        <span class="risk-marker">📍</span>
+                    {% endif %}
+
+                </td>
+
+                <td class="bg-danger text-white position-relative">
+
+                    {% if likelihood_value == 3 and impact_value == 3 %}
+                        <span class="risk-marker">📍</span>
+                    {% endif %}
+
+                </td>
+
+            </tr>
+
+            <tr>
+
+                <th class="bg-warning">
+                    Medium
+                </th>
+
+                <td class="bg-success position-relative">
+
+                    {% if likelihood_value == 2 and impact_value == 1 %}
+                        <span class="risk-marker">📍</span>
+                    {% endif %}
+
+                </td>
+
+                <td class="bg-warning position-relative">
+
+                    {% if likelihood_value == 2 and impact_value == 2 %}
+                        <span class="risk-marker">📍</span>
+                    {% endif %}
+
+                </td>
+
+                <td class="bg-danger position-relative">
+
+                    {% if likelihood_value == 2 and impact_value == 3 %}
+                        <span class="risk-marker">📍</span>
+                    {% endif %}
+
+                </td>
+
+            </tr>
+
+            <tr>
+
+                <th class="bg-success text-white">
+                    Low
+                </th>
+
+                <td class="bg-success position-relative">
+
+                    {% if likelihood_value == 1 and impact_value == 1 %}
+                        <span class="risk-marker">📍</span>
+                    {% endif %}
+
+                </td>
+
+                <td class="bg-warning position-relative">
+
+                    {% if likelihood_value == 1 and impact_value == 2 %}
+                        <span class="risk-marker">📍</span>
+                    {% endif %}
+
+                </td>
+
+                <td class="bg-danger position-relative">
+
+                    {% if likelihood_value == 1 and impact_value == 3 %}
+                        <span class="risk-marker">📍</span>
+                    {% endif %}
+
+                </td>
+
+            </tr>
+
+        </tbody>
+
+    </table>
+
+</div>
+
+<div class="mt-3">
+
+    <div class="alert alert-info mb-0">
+
+        <strong>Current Risk:</strong>
+
+        {{ supplier.risk_level|title }}
+
+        |
+
+        <strong>Score:</strong>
+
+        {{ supplier.risk_score }}
+
+    </div>
+
+</div>
+
+                </div>
+
+            </div>
+
+            <div class="card shadow-sm border-0 mt-4">
+
+                <div class="card-body">
+
+                    <div class="row text-center">
+
+                        <div class="col-4">
+
+    <small class="text-muted">
+        Business Impact
+    </small>
+
+    <h5>
+        {{ supplier.business_impact }}
+    </h5>
+
+</div>
+
+<div class="col-4">
+
+    <small class="text-muted">
+        Supply Risk
+    </small>
+
+    <h5>
+        {{ supplier.supply_risk }}
+    </h5>
+
+</div>
+
+<div class="col-4">
+
+    <small class="text-muted">
+        Risk Score
+    </small>
+
+    <h5 class="text-danger">
+        {{ supplier.risk_score }}
+    </h5>
+
+</div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            <div class="card shadow-sm border-0 mt-4">
+
+                <div class="card-header bg-white">
+
+                    <h5 class="mb-0">
+
+                        Risk Guidelines
+
+                    </h5>
+
+                </div>
+
+                <div class="card-body">
+
+                    <table class="table table-bordered">
+
+                        <thead>
+
+                            <tr>
+
+                                <th>Score</th>
+                                <th>Level</th>
+                                <th>Action</th>
+
+                            </tr>
+
+                        </thead>
+
+                        <tbody>
+
+                            <tr>
+                                <td>1-5</td>
+                                <td class="text-success">Low</td>
+                                <td>Acceptable</td>
+                            </tr>
+
+                            <tr>
+                                <td>6-10</td>
+                                <td class="text-warning">Medium</td>
+                                <td>Monitor</td>
+                            </tr>
+
+                            <tr>
+                                <td>11-15</td>
+                                <td class="text-danger">High</td>
+                                <td>Mitigate</td>
+                            </tr>
+
+                            <tr>
+                                <td>16-25</td>
+                                <td class="text-danger fw-bold">
+                                    Critical
+                                </td>
+                                <td>Immediate Action</td>
+                            </tr>
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- End of Risk Matrix -->
+
+    </div>
+
+    <div class="text-end mt-4">
+
+        <button
+            type="submit"
+            class="btn btn-primary"
+        >
+
+            Save Risk Classification
+
+        </button>
+
+    </div>
+
+</form>
+
+
+</div>
+
+<style>
+
+.card{
+    border-radius:16px;
+}
+
+.form-control,
+.form-select{
+    border-radius:10px;
+}
+
+.risk-matrix th,
+.risk-matrix td{
+    height:25px;
+    vertical-align:middle;
+    font-weight:600;
+}
+
+.risk-marker{
+    font-size:18px;
+    display:block;
+}
+
+.risk-matrix{
+    border-radius:12px;
+    overflow:hidden;
+}
+
+.risk-matrix td{
+    transition:all .3s ease;
+}
+
+.risk-matrix td:hover{
+    transform:scale(1.05);
+}
+
+</style>
+
+{% endblock %}

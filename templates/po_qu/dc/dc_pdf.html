@@ -5,153 +5,355 @@
 <title>Delivery Challan {{ dc.dc_number }}</title>
 
 <style>
-
 /* ================= PAGE ================= */
+
 @page {
     size: A4;
-    margin: 10mm 15mm 20mm 15mm;
+    margin: 10mm;
 
     @bottom-center {
-        content: "Page " counter(page) " of " counter(pages);
-        font-size: 10px;
-        color: #555;
+        content: "© VAAN — Page " counter(page) " of " counter(pages);
+        font-size: 9px;
+        color: #666;
     }
 }
 
 body {
-    font-family: Arial, sans-serif;
-    font-size: 12px;
-    color: #333;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 11px;
+    color: #222;
+    line-height: 1.4;
 }
 
-/* LOGO */
+/* ================= WATERMARK ================= */
+
+.page-watermark {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    width: 650px;
+    transform: translate(-50%, -50%);
+    opacity: 0.04;
+}
+
+/* ================= HEADER ================= */
+
+.header {
+    text-align: center;
+    margin-bottom: 15px;
+}
+
 .logo {
     height: 70px;
 }
 
-/* HEADER TABLE */
-.header-table td {
+.company-info {
+    font-size: 10px;
+    line-height: 1.5;
+    margin-top: 5px;
+}
+
+/* ================= TITLE ================= */
+
+.title {
+    text-align: left;
+    color: #2b7cff;
+    font-size: 28px;
+    font-weight: bold;
+    margin: 20px 0;
+}
+
+/* ================= TOP SECTION ================= */
+
+.top-section {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+}
+
+.top-section td {
     vertical-align: top;
 }
 
-/* ITEMS TABLE */
+.block-title {
+    color: #2b7cff;
+    font-size: 14px;
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.qr {
+    text-align: right;
+}
+
+.qr img {
+    width: 90px;
+    height: auto;
+}
+
+/* ================= ADDRESS TABLE ================= */
+
+.address-table {
+    width: 100%;
+    margin-top: 15px;
+    border-collapse: collapse;
+}
+
+.address-table td {
+    vertical-align: top;
+    padding: 4px;
+}
+
+.from-box {
+    width: 50%;
+    text-align: left;
+}
+
+.to-box {
+    width: 50%;
+    text-align: right;
+}
+
+/* ================= ITEM TABLE ================= */
+
 .dc-items {
     width: 100%;
     border-collapse: collapse;
-    margin-top: 10px;
+    margin-top: 20px;
 }
 
 .dc-items th {
-    background-color: #3399ff;
-    color: white;
-    padding: 6px;
-    font-size: 11px;
-    text-align: center;
+    background: #2b7cff;
+    color: #fff;
+    padding: 8px;
+    font-size: 10px;
+    text-align: left;
 }
 
 .dc-items td {
-    padding: 7px;
-    font-size: 11px;
-    text-align: center;
     border-bottom: 1px solid #ddd;
+    padding: 7px;
+}
+
+.dc-items tr:nth-child(even) {
+    background: #fafafa;
 }
 
 .dc-items td.product {
     text-align: left;
 }
 
-/* SIGNATURE */
-.signatures {
-    display: flex;
-    gap: 40px;
-    margin-top: 20px;
+/* ================= SIGNATURES ================= */
+
+.signature-table {
+    width: 60%;
+    margin-top: 15px;
+    border-collapse: separate;
+    border-spacing: 3px;
 }
 
-.signatures img {
-    max-width: 120px;
+.signature-table td {
+    width: 33.33%;
+    vertical-align: top;
 }
 
-/* FOOTER NOTE */
+.digital-sign-box {
+    position: relative;
+    overflow: hidden;
+    padding: 3px;
+    min-height: 35px;
+    text-align: center;
+}
+
+/* SIGN WATERMARK */
+
+.sign-watermark {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 60px;
+    transform: translate(-50%, -50%);
+    opacity: 0.6;
+    z-index: 0;
+}
+
+.digital-sign-title,
+.digital-sign-name,
+.digital-sign-date,
+.digital-sign-id,
+.signature-role {
+    position: relative;
+    z-index: 10;
+}
+
+.digital-sign-title {
+    font-size: 6px;
+    color: #444;
+    margin-bottom: 1px;
+}
+
+.digital-sign-name {
+    font-size: 8px;
+    font-weight: bold;
+    margin-bottom: 1px;
+}
+
+.digital-sign-date {
+    font-size: 6px;
+    color: #333;
+    margin-bottom: 1px;
+}
+
+.digital-sign-id {
+    font-size: 5px;
+    color: #666;
+    line-height: 1.1;
+    word-break: break-word;
+}
+
+.signature-role {
+    font-size: 6px;
+    color: #666;
+    margin-top: 1px;
+    font-weight: bold;
+}
+
+/* ================= NOTES ================= */
+
+.notes-terms {
+    position: fixed;
+    bottom: 12mm;
+    left: 18mm;
+    right: 18mm;
+    font-size: 9px;
+}
+
+.notes-terms b {
+    color: #2b7cff;
+}
+
+/* ================= FOOTER ================= */
+
 .footer {
     position: fixed;
-    bottom: 10px;
-    left: 15px;
-    right: 15px;
-    font-size: 11px;
-    color: #555;
+    bottom: 5mm;
+    left: 18mm;
+    right: 18mm;
+    text-align: center;
+    font-size: 9px;
+    color: #666;
 }
+
+/* ================= PRE ================= */
+
+.footer-note pre {
+    margin: 0;
+    white-space: pre-wrap;
+    font-family: inherit;
+}
+
+
+
 
 </style>
 </head>
 
 <body>
 
-<!-- ================= COMPANY ================= -->
-<div style="text-align:center; margin-bottom:15px;">
-    {% if logo_path %}
-    <img src="{{ logo_path }}" class="logo">
-    {% endif %}
 
-    <div style="font-size:10px;">
-        {{ company_address }}
-    </div>
+<!-- PAGE WATERMARK -->
+
+<img src="{{ logo_path }}" class="page-watermark">
+
+<!-- HEADER -->
+
+<div class="header">
+
+
+{% if logo_path %}
+    <img src="{{ logo_path }}" class="logo">
+{% endif %}
+
+<div class="company-info">
+    {{ company_address }}<br>
+    GSTIN: {{ company_gstin }} <br>
+    Phone: {{ company_phone }}
 </div>
 
-<!-- ================= HEADER ================= -->
-<table width="100%" class="header-table">
+
+</div>
+
+<!-- TITLE -->
+
+<div class="title">
+    #{{ dc.dc_number }}
+</div>
+
+<!-- FROM / TO + QR -->
+
+<table class="top-section">
 <tr>
 
-<td>
-    <span style="color:#3399ff; font-size:26px; font-weight:bold;">
-        DC #{{ dc.dc_number }}
-    </span><br><br>
+<td width="70%">
+    <div class="block-title">Dispatch Details</div>
 
-    <small>Date: {{ dc.date }}</small><br>
-    <small>City: {{ dc.city }}</small><br>
-    <small>Transporter: {{ dc.transporter }}</small><br>
-    <small>Created By: {{ dc.created_by }}</small>
+    <strong>Date:</strong> {{ dc.date }}<br>
+    <strong>City:</strong> {{ dc.city }}<br>
+    <strong>Transporter:</strong> {{ dc.transporter }}<br>
+    <strong>Created By:</strong>
+    {{ dc.created_by.first_name }}
+    {{ dc.created_by.last_name }}
 </td>
 
-<td align="right">
+<td width="30%" class="qr">
+
     {% if qr_code_path %}
-    <img src="{{ qr_code_path }}" style="width:100px;">
+        <img src="{{ qr_code_path }}">
     {% endif %}
+
 </td>
 
 </tr>
 </table>
 
-<br>
+<table class="address-table">
 
-<!-- ================= FROM / TO ================= -->
-<table width="100%" style="margin-bottom:15px;">
 <tr>
 
-<td width="50%">
-    <b>From</b><br>
+<td width="50%" class="from-box">
+
+    <div class="block-title">From</div>
+
     {{ dc.from_name }}<br>
     {{ dc.from_address }}<br>
     {{ dc.from_city }} {{ dc.from_state }}<br>
     {{ dc.from_pincode }}<br>
     Phone: {{ dc.from_phone }}<br>
     Email: {{ dc.from_email }}
+
 </td>
 
-<td width="50%" align="right">
-    <b>To</b><br>
+<td width="50%" class="to-box">
+
+    <div class="block-title">To</div>
+
     {{ dc.to_name }}<br>
     {{ dc.to_address }}<br>
     {{ dc.to_city }} {{ dc.to_state }}<br>
     {{ dc.to_pincode }}<br>
     Phone: {{ dc.to_phone }}<br>
     Email: {{ dc.to_email }}
+
 </td>
 
 </tr>
+
 </table>
 
-<!-- ================= ITEMS ================= -->
+<!-- ITEMS -->
+
 <table class="dc-items">
+
 <thead>
 <tr>
     <th>#</th>
@@ -162,7 +364,9 @@ body {
 </thead>
 
 <tbody>
+
 {% for item in dc.items.all %}
+
 <tr>
     <td>{{ forloop.counter }}</td>
     <td class="product">{{ item.product_name }}</td>
@@ -170,70 +374,144 @@ body {
     <td>{{ item.quantity }}</td>
 </tr>
 {% endfor %}
+
 </tbody>
+
 </table>
 
-<!-- ================= SIGNATURE ================= -->
-<div class="signatures">
+<!-- SIGNATURES -->
 
-    <div style="text-align:center;">
-        <div style="font-size:11px;">
-            <b>Prepared By</b><br>
-            {{ dc.prepared_by|default:"—" }}<br>
-            {{ dc.prepared_at|date:"d M Y H:i"|default:"—" }}<br>
+<table class="signature-table">
+<tr>
 
-            {% if dc.prepared_signature_id %}
-            ID: {{ dc.prepared_signature_id }}
-            {% endif %}
-        </div>
+<!-- PREPARED -->
+
+<td>
+
+
+<div class="digital-sign-box">
+
+    <img src="{{ logo_path }}" class="sign-watermark">
+
+    <div class="digital-sign-title">
+        ✓ Digitally Signed
     </div>
 
-    <div style="text-align:center">
-        <div style="font-size: 11px;">
-            <b>Reviewed By</b>
-            {{ dc.reviewed_by | default:"—" }}<br>
-            {{ dc.reviewed_at | date:"d M Y H:i | default: "—" }}<br>
-
-            {% if dc.reviewed_signature_id %}
-            ID: {{ dc.reviewed_signature_id }}
-            {% endif %}
-        </div>
+    <div class="digital-sign-name">
+        {{ dc.prepared_by.first_name }}
+        {{ dc.prepared_by.last_name }}
     </div>
 
-    <div style="text-align:center;">
-        <div style="font-size:11px;">
-            <b>Approved By</b><br>
-            {{ dc.approved_by|default:"—" }}<br>
-            {{ dc.approved_at|date:"d M Y H:i"|default:"—" }}<br>
-
-            {% if dc.approved_signature_id %}
-            ID: {{ dc.approved_signature_id }}
-            {% endif %}
-        </div>
+    <div class="digital-sign-date">
+        {{ dc.prepared_at|date:"d M Y, g:i a" }}
     </div>
 
+    <div class="digital-sign-id">
+        {{ dc.prepared_signature_id|default:"-" }}
+    </div>
 
-    <div style="text-align: center;">
-        <div style="font-size: large;">
-            <b>Reviewd by</b>
-            {{ dc.reviewed_by | default: "—" }}<br>
-            {{ dc.reviewed_at | date: "d M Y H:i" | default: "—" }}<br>
-
-            {% if dc.reviewed_signature_id %}
-            ID: {{ dc.reviewed_signature_id }}
-            {% endif %}
-        </div>
+    <div class="signature-role">
+        Prepared By
     </div>
 
 </div>
 
-<!-- ================= FOOTER NOTE ================= -->
-<div class="footer">
-    {% if dc.note %}
-    <strong>Note:</strong>
-    {{ dc.note }}
-    {% endif %}
+
+</td>
+
+<!-- REVIEWED -->
+
+<td>
+
+
+<div class="digital-sign-box">
+
+    <img src="{{ logo_path }}" class="sign-watermark">
+
+    <div class="digital-sign-title">
+        ✓ Digitally Signed
+    </div>
+
+    <div class="digital-sign-name">
+        {{ dc.reviewed_by.first_name }}
+        {{ dc.reviewed_by.last_name }}
+    </div>
+
+    <div class="digital-sign-date">
+        {{ dc.reviewed_at|date:"d M Y, g:i a" }}
+    </div>
+
+    <div class="digital-sign-id">
+        {{ dc.reviewed_signature_id|default:"-" }}
+    </div>
+
+    <div class="signature-role">
+        Reviewed By
+    </div>
+
+</div>
+
+
+</td>
+
+<!-- APPROVED -->
+
+<td>
+
+
+<div class="digital-sign-box">
+
+    <img src="{{ logo_path }}" class="sign-watermark">
+
+    <div class="digital-sign-title">
+        ✓ Digitally Signed
+    </div>
+
+    <div class="digital-sign-name">
+        {{ dc.approved_by.first_name }}
+        {{ dc.approved_by.last_name }}
+    </div>
+
+    <div class="digital-sign-date">
+        {{ dc.approved_at|date:"d M Y, g:i a" }}
+    </div>
+
+    <div class="digital-sign-id">
+        {{ dc.approved_signature_id|default:"-" }}
+    </div>
+
+    <div class="signature-role">
+        Approved By
+    </div>
+
+</div>
+
+
+</td>
+
+</tr>
+</table>
+
+<!-- NOTES & TERMS -->
+
+<div class="notes-terms">
+
+
+<div>
+    <b>Note</b><br>
+    {{ dc.note|default:"-" }}
+</div>
+
+{% if dc.terms %}
+<div style="margin-top:10px;">
+    <b>Terms</b><br>
+    {{ dc.terms }}
+</div>
+{% endif %}
+
+
 </div>
 
 </body>
+
 </html>

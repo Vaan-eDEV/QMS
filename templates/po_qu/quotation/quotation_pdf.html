@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html>
 <head>
@@ -5,263 +6,474 @@
 <title>Quotation {{ quotation.quotation_number }}</title>
 
 <style>
-
 /* ================= PAGE ================= */
+/* ================= PAGE ================= */
+
 @page {
     size: A4;
-    margin: 10mm 15mm 20mm 15mm;
+    margin: 10mm;
 
     @bottom-center {
-        content: "Page " counter(page) " of " counter(pages);
-        font-size: 10px;
-        color: #555;
+        content: "© VAAN — Page " counter(page) " of " counter(pages);
+        font-size: 9px;
+        color: #666;
     }
 }
 
 body {
-    font-family: "Helvetica Neue", Arial, sans-serif;
-    font-size: 12px;
-    color: #333;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 11px;
+    color: #222;
+    line-height: 1.4;
 }
 
-/* WATERMARK (optional) */
-body::before {
-    content: "";
+/* ================= WATERMARK ================= */
+
+.page-watermark {
     position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-image: url("{{ watermark|default:'' }}");
-    background-repeat: no-repeat;
-    background-position: center;
-    background-size: 80%;
-    opacity: 0.08;
-    z-index: -1;
+    top: 50%;
+    left: 50%;
+    width: 650px;
+    transform: translate(-50%, -50%);
+    opacity: 0.04;
 }
 
-/* LOGO */
+/* ================= HEADER ================= */
+
+.header {
+    text-align: center;
+    margin-bottom: 15px;
+}
+
 .logo {
     height: 70px;
 }
 
-/* TABLE */
+.company-info {
+    font-size: 10px;
+    line-height: 1.5;
+    margin-top: 5px;
+}
+
+/* ================= TITLE ================= */
+
+.title {
+    text-align: left;
+    color: #2b7cff;
+    font-size: 28px;
+    font-weight: bold;
+    margin: 20px 0;
+}
+
+/* ================= CUSTOMER + QR ================= */
+
+.top-section {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+}
+
+.top-section td {
+    vertical-align: top;
+}
+
+.customer-box {
+    width: 70%;
+}
+
+.qr {
+    text-align: right;
+}
+
+.qr img {
+    width: 90px;
+}
+
+
+.block-title {
+    color: #2b7cff;
+    font-size: 14px;
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+/* ================= ITEM TABLE ================= */
+
 .po-items {
     width: 100%;
     border-collapse: collapse;
-    margin-bottom: 10px;
+    margin-top: 20px;
 }
 
 .po-items th {
-    background-color: #3399ff;
-    color: white;
-    padding: 6px;
-    font-size: 11px;
-    text-align: center;
+    background: #2b7cff;
+    color: #fff;
+    padding: 8px;
+    font-size: 10px;
+    text-align: left;
 }
 
 .po-items td {
-    border-bottom: 1px solid #dad9d9;
+    border-bottom: 1px solid #ddd;
     padding: 7px;
-    font-size: 11px;
+}
+
+.po-items tr:nth-child(even) {
+    background: #fafafa;
 }
 
 .num {
     text-align: right;
 }
 
-/* SIGNATURE */
-.signatures {
-    display: flex;
-    gap: 40px;
-    margin-top: 20px;
+/* ================= TOTALS ================= */
+
+.total {
+    width: 40%;
+    margin-left: auto;
+    margin-top: 15px;
+    border-collapse: collapse;
 }
 
-.signatures img {
-    max-width: 120px;
+.total td {
+    padding: 6px;
+    border-bottom: 1px solid #ddd;
 }
 
-/* FOOTER */
-.footer-note {
-    position: fixed;
-    bottom: 25px;
-    left: 15mm;
-    right: 15mm;
-    font-size: 10px;
+.grand-total td {
+    background: #f5f9ff;
+    border-top: 2px solid #2b7cff;
+    border-bottom: 2px solid #2b7cff;
+    font-weight: bold;
+    font-size: 12px;
+}
+
+/* ================= SIGNATURES ================= */
+
+/* SIGNATURE SECTION */
+.signature-table {
+    width: 60%;
+    margin-top: 10px;
+    border-collapse: separate;
+    border-spacing: 3px;
+}
+
+.signature-table td {
+    width: 33.33%;
+    vertical-align: top;
+}
+
+/* SIGN BOX */
+.digital-sign-box {
+    position: relative;
+    overflow: hidden;
+    padding: 3px;
+    min-height: 35px;
+    text-align: center;
+}
+
+/* WATERMARK */
+.sign-watermark {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 60px;
+    transform: translate(-50%, -50%);
+    opacity: 0.6;
+    z-index: 0;
+}
+
+/* TEXT ABOVE WATERMARK */
+.digital-sign-title,
+.digital-sign-name,
+.digital-sign-date,
+.digital-sign-id,
+.signature-role {
+    position: relative;
+    z-index: 10;
+}
+
+/* TEXT STYLES */
+.digital-sign-title {
+    font-size: 6px;
     color: #444;
+    margin-bottom: 1px;
 }
 
+.digital-sign-name {
+    font-size: 8px;
+    font-weight: bold;
+    margin-bottom: 1px;
+}
 
+.digital-sign-date {
+    font-size: 6px;
+    color: #333;
+    margin-bottom: 1px;
+}
+
+.digital-sign-id {
+    font-size: 5px;
+    color: #666;
+    line-height: 1.1;
+    word-break: break-word;
+}
+
+.signature-role {
+    font-size: 6px;
+    color: #666;
+    margin-top: 1px;
+    font-weight: bold;
+}
+/* NOTES */
+.notes-terms {
+    position: fixed;
+    bottom: 12mm;
+    padding-top: 8px;
+    font-size: 9px;
+}
+
+.notes-terms b {
+    color: #2b7cff;
+}
+
+/* PRE */
+.footer-note pre {
+    margin: 0;
+    white-space: pre-wrap;
+    font-family: inherit;
+}
 </style>
 </head>
 
 <body>
 
-<!-- ================= COMPANY ================= -->
-<div style="text-align:center; margin-bottom:20px;">
+
+<!-- PAGE WATERMARK -->
+<img src="{{ logo_path }}" class="page-watermark">
+
+<!-- HEADER -->
+<div class="header">
+
     {% if logo_path %}
-    <img src="{{ logo_path }}" class="logo">
+        <img src="{{ logo_path }}" class="logo">
     {% endif %}
 
-    <div style="font-size:10px; color:#555;">
-        {{ company_address }} <br>
-        Phone: {{ company_phone }} | Email: {{ company_email }}
+    <div class="company-info">
+        {{ company_address }}<br>
+        GSTIN: {{ company_gstin }} <br>
+        Phone: {{ company_phone }}
     </div>
+
 </div>
 
-<!-- ================= HEADER ================= -->
-<table style="width:100%; margin-bottom:15px;">
+<!-- TITLE -->
+<div class="title">
+    #{{ quotation.quotation_number }}
+</div>
+
+<!-- CUSTOMER DETAILS + QR -->
+<table class="top-section">
+    <tr>
+
+        <td width="70%">
+
+            <div class="block-title">Customer Details</div>
+
+            <strong>{{ quotation.customer_name }}</strong><br>
+
+            {{ quotation.customer_address }}<br>
+
+            Email: {{ quotation.customer_email }}<br>
+
+            Phone: {{ quotation.customer_phone }}<br><br>
+
+            <strong>Date:</strong>
+            {{ quotation.date|date:"d M Y" }}
+
+        </td>
+
+        <td width="30%" class="qr">
+
+            {% if qr_code_path %}
+                <img src="{{ qr_code_path }}">
+            {% endif %}
+
+        </td>
+
+    </tr>
+</table>
+
+<!-- ITEMS -->
+<table class="po-items">
+
+    <thead>
+        <tr>
+            <th>#</th>
+            <th>Description</th>
+            <th>HSN/SAC</th>
+            <th>Unit</th>
+            <th>Qty</th>
+            <th>Rate</th>
+            <th>Amount</th>
+        </tr>
+    </thead>
+
+    <tbody>
+        {% for item in items %}
+        <tr>
+            <td>{{ forloop.counter }}</td>
+            <td>{{ item.description }}</td>
+            <td>{{ item.hsn_code }}</td>
+            <td>{{ item.unit }}</td>
+            <td class="num">{{ item.quantity }}</td>
+            <td class="num">{{ item.rate|floatformat:2 }}</td>
+            <td class="num">{{ item.amount|floatformat:2 }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+
+</table>
+
+<!-- TOTALS -->
+<table class="total">
+
+    <tr>
+        <td>Subtotal</td>
+        <td class="num">₹ {{ quotation.subtotal|floatformat:2 }}</td>
+    </tr>
+
+    <tr>
+        <td>Discount ({{ quotation.discount_percent }}%)</td>
+        <td class="num">₹ {{ quotation.discount_amount|floatformat:2 }}</td>
+    </tr>
+
+    <tr>
+        <td>CGST</td>
+        <td class="num">₹ {{ quotation.cgst_amount|floatformat:2 }}</td>
+    </tr>
+
+    <tr>
+        <td>SGST</td>
+        <td class="num">₹ {{ quotation.sgst_amount|floatformat:2 }}</td>
+    </tr>
+
+    <tr>
+        <td>IGST</td>
+        <td class="num">₹ {{ quotation.igst_amount|floatformat:2 }}</td>
+    </tr>
+
+    <tr class="grand-total">
+        <td><b>Grand Total</b></td>
+        <td class="num">
+            <b>₹ {{ quotation.grand_total|floatformat:2 }}</b>
+        </td>
+    </tr>
+
+</table>
+<!-- SIGNATURES -->
+<table class="signature-table">
 <tr>
 
 <td>
-    <span style="color:#3399ff; font-size:28px; font-weight:bold;">
-        Quotation #{{ quotation.quotation_number }}
-    </span><br><br>
-
-    <small>Date: {{ quotation.date|date:"d M Y" }}</small><br><br>
-
-    <strong>Customer</strong><br>
-    <b>{{ quotation.customer_name }}</b><br>
-
-    <span style="white-space: pre-line;">
-        {{ quotation.customer_address }}
-    </span><br>
-
-    <small>Email: {{ quotation.customer_email }}</small><br>
-    <small>Phone: {{ quotation.customer_phone }}</small>
-</td>
-
-<td style="text-align:right;">
-
-    {% if qr_code_path %}
-    <img src="{{ qr_code_path }}" style="width:100px; border:1px solid #eee; padding:2px;">
-    {% endif %}
-
-    <br><br>
-
-    <strong>Bank Details</strong><br>
-    <small>Bank: {{ quotation.bank_name }}</small><br>
-    <small>A/C: {{ quotation.bank_account }}</small><br>
-    <small>IFSC: {{ quotation.ifsc }}</small>
-
-</td>
-
-</tr>
-</table>
-
-<!-- ================= ITEMS ================= -->
-<table class="po-items">
-<thead>
-<tr>
-    <th>#</th>
-    <th>Description</th>
-    <th>HSN/SAC</th>
-    <th>Unit</th>
-    <th>Qty</th>
-    <th>Rate</th>
-    <th>Amount</th>
-</tr>
-</thead>
-
-<tbody>
-{% for item in items %}
-<tr>
-    <td>{{ forloop.counter }}</td>
-    <td>{{ item.description }}</td>
-    <td>{{ item.hsn_code }}</td>
-    <td>{{ item.unit }}</td>
-    <td class="num">{{ item.quantity }}</td>
-    <td class="num">{{ item.rate|floatformat:2 }}</td>
-    <td class="num">{{ item.amount|floatformat:2 }}</td>
-</tr>
-{% endfor %}
-</tbody>
-</table>
-
-<!-- ================= TOTAL ================= -->
-<table class="po-items">
-<tr>
-    <td colspan="6"></td>
-    <td class="num"><b>Subtotal : ₹ {{ quotation.subtotal|floatformat:2 }}</b></td>
-</tr>
-
-<tr>
-    <td colspan="6"></td>
-    <td class="num">
-        Discount ({{ quotation.discount_percent }}%) :
-        ₹ -{{ quotation.discount_amount|floatformat:2 }}
-    </td>
-</tr>
-
-<tr>
-    <td colspan="6"></td>
-    <td class="num">CGST : ₹ {{ quotation.cgst_amount|floatformat:2 }}</td>
-</tr>
-
-<tr>
-    <td colspan="6"></td>
-    <td class="num">SGST : ₹ {{ quotation.sgst_amount|floatformat:2 }}</td>
-</tr>
-
-<tr>
-    <td colspan="6"></td>
-    <td class="num">IGST : ₹ {{ quotation.igst_amount|floatformat:2 }}</td>
-</tr>
-
-<tr>
-    <td colspan="6"></td>
-    <td class="num">
-        <b>Grand Total : ₹ {{ quotation.grand_total|floatformat:2 }}</b>
-    </td>
-</tr>
-</table>
-
-<!-- ================= SIGNATURE ================= -->
-<div class="signatures">
-
-    <div style="text-align:center;">
-        <div style="font-size:11px;">
-            <b>Prepared By</b><br>
-            {{ quotation.prepared_by|default:"—" }}<br>
-            {{ quotation.prepared_at|date:"d M Y H:i"|default:"—" }}<br>
-
-            {% if quotation.prepared_signature_id %}
-            ID: {{ quotation.prepared_signature_id }}
-            {% endif %}
+    <div class="digital-sign-box">
+        <img src="{{ logo_path }}" class="sign-watermark">
+        <div class="digital-sign-title">
+            ✓ Digitally Signed
         </div>
+
+        <div class="digital-sign-name">
+            {{ quotation.prepared_by.first_name }} {{ quotation.prepared_by.last_name }}
+        </div>
+
+        <div class="digital-sign-date">
+            {{ quotation.prepared_at|date:"d M Y, g:i a" }}
+        </div>
+
+        <div class="digital-sign-id">
+            {{ quotation.prepared_signature_id|default:"-" }}
+        </div>
+
+        <div class="signature-role">
+            Prepared By
+        </div>
+
+    </div>
+</td>
+
+<td>
+    <div class="digital-sign-box">
+        <img src="{{ logo_path }}" class="sign-watermark">
+        <div class="digital-sign-title">
+            ✓ Digitally Signed
+        </div>
+
+        <div class="digital-sign-name">
+            {{ quotation.reviewed_by.first_name }} {{ quotation.reviewed_by.last_name }}
+        </div>
+
+        <div class="digital-sign-date">
+            {{ quotation.reviewed_at|date:"d M Y, g:i a" }}
+        </div>
+
+        <div class="digital-sign-id">
+            {{ quotation.reviewed_signature_id|default:"-" }}
+        </div>
+
+        <div class="signature-role">
+            Reviewed By
+        </div>
+
+    </div>
+</td>
+
+<td>
+    <div class="digital-sign-box">
+
+    <img src="{{ logo_path }}" class="sign-watermark">
+
+    <div class="digital-sign-title">
+        ✓ Digitally Signed
     </div>
 
-    <div style="text-align:center;">
-        <div style="font-size:11px;">
-            <b>Approved By</b><br>
-            {{ quotation.approved_by|default:"—" }}<br>
-            {{ quotation.approved_at|date:"d M Y H:i"|default:"—" }}<br>
+    <div class="digital-sign-name">
+        {{ quotation.approved_by.first_name }} {{ quotation.approved_by.last_name }}
+    </div>
 
-            {% if quotation.approved_signature_id %}
-            ID: {{ quotation.approved_signature_id }}
-            {% endif %}
-        </div>
+    <div class="digital-sign-date">
+        {{ quotation.approved_at|date:"d M Y, g:i a" }}
+    </div>
+
+    <div class="digital-sign-id">
+        {{ quotation.approved_signature_id|default:"-" }}
+    </div>
+
+    <div class="signature-role">
+        Approved By
     </div>
 
 </div>
-<!-- ================= NOTES ================= -->
-<div class="footer-note">
+</td>
 
-    {% if quotation.note %}
+</tr>
+</table>
+
+<!-- NOTES & TERMS -->
+<div class="notes-terms">
+
     <div>
-        <b>Note:</b><br>
+        <b>Note</b><br>
         {{ quotation.note|default:"-" }}
     </div>
-    {% endif %}
 
-    {% if quotation.terms %}
-    <div style="margin-top:6px;">
-        <b>Terms:</b><br>
+    <div style="margin-top:10px;">
+        <b>Terms</b><br>
         {{ quotation.terms|default:"-" }}
     </div>
-    {% endif %}
 
 </div>
 
+
 </body>
+
 </html>

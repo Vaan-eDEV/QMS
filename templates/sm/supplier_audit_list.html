@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class="container-fluid py-4">
+
+    <h3>
+        Supplier Audit Requests
+    </h3>
+
+    <table class="table table-bordered">
+
+        <thead>
+
+            <tr>
+
+                <th>Request No</th>
+
+                <th>Supplier</th>
+
+                <th>Type</th>
+
+                <th>Status</th>
+
+                <th>Date</th>
+
+            </tr>
+
+        </thead>
+
+        <tbody>
+
+            {% for audit in audits %}
+
+            <tr>
+
+                <td>{{ audit.request_no }}</td>
+
+                <td>{{ audit.supplier.supplier_name }}</td>
+
+                <td>{{ audit.get_audit_type_display }}</td>
+
+                <td>{{ audit.get_status_display }}</td>
+
+                <td>{{ audit.created_at|date:"d-M-Y" }}</td>
+
+            </tr>
+
+            {% empty %}
+
+            <tr>
+
+                <td colspan="5">
+                    No audit requests found.
+                </td>
+
+            </tr>
+
+            {% endfor %}
+
+        </tbody>
+
+    </table>
+
+</div>
+
+{% endblock %}

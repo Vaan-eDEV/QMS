@@ -1,0 +1,1157 @@
+
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+
+<div class="container-fluid py-4">
+
+    <div class="card shadow border-0">
+
+        <div class="card-header bg-primary text-white">
+
+            <h4 class="mb-0">
+                Supplier Audit Request Wizard
+            </h4>
+
+        </div>
+
+        <div class="card-body">
+
+            <div class="mb-4">
+
+                <div class="progress" style="height:10px;">
+
+                    <div
+                        id="wizardProgress"
+                        class="progress-bar bg-success"
+                        role="progressbar"
+                        style="width:33%;"
+                    ></div>
+
+                </div>
+
+                <div class="d-flex justify-content-between mt-2">
+
+                    <small>
+                        Step 1
+                    </small>
+
+                    <small>
+                        Step 2
+                    </small>
+
+                    <small>
+                        Step 3
+                    </small>
+
+                </div>
+
+            </div>
+
+            <form
+    method="POST"
+    enctype="multipart/form-data"
+>
+                {% csrf_token %}
+
+                <!-- ===================================================== -->
+                <!-- STEP 1 -->
+                <!-- ===================================================== -->
+
+                <div id="step1">
+
+                    <h5 class="border-bottom pb-2 mb-4">
+
+                        Audit Information
+
+                    </h5>
+
+                    <div class="row">
+
+                        <div class="col-md-6 mb-3">
+
+                            <label class="form-label">
+
+                                Supplier
+
+                            </label>
+
+                            <input
+                                type="text"
+                                class="form-control"
+                                value="{{ supplier.supplier_name }}"
+                                readonly
+                            >
+
+                        </div>
+
+                        <div class="col-md-3 mb-3">
+
+                            <label class="form-label">
+
+                                Supplier Code
+
+                            </label>
+
+                            <input
+                                type="text"
+                                class="form-control"
+                                value="{{ supplier.supplier_code }}"
+                                readonly
+                            >
+
+                        </div>
+
+                        <div class="col-md-3 mb-3">
+
+                            <label class="form-label">
+
+                                Risk Level
+
+                            </label>
+
+                            <input
+                                type="text"
+                                class="form-control"
+                                value="{{ supplier.risk_level }}"
+                                readonly
+                            >
+
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+
+                            <label class="form-label">
+
+                                Audit Type
+
+                            </label>
+
+                            <select
+                                name="audit_type"
+                                class="form-select"
+                                
+                            >
+
+                                <option value="">
+                                    Select
+                                </option>
+
+                                {% for value,label in audit_types %}
+
+                                <option value="{{ value }}">
+                                    {{ label }}
+                                </option>
+
+                                {% endfor %}
+
+                            </select>
+
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+
+                            <label class="form-label">
+
+                                Audit Category
+
+                            </label>
+
+                            <select
+                                name="audit_category"
+                                class="form-select"
+                            >
+
+                                {% for value,label in audit_categories %}
+
+                                <option value="{{ value }}">
+                                    {{ label }}
+                                </option>
+
+                                {% endfor %}
+
+                            </select>
+
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+
+                            <label class="form-label">
+
+                                Audit Criteria
+
+                            </label>
+
+                            <select
+                                name="audit_criteria"
+                                class="form-select"
+                            >
+
+                                {% for value,label in audit_criteria %}
+
+                                <option value="{{ value }}">
+                                    {{ label }}
+                                </option>
+
+                                {% endfor %}
+
+                            </select>
+
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+
+                            <label class="form-label">
+
+                                Audit Trigger
+
+                            </label>
+
+                            <select
+                                name="audit_trigger"
+                                class="form-select"
+                            >
+
+                                {% for value,label in audit_triggers %}
+
+                                <option value="{{ value }}">
+                                    {{ label }}
+                                </option>
+
+                                {% endfor %}
+
+                            </select>
+
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+
+                            <label class="form-label">
+
+                                Preferred Audit Date
+
+                            </label>
+
+                            <input
+                                type="date"
+                                name="preferred_audit_date"
+                                class="form-control"
+                            >
+
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+
+                            <label class="form-label">
+
+                                Priority
+
+                            </label>
+
+                            <select
+                                name="priority"
+                                class="form-select"
+                            >
+
+                                {% for value,label in priorities %}
+
+                                <option value="{{ value }}">
+                                    {{ label }}
+                                </option>
+
+                                {% endfor %}
+
+                            </select>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+    
+<!-- ===================================================== -->
+<!-- STEP 2 -->
+<!-- ===================================================== -->
+
+<div id="step2" style="display:none;">
+
+    <h5 class="border-bottom pb-2 mb-4">
+
+        Audit Scope, Objectives & Attachments
+
+    </h5>
+
+    <!-- ===================================== -->
+    <!-- AUDIT SCOPE -->
+    <!-- ===================================== -->
+
+    <div class="mb-4">
+
+        <label class="form-label fw-bold">
+
+            Audit Scope
+
+        </label>
+
+        <div class="row">
+
+            <div class="col-md-4">
+
+                <div class="form-check">
+
+                    <input
+                        class="form-check-input"
+                        type="checkbox"
+                        name="audit_scope"
+                        value="Quality Management System"
+                    >
+
+                    <label class="form-check-label">
+
+                        Quality Management System
+
+                    </label>
+
+                </div>
+
+            </div>
+
+            <div class="col-md-4">
+
+                <div class="form-check">
+
+                    <input
+                        class="form-check-input"
+                        type="checkbox"
+                        name="audit_scope"
+                        value="Production Process"
+                    >
+
+                    <label class="form-check-label">
+
+                        Production Process
+
+                    </label>
+
+                </div>
+
+            </div>
+
+            <div class="col-md-4">
+
+                <div class="form-check">
+
+                    <input
+                        class="form-check-input"
+                        type="checkbox"
+                        name="audit_scope"
+                        value="Warehouse"
+                    >
+
+                    <label class="form-check-label">
+
+                        Warehouse
+
+                    </label>
+
+                </div>
+
+            </div>
+
+            <div class="col-md-4 mt-2">
+
+                <div class="form-check">
+
+                    <input
+                        class="form-check-input"
+                        type="checkbox"
+                        name="audit_scope"
+                        value="Incoming Inspection"
+                    >
+
+                    <label class="form-check-label">
+
+                        Incoming Inspection
+
+                    </label>
+
+                </div>
+
+            </div>
+
+            <div class="col-md-4 mt-2">
+
+                <div class="form-check">
+
+                    <input
+                        class="form-check-input"
+                        type="checkbox"
+                        name="audit_scope"
+                        value="Calibration System"
+                    >
+
+                    <label class="form-check-label">
+
+                        Calibration System
+
+                    </label>
+
+                </div>
+
+            </div>
+
+            <div class="col-md-4 mt-2">
+
+                <div class="form-check">
+
+                    <input
+                        class="form-check-input"
+                        type="checkbox"
+                        name="audit_scope"
+                        value="Supplier Controls"
+                    >
+
+                    <label class="form-check-label">
+
+                        Supplier Controls
+
+                    </label>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- ===================================== -->
+    <!-- DEPARTMENTS -->
+    <!-- ===================================== -->
+
+    <div class="mb-4">
+
+        <label class="form-label fw-bold">
+
+            Departments Involved
+
+        </label>
+
+        <select
+            name="departments"
+            class="form-select"
+            multiple
+        >
+
+            <option value="Quality">
+    Quality
+</option>
+
+<option value="Production">
+    Production
+</option>
+
+<option value="Stores">
+    Stores
+</option>
+
+<option value="Purchase">
+    Purchase
+</option>
+
+<option value="Maintenance">
+    Maintenance
+</option>
+
+        </select>
+
+        <small class="text-muted">
+
+            Hold CTRL to select multiple departments.
+
+        </small>
+
+    </div>
+
+    <!-- ===================================== -->
+    <!-- OBJECTIVES -->
+    <!-- ===================================== -->
+
+    <div class="mb-4">
+
+        <label class="form-label fw-bold">
+
+            Audit Objectives
+
+        </label>
+
+        <textarea
+            name="objectives"
+            rows="5"
+            class="form-control"
+            placeholder="Enter audit objectives..."
+            
+        ></textarea>
+
+    </div>
+
+    <!-- ===================================== -->
+    <!-- NOTES -->
+    <!-- ===================================== -->
+
+    <div class="mb-4">
+
+        <label class="form-label fw-bold">
+
+            Additional Notes
+
+        </label>
+
+        <textarea
+            name="additional_notes"
+            rows="4"
+            class="form-control"
+        ></textarea>
+
+    </div>
+
+    <!-- ===================================== -->
+    <!-- ATTACHMENTS -->
+    <!-- ===================================== -->
+
+    <div class="mb-4">
+
+        <label class="form-label fw-bold">
+
+            Supporting Documents
+
+        </label>
+
+        <input
+            type="file"
+            id="attachments"
+            name="attachments"
+            class="form-control"
+            multiple
+        >
+
+        <small class="text-muted">
+
+            Upload Audit Plan, Supplier Documents,
+            Previous Audit Reports, Evidence Files, etc.
+
+        </small>
+
+    </div>
+
+    <!-- ===================================== -->
+    <!-- FILE PREVIEW -->
+    <!-- ===================================== -->
+
+    <div
+        id="attachmentPreview"
+        class="mt-3"
+    ></div>
+
+</div>
+
+                
+<!-- ===================================================== -->
+<!-- STEP 3 -->
+<!-- ===================================================== -->
+
+<div id="step3" style="display:none;">
+
+    <h5 class="border-bottom pb-2 mb-4">
+
+        Review & Submit
+
+    </h5>
+
+    <div class="alert alert-warning">
+
+        Please review all information carefully before
+        submitting the audit request.
+
+    </div>
+
+    <div class="card border-0 shadow-sm">
+
+        <div class="card-body">
+
+            <table class="table table-bordered align-middle">
+
+                <tbody>
+
+                    <tr>
+
+                        <th width="30%">
+                            Supplier
+                        </th>
+
+                        <td id="reviewSupplier"></td>
+
+                    </tr>
+
+                    <tr>
+
+                        <th>
+                            Supplier Code
+                        </th>
+
+                        <td id="reviewSupplierCode"></td>
+
+                    </tr>
+
+                    <tr>
+
+                        <th>
+                            Audit Type
+                        </th>
+
+                        <td id="reviewAuditType"></td>
+
+                    </tr>
+
+                    <tr>
+
+                        <th>
+                            Audit Category
+                        </th>
+
+                        <td id="reviewAuditCategory"></td>
+
+                    </tr>
+                    <tr>
+    <th>Audit Scope</th>
+    <td id="reviewScope"></td>
+</tr>
+
+<tr>
+    <th>Departments</th>
+    <td id="reviewDepartments"></td>
+</tr>
+                    <tr>
+
+                        <th>
+                            Audit Criteria
+                        </th>
+
+                        <td id="reviewAuditCriteria"></td>
+
+                    </tr>
+
+                    <tr>
+
+                        <th>
+                            Audit Trigger
+                        </th>
+
+                        <td id="reviewAuditTrigger"></td>
+
+                    </tr>
+
+                    <tr>
+
+                        <th>
+                            Preferred Audit Date
+                        </th>
+
+                        <td id="reviewDate"></td>
+
+                    </tr>
+
+                    <tr>
+
+                        <th>
+                            Priority
+                        </th>
+
+                        <td id="reviewPriority"></td>
+
+                    </tr>
+
+                    <tr>
+
+                        <th>
+                            Audit Objectives
+                        </th>
+
+                        <td id="reviewObjectives"></td>
+
+                    </tr>
+
+                    <tr>
+
+                        <th>
+                            Additional Notes
+                        </th>
+
+                        <td id="reviewNotes"></td>
+
+                    </tr>
+
+                    <tr>
+
+                        <th>
+                            Audit Justification
+                        </th>
+
+                        <td>
+
+                            <textarea
+                                name="reason"
+                                rows="4"
+                                class="form-control"
+                                placeholder="Enter audit justification..."
+                                
+                            ></textarea>
+
+                        </td>
+
+                    </tr>
+
+                </tbody>
+
+            </table>
+
+            <!-- ===================================== -->
+            <!-- ATTACHMENTS -->
+            <!-- ===================================== -->
+
+            <h6 class="mt-4 mb-3">
+
+                Uploaded Attachments
+
+            </h6>
+
+            <ul
+                id="reviewAttachments"
+                class="list-group"
+            >
+
+                <li class="list-group-item text-muted">
+
+                    No Attachments
+
+                </li>
+
+            </ul>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+                <!-- ===================================================== -->
+                <!-- BUTTONS -->
+                <!-- ===================================================== -->
+
+                <div class="mt-4">
+
+                    <button
+                        type="button"
+                        id="prevBtn"
+                        class="btn btn-secondary"
+                        onclick="prevStep()"
+                        style="display:none;"
+                    >
+                        Previous
+                    </button>
+
+                    <button
+                        type="button"
+                        id="nextBtn"
+                        class="btn btn-primary"
+                        onclick="nextStep()"
+                    >
+                        Next
+                    </button>
+
+                    <button
+                        type="submit"
+                        id="submitBtn"
+                        class="btn btn-success"
+                        style="display:none;"
+                    >
+                        Submit Audit Request
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+
+<script>
+
+let currentStep = 1;
+let selectedFiles = [];
+
+// =====================================
+// SHOW STEP
+// =====================================
+
+function showStep(step)
+{
+    document.getElementById("step1").style.display = "none";
+    document.getElementById("step2").style.display = "none";
+    document.getElementById("step3").style.display = "none";
+
+    document.getElementById(
+        "step" + step
+    ).style.display = "block";
+
+    let progress = 33;
+
+    if(step === 2)
+    {
+        progress = 66;
+    }
+
+    if(step === 3)
+    {
+        progress = 100;
+    }
+
+    document.getElementById(
+        "wizardProgress"
+    ).style.width = progress + "%";
+
+    document.getElementById(
+        "prevBtn"
+    ).style.display =
+        step === 1
+        ? "none"
+        : "inline-block";
+
+    document.getElementById(
+        "nextBtn"
+    ).style.display =
+        step === 3
+        ? "none"
+        : "inline-block";
+
+    document.getElementById(
+        "submitBtn"
+    ).style.display =
+        step === 3
+        ? "inline-block"
+        : "none";
+}
+
+// =====================================
+// NEXT STEP
+// =====================================
+
+function nextStep()
+{
+    if(currentStep < 3)
+    {
+        currentStep++;
+
+        if(currentStep === 3)
+        {
+            populateReview();
+        }
+
+        showStep(currentStep);
+    }
+}
+
+// =====================================
+// PREVIOUS STEP
+// =====================================
+
+function prevStep()
+{
+    if(currentStep > 1)
+    {
+        currentStep--;
+
+        showStep(currentStep);
+    }
+}
+
+// =====================================
+// REVIEW PAGE
+// =====================================
+
+function populateReview()
+{
+    const auditType =
+        document.querySelector('[name="audit_type"]');
+
+    const auditCategory =
+        document.querySelector('[name="audit_category"]');
+
+    const auditCriteria =
+        document.querySelector('[name="audit_criteria"]');
+
+    const auditTrigger =
+        document.querySelector('[name="audit_trigger"]');
+
+    const priority =
+        document.querySelector('[name="priority"]');
+
+    const objectives =
+        document.querySelector('[name="objectives"]');
+
+    const notes =
+        document.querySelector('[name="additional_notes"]');
+
+    const date =
+        document.querySelector('[name="preferred_audit_date"]');
+
+    document.getElementById(
+        "reviewSupplier"
+    ).innerText =
+        "{{ supplier.supplier_name }}";
+
+    document.getElementById(
+        "reviewSupplierCode"
+    ).innerText =
+        "{{ supplier.supplier_code }}";
+
+    document.getElementById(
+        "reviewAuditType"
+    ).innerText =
+        auditType.options[
+            auditType.selectedIndex
+        ].text;
+
+    document.getElementById(
+        "reviewAuditCategory"
+    ).innerText =
+        auditCategory.options[
+            auditCategory.selectedIndex
+        ].text;
+
+    document.getElementById(
+        "reviewAuditCriteria"
+    ).innerText =
+        auditCriteria.options[
+            auditCriteria.selectedIndex
+        ].text;
+
+    document.getElementById(
+        "reviewAuditTrigger"
+    ).innerText =
+        auditTrigger.options[
+            auditTrigger.selectedIndex
+        ].text;
+
+    document.getElementById(
+        "reviewDate"
+    ).innerText =
+        date.value;
+
+    document.getElementById(
+        "reviewPriority"
+    ).innerText =
+        priority.options[
+            priority.selectedIndex
+        ].text;
+
+    document.getElementById(
+        "reviewObjectives"
+    ).innerText =
+        objectives.value;
+
+    document.getElementById(
+        "reviewNotes"
+    ).innerText =
+        notes.value;
+
+    // =====================================
+    // AUDIT SCOPE
+    // =====================================
+
+    const scopes =
+        document.querySelectorAll(
+            'input[name="audit_scope"]:checked'
+        );
+
+    let scopeList = [];
+
+    scopes.forEach(function(item)
+    {
+        scopeList.push(item.value);
+    });
+
+    const scopeField =
+        document.getElementById(
+            "reviewScope"
+        );
+
+    if(scopeField)
+    {
+        scopeField.innerText =
+            scopeList.join(", ");
+    }
+
+    // =====================================
+    // DEPARTMENTS
+    // =====================================
+
+    const departments =
+        document.querySelector(
+            '[name="departments"]'
+        );
+
+    let deptList = [];
+
+    Array.from(
+        departments.selectedOptions
+    ).forEach(function(option)
+    {
+        deptList.push(
+            option.value
+        );
+    });
+
+    const deptField =
+        document.getElementById(
+            "reviewDepartments"
+        );
+
+    if(deptField)
+    {
+        deptField.innerText =
+            deptList.join(", ");
+    }
+
+    // =====================================
+    // ATTACHMENTS
+    // =====================================
+
+    const reviewAttachments =
+        document.getElementById(
+            "reviewAttachments"
+        );
+
+    if(reviewAttachments)
+    {
+        reviewAttachments.innerHTML = "";
+
+        if(selectedFiles.length > 0)
+        {
+            selectedFiles.forEach(
+                function(file)
+                {
+                    reviewAttachments.innerHTML += `
+                        <li class="list-group-item">
+                            ${file.name}
+                        </li>
+                    `;
+                }
+            );
+        }
+        else
+        {
+            reviewAttachments.innerHTML =
+                '<li class="list-group-item text-muted">No Attachments</li>';
+        }
+    }
+}
+
+// =====================================
+// FILE PREVIEW
+// =====================================
+
+function renderFiles()
+{
+    const preview =
+        document.getElementById(
+            "attachmentPreview"
+        );
+
+    preview.innerHTML = "";
+
+    selectedFiles.forEach(
+        function(file,index)
+        {
+            preview.innerHTML += `
+                <div class="alert alert-light border d-flex justify-content-between align-items-center">
+
+                    <span>
+                        ${file.name}
+                    </span>
+
+                    <button
+                        type="button"
+                        class="btn btn-sm btn-danger"
+                        onclick="removeFile(${index})"
+                    >
+                        Remove
+                    </button>
+
+                </div>
+            `;
+        }
+    );
+}
+
+// =====================================
+// REMOVE FILE
+// =====================================
+
+function removeFile(index)
+{
+    selectedFiles.splice(
+        index,
+        1
+    );
+
+    renderFiles();
+}
+
+// =====================================
+// PAGE LOAD
+// =====================================
+
+document.addEventListener(
+    "DOMContentLoaded",
+    function()
+    {
+        const fileInput =
+            document.getElementById(
+                "attachments"
+            );
+
+        if(fileInput)
+        {
+            fileInput.addEventListener(
+                "change",
+                function()
+                {
+                    selectedFiles =
+                        Array.from(
+                            this.files
+                        );
+
+                    renderFiles();
+                }
+            );
+        }
+
+        showStep(1);
+    }
+);
+
+</script>
+
+
+
+{% endblock %}
+

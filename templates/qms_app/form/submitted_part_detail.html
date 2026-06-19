@@ -1,6 +1,8 @@
 {% extends 'base.html' %}
 {% block content %}
 {% load custom_filters %}
+{% load custom_tags %}
+
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap');
 
@@ -10,16 +12,14 @@
 
     /* ===== A4 PAPER ===== */
     .a4-sheet {
-        width: 210mm;
-        min-height: 297mm;
-        margin: 40px auto;
-        background: #fff;
-        padding: 30mm 25mm;
-        box-shadow: 0 0 15px rgba(0, 0, 0, 0.15);
-        position: relative;
-        font-family: "Times New Roman", serif;
-    }
-
+    width: 95%;
+    max-width: 1800px;
+    min-height: 297mm;
+    margin: 20px auto;
+    background: #fff;
+    padding: 20px;
+    box-shadow: 0 0 15px rgba(0,0,0,.15);
+}
     /* ===== HEADER ===== */
     .doc-title {
         text-align: center;
@@ -91,7 +91,21 @@
     .data-table th {
         background: #f3f4f6;
     }
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 15px 0 20px;
+    font-size: 12px;
+}
 
+.data-table th,
+.data-table td {
+    border: 1px solid #000;
+    padding: 6px;
+    text-align: center;
+    vertical-align: middle;
+    white-space: nowrap;
+}
     /* ===== SIGNATURE SECTION ===== */
     .signature-area {
         margin-top: 80px;
@@ -173,6 +187,154 @@
         Part ID: <strong>{{ part.part_id }}</strong><br>
         Created: {{ part.created_at|date:"d M Y, H:i" }}
     </div>
+    <hr>
+
+<h2>RFQ TRACEABILITY</h2>
+
+{% if rfq_data %}
+
+    {% for process, forms in rfq_data.items %}
+
+        <div class="form-title">
+            {{ process }}
+        </div>
+
+        {% for form in forms %}
+
+            <div class="stage-title">
+                {{ form.form_name }}
+            </div>
+
+            {% for key, val in form.data.items %}
+
+                {% if val.type == "table" %}
+
+                    <div style="margin-bottom:20px;">
+
+                        <h6 style="margin-bottom:8px;font-weight:bold;">
+                            {{ key }}
+                        </h6>
+
+                        
+
+                            <table class="data-table">
+
+                                <thead>
+
+                                    <tr>
+
+                                        <th>{{ val.header }}</th>
+
+                                        {% for col in val.columns %}
+                                            <th>{{ col }}</th>
+                                        {% endfor %}
+
+                                    </tr>
+
+                                </thead>
+
+                                <tbody>
+
+                                    {% for row in val.rows %}
+
+                                        <tr>
+
+                                            <td>
+                                                {{ row.row_name|default:"-" }}
+                                            </td>
+
+                                            {% for col in val.columns %}
+
+                                                <td>
+
+                                                     {{ row|get_item:col }}
+
+                                                </td>
+
+                                            {% endfor %}
+
+                                        </tr>
+
+                                    {% endfor %}
+
+                                </tbody>
+
+                                {% if val.show_total %}
+
+                                <tfoot>
+
+                                    <tr>
+
+                                        <td>
+                                            <strong>Total</strong>
+                                        </td>
+
+                                        {% for col in val.columns %}
+
+                                            <td>
+
+                                                {% if col == val.total_column %}
+                                                    <strong>{{ val.total_value }}</strong>
+                                                {% endif %}
+
+                                            </td>
+
+                                        {% endfor %}
+
+                                    </tr>
+
+                                </tfoot>
+
+                                {% endif %}
+
+                            </table>
+
+                        
+
+                    </div>
+
+                {% else %}
+
+                    <div class="field-row">
+
+                        <div class="field-label">
+                            {{ key }}
+                        </div>
+
+                        <div class="field-value">
+
+                            {% if val %}
+                                {{ val }}
+                            {% else %}
+                                -
+                            {% endif %}
+
+                        </div>
+
+                    </div>
+
+                {% endif %}
+
+            {% endfor %}
+
+        {% endfor %}
+
+    {% endfor %}
+
+{% else %}
+
+    <div class="alert alert-warning">
+        No RFQ Traceability Data Found
+    </div>
+
+{% endif %}
+
+<hr>
+
+
+
+
+
 
     {% for form_name, stages in display_forms.items %}
 

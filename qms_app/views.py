@@ -13,6 +13,7 @@ from django.http import Http404
 from django.http import HttpResponseForbidden
 from uuid import UUID
 import uuid
+from form_builder.services import build_traceability_data
 from django.urls import reverse
 from difflib import HtmlDiff
 from datetime import date, datetime
@@ -3283,6 +3284,7 @@ def delete_field(request, field_id):
 #         "stage": stage,
 #         "error": error
 #     })
+
 @login_required
 def edit_field(request, field_id):
 
@@ -5751,6 +5753,18 @@ def submitted_part_detail(request, part_id):
 
     part = get_object_or_404(BatchPart, id=part_id)
 
+    rfq_data = {}
+
+    if part.batch.rfq_ref_id:
+
+        rfq_data = build_traceability_data(
+            ref_id=part.batch.rfq_ref_id,
+            company=part.batch.company_name
+        )
+    print("WO:", part.batch.batch_id)
+    print("RFQ:", part.batch.rfq_ref_id)
+    print("RFQ DATA:", rfq_data)
+    
     flow_id = part.batch.flow_id
     part_code = part.part_id
 
@@ -5804,6 +5818,7 @@ def submitted_part_detail(request, part_id):
             {
                 "part": part,
                 "display_forms": {},
+                "rfq_data": rfq_data,
                 "company_name": part.batch.company_name,
                 "submitted_by": None,
                 "submitted_at": None,
@@ -5951,6 +5966,7 @@ def submitted_part_detail(request, part_id):
         {
             "part": part,
             "display_forms": display_forms,
+            "rfq_data": rfq_data,
             "company_name": part.batch.company_name,
             "lot_number": part.batch.material_batch.lot_number if part.batch.material_batch else "-",
             "submitted_by": first_submission.submitted_by,
@@ -8306,6 +8322,9 @@ def start_workorder_form(
                     "company_name":
                         item.work_order.customer_name,
 
+                    "rfq_ref_id":
+                        item.work_order.rfq_ref,
+
                     "flow_id":
                         uuid.uuid4(),
 
@@ -8328,7 +8347,9 @@ def start_workorder_form(
         form_batch.company_name = (
             item.work_order.customer_name
         )
-
+        form_batch.rfq_ref_id = (
+            item.work_order.rfq_ref
+        )
         # =====================================
         # DO NOT RESET CURRENT STAGE
         # =====================================

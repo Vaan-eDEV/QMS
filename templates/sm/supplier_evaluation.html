@@ -3,430 +3,309 @@
 
 {% block content %}
 
+<style>
+.kpi-card{border:none;border-radius:16px}
+.score-panel{position:sticky;top:20px}
+.criteria-table input{max-width:90px}
+</style>
+
 <div class="container-fluid py-4">
 
-    <!-- ===================================== -->
-    <!-- PAGE HEADER -->
-    <!-- ===================================== -->
-
     <div class="d-flex justify-content-between align-items-center mb-4">
-
         <div>
-
-            <h2 class="fw-bold mb-1">
-
-                Evaluation & Scorecard
-
-            </h2>
-
-            <p class="text-muted mb-0">
-
-                {{ supplier.supplier_name }}
-                -
-                {{ supplier.supplier_code }}
-
-            </p>
-
+            <h2 class="fw-bold mb-1">Supplier Evaluation Dashboard</h2>
+            <small class="text-muted">{{ supplier.supplier_name }} | {{ supplier.supplier_code }}</small>
         </div>
 
         <div>
-
-            <a
-                href="{% url 'supplier_detail' supplier.id %}"
-                class="btn btn-light"
-            >
-
+            <a href="{% url 'supplier_detail' supplier.id %}" class="btn btn-outline-secondary">
                 Back
-
             </a>
-
         </div>
-
     </div>
 
-    <!-- ===================================== -->
-    <!-- TOP INFO -->
-    <!-- ===================================== -->
+    <div class="row g-3 mb-4">
 
-    <div class="card border-0 shadow-sm mb-4">
-
-        <div class="card-body">
-
-            <div class="row g-4">
-
-                <div class="col-md-3">
-
-                    <div class="border rounded p-3 h-100">
-
-                        <small class="text-muted">
-
-                            Supplier
-
-                        </small>
-
-                        <h6 class="fw-bold mt-2">
-
-                            {{ supplier.supplier_name }}
-
-                        </h6>
-
-                    </div>
-
+        <div class="col-md-3">
+            <div class="card shadow-sm kpi-card">
+                <div class="card-body">
+                    <small class="text-muted">Supplier</small>
+                    <h6 class="mb-0">{{ supplier.supplier_name }}</h6>
                 </div>
-
-                <div class="col-md-3">
-
-                    <div class="border rounded p-3 h-100">
-
-                        <small class="text-muted">
-
-                            Supplier Code
-
-                        </small>
-
-                        <h6 class="fw-bold mt-2">
-
-                            {{ supplier.supplier_code }}
-
-                        </h6>
-
-                    </div>
-
-                </div>
-
-                <div class="col-md-3">
-
-                    <div class="border rounded p-3 h-100">
-
-                        <small class="text-muted">
-
-                            Evaluator
-
-                        </small>
-
-                        <h6 class="fw-bold mt-2">
-
-                            {{ request.user }}
-
-                        </h6>
-
-                    </div>
-
-                </div>
-
-                <div class="col-md-3">
-
-                    <div class="border rounded p-3 h-100">
-
-                        <small class="text-muted">
-
-                            Evaluation Date
-
-                        </small>
-
-                        <h6 class="fw-bold mt-2">
-
-                            {% now "d M Y" %}
-
-                        </h6>
-
-                    </div>
-
-                </div>
-
             </div>
+        </div>
 
+        <div class="col-md-3">
+            <div class="card shadow-sm kpi-card">
+                <div class="card-body">
+                    <small class="text-muted">Evaluator</small>
+                    <h6 class="mb-0">{{ request.user }}</h6>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card shadow-sm kpi-card">
+                <div class="card-body">
+                    <small class="text-muted">Current Rating</small>
+                    <h6 class="mb-0">{{ evaluation.rating|default:"Pending" }}</h6>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card shadow-sm kpi-card">
+                <div class="card-body">
+                    <small class="text-muted">Current Score</small>
+                    <h6 class="mb-0">{{ evaluation.percentage }}%</h6>
+                </div>
+            </div>
         </div>
 
     </div>
 
-    <!-- ===================================== -->
-    <!-- MAIN -->
-    <!-- ===================================== -->
+    <form method="POST">
+        {% csrf_token %}
 
-    <div class="row g-4">
+        <div class="row">
 
-        <!-- LEFT -->
+            <div class="col-lg-8">
 
-        <div class="col-lg-8">
-
-            <form method="POST">
-
-                {% csrf_token %}
-
-                <div class="card border-0 shadow-sm">
+                <div class="card shadow-sm border-0 mb-4">
 
                     <div class="card-header bg-white">
-
-                        <h5 class="mb-0">
-
-                            Evaluation Criteria & Scorecard
-
-                        </h5>
-
+                        <h5 class="mb-0">Supplier Evaluation Matrix</h5>
                     </div>
 
                     <div class="card-body p-0">
 
-                        <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0 criteria-table">
 
-                            <table class="table align-middle mb-0">
+    <thead class="table-light">
 
-                                <thead class="table-light">
+        <tr>
 
-                                    <tr>
+            <th>Criteria</th>
+            <th>Measurement Method</th>
+            <th>Weight (%)</th>
+            <th>Score (1-5)</th>
+            <th>Weighted Score</th>
 
-                                        <th>#</th>
+        </tr>
 
-                                        <th>Criteria</th>
+    </thead>
 
-                                        <th>Max</th>
+    <tbody>
 
-                                        <th>Score</th>
+        <tr>
 
-                                    </tr>
+            <td>Quality Performance</td>
 
-                                </thead>
+            <td>Incoming rejection %, NCR count</td>
 
-                                <tbody>
+            <td>30%</td>
 
-                                    <!-- QUALITY -->
+            <td>
+                <input type="number"
+                       min="1"
+                       max="5"
+                       name="quality_score"
+                       value="{{ evaluation.quality_score }}"
+                       class="form-control score">
+            </td>
 
-                                    <tr>
+            <td id="quality_weighted">0.0</td>
 
-                                        <td>1</td>
+        </tr>
 
-                                        <td>
+        <tr>
 
-                                            <div class="fw-semibold">
+            <td>Delivery Performance</td>
 
-                                                Quality Performance
+            <td>% deliveries on time vs PO date</td>
 
-                                            </div>
+            <td>20%</td>
 
-                                            <small class="text-muted">
+            <td>
+                <input type="number"
+                       min="1"
+                       max="5"
+                       name="delivery_score"
+                       value="{{ evaluation.delivery_score }}"
+                       class="form-control score">
+            </td>
 
-                                                Incoming Quality, CAPA Response
+            <td id="delivery_weighted">0.0</td>
 
-                                            </small>
+        </tr>
 
-                                        </td>
+        <tr>
 
-                                        <td>20</td>
+            <td>Cost Competitiveness</td>
 
-                                        <td>
+            <td>Price stability, value for money</td>
 
-                                            <input
-                                                type="number"
-                                                name="quality_score"
-                                                class="form-control score-input"
-                                                max="20"
-                                                value="{{ evaluation.quality_score }}"
-                                                required
-                                            >
+            <td>10%</td>
 
-                                        </td>
+            <td>
+                <input type="number"
+                       min="1"
+                       max="5"
+                       name="cost_score"
+                       value="{{ evaluation.cost_score }}"
+                       class="form-control score">
+            </td>
 
-                                    </tr>
+            <td id="cost_weighted">0.0</td>
 
-                                    <!-- DELIVERY -->
+        </tr>
 
-                                    <tr>
+        <tr>
 
-                                        <td>2</td>
+            <td>Communication & Support</td>
 
-                                        <td>
+            <td>Response to queries, complaint closure</td>
 
-                                            <div class="fw-semibold">
+            <td>10%</td>
 
-                                                Delivery Performance
+            <td>
+                <input type="number"
+                       min="1"
+                       max="5"
+                       name="communication_score"
+                       value="{{ evaluation.communication_score }}"
+                       class="form-control score">
+            </td>
 
-                                            </div>
+            <td id="communication_weighted">0.0</td>
 
-                                            <small class="text-muted">
+        </tr>
 
-                                                On-Time Delivery
+        <tr>
 
-                                            </small>
+            <td>Documentation Compliance</td>
 
-                                        </td>
+            <td>Test reports, COA/COC, certificates</td>
 
-                                        <td>15</td>
+            <td>10%</td>
 
-                                        <td>
+            <td>
+                <input type="number"
+                       min="1"
+                       max="5"
+                       name="documentation_score"
+                       value="{{ evaluation.documentation_score }}"
+                       class="form-control score">
+            </td>
 
-                                            <input
-                                                type="number"
-                                                name="delivery_score"
-                                                class="form-control score-input"
-                                                max="15"
-                                                value="{{ evaluation.delivery_score }}"
-                                                required
-                                            >
+            <td id="documentation_weighted">0.0</td>
 
-                                        </td>
+        </tr>
 
-                                    </tr>
+        <tr>
 
-                                    <!-- TECHNICAL -->
+            <td>Technical Capability</td>
 
-                                    <tr>
+            <td>Process capability, infrastructure, skill</td>
 
-                                        <td>3</td>
+            <td>10%</td>
 
-                                        <td>
+            <td>
+                <input type="number"
+                       min="1"
+                       max="5"
+                       name="technical_score"
+                       value="{{ evaluation.technical_score }}"
+                       class="form-control score">
+            </td>
 
-                                            <div class="fw-semibold">
+            <td id="technical_weighted">0.0</td>
 
-                                                Technical Capability
+        </tr>
 
-                                            </div>
+        <tr>
 
-                                            <small class="text-muted">
+            <td>QMS Compliance</td>
 
-                                                Engineering & Manufacturing
+            <td>ISO 9001/13485 certificates, audits</td>
 
-                                            </small>
+            <td>10%</td>
 
-                                        </td>
+            <td>
+                <input type="number"
+                       min="1"
+                       max="5"
+                       name="qms_score"
+                       value="{{ evaluation.qms_score }}"
+                       class="form-control score">
+            </td>
 
-                                        <td>15</td>
+            <td id="qms_weighted">0.0</td>
 
-                                        <td>
+        </tr>
 
-                                            <input
-                                                type="number"
-                                                name="technical_score"
-                                                class="form-control score-input"
-                                                max="15"
-                                                value="{{ evaluation.technical_score }}"
-                                                required
-                                            >
+    </tbody>
 
-                                        </td>
+    <tfoot class="table-light">
 
-                                    </tr>
+        <tr>
 
-                                    <!-- DOCUMENTATION -->
+            <th colspan="4" class="text-end">
 
-                                    <tr>
+                TOTAL WEIGHTED SCORE
 
-                                        <td>4</td>
+            </th>
 
-                                        <td>
+            <th id="total_weighted">
 
-                                            <div class="fw-semibold">
+                0.0
 
-                                                Documentation Control
+            </th>
 
-                                            </div>
+        </tr>
 
-                                            <small class="text-muted">
+    </tfoot>
 
-                                                ISO, COC, Records
+</table>
 
-                                            </small>
+                    </div>
 
-                                        </td>
+                </div>
 
-                                        <td>15</td>
+                <div class="card shadow-sm border-0">
 
-                                        <td>
+                    <div class="card-header bg-white">
+                        <h5 class="mb-0">Assessment Notes</h5>
+                    </div>
 
-                                            <input
-                                                type="number"
-                                                name="documentation_score"
-                                                class="form-control score-input"
-                                                max="15"
-                                                value="{{ evaluation.documentation_score }}"
-                                                required
-                                            >
+                    <div class="card-body">
 
-                                        </td>
+                        <div class="row g-3">
 
-                                    </tr>
+                            <div class="col-md-6">
+                                <label class="form-label">Strengths</label>
+                                <textarea name="strengths" class="form-control" rows="4">{{ evaluation.strengths }}</textarea>
+                            </div>
 
-                                    <!-- COMPLIANCE -->
+                            <div class="col-md-6">
+                                <label class="form-label">Weak Areas</label>
+                                <textarea name="weak_areas" class="form-control" rows="4">{{ evaluation.weak_areas }}</textarea>
+                            </div>
 
-                                    <tr>
+                            <div class="col-12">
+                                <label class="form-label">Corrective Actions</label>
+                                <textarea name="corrective_actions" class="form-control" rows="3">{{ evaluation.corrective_actions }}</textarea>
+                            </div>
 
-                                        <td>5</td>
+                            <div class="col-md-8">
+                                <label class="form-label">Remarks</label>
+                                <textarea name="remarks" class="form-control" rows="3">{{ evaluation.remarks }}</textarea>
+                            </div>
 
-                                        <td>
-
-                                            <div class="fw-semibold">
-
-                                                Risk & Compliance
-
-                                            </div>
-
-                                            <small class="text-muted">
-
-                                                Regulatory & Risk Management
-
-                                            </small>
-
-                                        </td>
-
-                                        <td>15</td>
-
-                                        <td>
-
-                                            <input
-                                                type="number"
-                                                name="compliance_score"
-                                                class="form-control score-input"
-                                                max="15"
-                                                value="{{ evaluation.compliance_score }}"
-                                                required
-                                            >
-
-                                        </td>
-
-                                    </tr>
-
-                                    <!-- COMMERCIAL -->
-
-                                    <tr>
-
-                                        <td>6</td>
-
-                                        <td>
-
-                                            <div class="fw-semibold">
-
-                                                Commercial Performance
-
-                                            </div>
-
-                                            <small class="text-muted">
-
-                                                Price & Payment Terms
-
-                                            </small>
-
-                                        </td>
-
-                                        <td>10</td>
-
-                                        <td>
-
-                                            <input
-                                                type="number"
-                                                name="commercial_score"
-                                                class="form-control score-input"
-                                                max="10"
-                                                value="{{ evaluation.commercial_score }}"
-                                                required
-                                            >
-
-                                        </td>
-
-                                    </tr>
-
-                                </tbody>
-
-                            </table>
+                            <div class="col-md-4">
+                                <label class="form-label">Next Evaluation Date</label>
+                                <input type="date" name="next_evaluation_date" class="form-control" value="{{ evaluation.next_evaluation_date|date:'Y-m-d' }}">
+                            </div>
 
                         </div>
 
@@ -434,122 +313,46 @@
 
                 </div>
 
-                <!-- COMMENTS -->
-
-                <div class="card border-0 shadow-sm mt-4">
-
-                    <div class="card-header bg-white">
-
-                        <h5 class="mb-0">
-
-                            Evaluator Comments
-
-                        </h5>
-
-                    </div>
-
-                    <div class="card-body">
-
-                        <textarea
-                            name="remarks"
-                            rows="5"
-                            class="form-control"
-                        >{{ evaluation.remarks }}</textarea>
-
-                    </div>
-
-                </div>
-
-                <!-- BUTTONS -->
-
-                <div class="d-flex justify-content-end gap-2 mt-4">
-
-                    <button
-                        type="submit"
-                        class="btn btn-success"
-                    >
-
-                        Submit Evaluation
-
-                    </button>
-
-                </div>
-
-            </form>
-
-        </div>
-
-        <!-- RIGHT -->
-
-        <div class="col-lg-4">
-
-            <!-- SCORE CARD -->
-
-            <div class="card border-0 shadow-sm mb-4">
-
-                <div class="card-header bg-white">
-
-                    <h5 class="mb-0">
-
-                        Overall Score
-
-                    </h5>
-
-                </div>
-
-                <div class="card-body text-center">
-
-                    <canvas id="scoreChart"></canvas>
-
-                    <h2 class="fw-bold mt-3">
-
-                        {{ evaluation.total_score }}/90
-
-                    </h2>
-
-                </div>
-
             </div>
 
-            <!-- STATUS -->
 
-            <div class="card border-0 shadow-sm">
+            <div class="col-lg-4">
 
-                <div class="card-body">
+                <div class="card shadow-sm border-0 score-panel">
 
-                    <div class="mb-3">
+                    <div class="card shadow-sm border-0 score-panel">
 
-                        <small class="text-muted">
 
-                            Risk Level
+                        <div class="card-body">
 
-                        </small>
+    <h5 class="mb-4">
 
-                        <h5 class="mt-1">
+        Live Evaluation Result
 
-                            {{ supplier.risk_level|title }}
+    </h5>
 
-                        </h5>
+    <div class="text-center mb-4">
 
-                    </div>
+        <h1
+            id="livePercentage"
+            class="fw-bold text-primary"
+        >
+            0%
+        </h1>
 
-                    <div>
+        <div
+            class="progress"
+            style="height:22px;"
+        >
 
-                        <small class="text-muted">
+            <div
+                id="scoreBar"
+                class="progress-bar bg-success"
+                role="progressbar"
+                style="width:0%;"
+            >
 
-                            Current Status
-
-                        </small>
-
-                        <h5 class="mt-1">
-
-                            {{ supplier.status|title }}
-
-                        </h5>
-
-                    </div>
-
-                </div>
+                0%
 
             </div>
 
@@ -557,89 +360,578 @@
 
     </div>
 
+    <div class="row text-center mb-4">
+
+        <div class="col-6">
+
+            <small class="text-muted">
+
+                Rating
+
+            </small>
+
+            <h5
+                id="liveRating"
+                class="fw-bold"
+            >
+
+                Pending
+
+            </h5>
+
+        </div>
+
+        <div class="col-6">
+
+            <small class="text-muted">
+
+                Status
+
+            </small>
+
+            <h5
+                id="liveApproval"
+                class="fw-bold"
+            >
+
+                Pending
+
+            </h5>
+
+        </div>
+
+    </div>
+
+    <hr>
+
+    <h6 class="mb-3">
+
+        Supplier Rating Interpretation
+
+    </h6>
+
+    <table
+        class="table table-bordered table-sm align-middle"
+    >
+
+        <thead class="table-light">
+
+            <tr>
+
+                <th>
+
+                    Marks (100)
+
+                </th>
+
+                <th>
+
+                    Rating
+
+                </th>
+
+                <th>
+
+                    Status
+
+                </th>
+
+            </tr>
+
+        </thead>
+
+        <tbody>
+
+            <tr>
+
+                <td>
+
+                    90 - 100
+
+                </td>
+
+                <td>
+
+                    Excellent
+
+                </td>
+
+                <td>
+
+                    Fully Approved
+
+                </td>
+
+            </tr>
+
+            <tr>
+
+                <td>
+
+                    75 - 89
+
+                </td>
+
+                <td>
+
+                    Good
+
+                </td>
+
+                <td>
+
+                    Approved
+
+                </td>
+
+            </tr>
+
+            <tr>
+
+                <td>
+
+                    60 - 74
+
+                </td>
+
+                <td>
+
+                    Moderate
+
+                </td>
+
+                <td>
+
+                    Conditionally Approved
+
+                </td>
+
+            </tr>
+
+            <tr>
+
+                <td>
+
+                    Below 60
+
+                </td>
+
+                <td>
+
+                    Poor
+
+                </td>
+
+                <td>
+
+                    Not Approved
+
+                </td>
+
+            </tr>
+
+        </tbody>
+
+    </table>
+
+    <div
+        class="alert alert-info mt-3 mb-3"
+    >
+
+        <strong>
+
+            Current Rating:
+
+        </strong>
+
+        {{ evaluation.rating|default:"Not Evaluated" }}
+
+        <br>
+
+        <strong>
+
+            Approval Status:
+
+        </strong>
+
+        {{ evaluation.approval_status|default:"Pending" }}
+
+        <br>
+
+        <strong>
+
+            Risk Level:
+
+        </strong>
+
+        {{ supplier.risk_level|title }}
+
+    </div>
+
+    <button
+        type="submit"
+        class="btn btn-success w-100"
+    >
+
+        Save Evaluation
+
+    </button>
+
 </div>
 
-<style>
 
-.card{
+</div>
 
-    border-radius:18px;
 
-}
+                </div>
 
-.form-control{
+            </div>
 
-    border-radius:10px;
+        </div>
 
-}
+    </form>
 
-.score-input{
-
-    width:100px;
-
-}
-
-.table td,
-.table th{
-
-    vertical-align:middle;
-
-}
-
-</style>
-
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</div>
 
 <script>
 
-const ctx = document.getElementById('scoreChart');
+function calculateScore() {
 
-new Chart(ctx, {
+    const quality =
+        parseFloat(
+            document.querySelector(
+                '[name="quality_score"]'
+            )?.value || 0
+        );
 
-    type: 'doughnut',
+    const delivery =
+        parseFloat(
+            document.querySelector(
+                '[name="delivery_score"]'
+            )?.value || 0
+        );
 
-    data: {
+    const cost =
+        parseFloat(
+            document.querySelector(
+                '[name="cost_score"]'
+            )?.value || 0
+        );
 
-        labels: [
+    const communication =
+        parseFloat(
+            document.querySelector(
+                '[name="communication_score"]'
+            )?.value || 0
+        );
 
-            'Score',
+    const documentation =
+        parseFloat(
+            document.querySelector(
+                '[name="documentation_score"]'
+            )?.value || 0
+        );
 
-            'Remaining'
+    const technical =
+        parseFloat(
+            document.querySelector(
+                '[name="technical_score"]'
+            )?.value || 0
+        );
 
-        ],
+    const qms =
+        parseFloat(
+            document.querySelector(
+                '[name="qms_score"]'
+            )?.value || 0
+        );
 
-        datasets: [{
+    // ==========================
+    // WEIGHTED SCORE
+    // ==========================
 
-            data: [
+    const q =
+        (quality * 30) / 100;
 
-                {{ evaluation.total_score|default:0 }},
+    const d =
+        (delivery * 20) / 100;
 
-                90 - {{ evaluation.total_score|default:0 }}
+    const c =
+        (cost * 10) / 100;
 
-            ]
+    const com =
+        (communication * 10) / 100;
 
-        }]
+    const doc =
+        (documentation * 10) / 100;
 
-    },
+    const tech =
+        (technical * 10) / 100;
 
-    options: {
+    const qm =
+        (qms * 10) / 100;
 
-        responsive: true,
+    // ==========================
+    // UPDATE TABLE
+    // ==========================
 
-        plugins: {
+    const updateCell = (id, value) => {
 
-            legend: {
+        const el =
+            document.getElementById(id);
 
-                position: 'bottom'
+        if (el) {
 
-            }
+            el.innerHTML =
+                value.toFixed(1);
+
+        }
+
+    };
+
+    updateCell(
+        "quality_weighted",
+        q
+    );
+
+    updateCell(
+        "delivery_weighted",
+        d
+    );
+
+    updateCell(
+        "cost_weighted",
+        c
+    );
+
+    updateCell(
+        "communication_weighted",
+        com
+    );
+
+    updateCell(
+        "documentation_weighted",
+        doc
+    );
+
+    updateCell(
+        "technical_weighted",
+        tech
+    );
+
+    updateCell(
+        "qms_weighted",
+        qm
+    );
+
+    // ==========================
+    // TOTAL SCORE
+    // ==========================
+
+    const total =
+        q +
+        d +
+        c +
+        com +
+        doc +
+        tech +
+        qm;
+
+    const totalCell =
+        document.getElementById(
+            "total_weighted"
+        );
+
+    if (totalCell) {
+
+        totalCell.innerHTML =
+            total.toFixed(1);
+
+    }
+
+    // ==========================
+    // PERCENTAGE
+    // ==========================
+
+    const percentage =
+        (
+            (total / 5) * 100
+        ).toFixed(2);
+
+    const percentageElement =
+        document.getElementById(
+            "livePercentage"
+        );
+
+    if (
+        percentageElement
+    ) {
+
+        percentageElement.innerHTML =
+            percentage + "%";
+
+    }
+
+    // ==========================
+    // PROGRESS BAR
+    // ==========================
+
+    const progressBar =
+        document.getElementById(
+            "scoreBar"
+        );
+
+    if (
+        progressBar
+    ) {
+
+        progressBar.style.width =
+            percentage + "%";
+
+        progressBar.innerHTML =
+            percentage + "%";
+
+        if (
+            percentage >= 90
+        ) {
+
+            progressBar.className =
+                "progress-bar bg-success";
+
+        }
+
+        else if (
+            percentage >= 75
+        ) {
+
+            progressBar.className =
+                "progress-bar bg-primary";
+
+        }
+
+        else if (
+            percentage >= 60
+        ) {
+
+            progressBar.className =
+                "progress-bar bg-warning text-dark";
+
+        }
+
+        else {
+
+            progressBar.className =
+                "progress-bar bg-danger";
 
         }
 
     }
 
-});
+    // ==========================
+    // RATING
+    // ==========================
+
+    let rating =
+        "Poor";
+
+    let approval =
+        "Not Approved";
+
+    if (
+        percentage >= 90
+    ) {
+
+        rating =
+            "Excellent";
+
+        approval =
+            "Fully Approved";
+
+    }
+
+    else if (
+        percentage >= 75
+    ) {
+
+        rating =
+            "Good";
+
+        approval =
+            "Approved";
+
+    }
+
+    else if (
+        percentage >= 60
+    ) {
+
+        rating =
+            "Moderate";
+
+        approval =
+            "Conditionally Approved";
+
+    }
+
+    const ratingElement =
+        document.getElementById(
+            "liveRating"
+        );
+
+    const approvalElement =
+        document.getElementById(
+            "liveApproval"
+        );
+
+    if (
+        ratingElement
+    ) {
+
+        ratingElement.innerHTML =
+            rating;
+
+    }
+
+    if (
+        approvalElement
+    ) {
+
+        approvalElement.innerHTML =
+            approval;
+
+    }
+
+}
+
+// ==========================
+// EVENTS
+// ==========================
+
+document.addEventListener(
+    "DOMContentLoaded",
+    function () {
+
+        document
+            .querySelectorAll(
+                ".score"
+            )
+            .forEach(
+                input => {
+
+                    input.addEventListener(
+                        "input",
+                        calculateScore
+                    );
+
+                }
+            );
+
+        calculateScore();
+
+    }
+);
 
 </script>
+
 
 {% endblock %}

@@ -1,0 +1,261 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="container-fluid">
+
+    <!-- HEADER -->
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+
+        <div>
+
+            <h2 class="fw-bold mb-0">
+                Create Instrument
+            </h2>
+
+            <small class="text-muted">
+                Add New Measuring Instrument
+            </small>
+
+        </div>
+
+        <a href="{% url 'instrument_list' %}"
+           class="btn btn-secondary">
+
+            Back
+
+        </a>
+
+    </div>
+
+
+    <!-- FORM -->
+
+    <div class="card shadow-sm border-0">
+
+        <div class="card-body">
+
+            <form method="post">
+
+                {% csrf_token %}
+
+                <div class="row g-3">
+
+                    <!-- Instrument ID -->
+
+                    <div class="col-md-4">
+
+                        <label class="form-label">
+                            Instrument ID
+                        </label>
+
+                        <input
+                            type="text"
+                            name="instrument_id"
+                            class="form-control"
+                            required
+                        >
+
+                    </div>
+
+                    <!-- Name -->
+
+                    <div class="col-md-4">
+
+                        <label class="form-label">
+                            Instrument Name
+                        </label>
+
+                        <input
+                            type="text"
+                            name="name"
+                            class="form-control"
+                            required
+                        >
+
+                    </div>
+
+                    <!-- Category -->
+
+                    <div class="col-md-4">
+
+                        <label class="form-label">
+                            Category
+                        </label>
+
+                        <input
+                            type="text"
+                            name="category"
+                            class="form-control"
+                            placeholder="Vernier, Micrometer, Gauge..."
+                            required
+                        >
+
+                    </div>
+
+                    <!-- Manufacturer -->
+
+                    <div class="col-md-4">
+
+                        <label class="form-label">
+                            Manufacturer
+                        </label>
+
+                        <input
+                            type="text"
+                            name="manufacturer"
+                            class="form-control"
+                        >
+
+                    </div>
+
+                    <!-- Model No -->
+
+                    <div class="col-md-4">
+
+                        <label class="form-label">
+                            Model No
+                        </label>
+
+                        <input
+                            type="text"
+                            name="model_no"
+                            class="form-control"
+                        >
+
+                    </div>
+
+                    <!-- Serial No -->
+
+                    <div class="col-md-4">
+
+                        <label class="form-label">
+                            Serial No
+                        </label>
+
+                        <input
+                            type="text"
+                            name="serial_no"
+                            class="form-control"
+                        >
+
+                    </div>
+
+                    <!-- Location -->
+
+                    <div class="col-md-4">
+
+                        <label class="form-label">
+                            Location
+                        </label>
+
+                        <input
+                            type="text"
+                            name="location"
+                            class="form-control"
+                            placeholder="Inspection Room"
+                        >
+
+                    </div>
+
+                    <!-- Purchase Date -->
+
+                    <div class="col-md-4">
+
+                        <label class="form-label">
+                            Purchase Date
+                        </label>
+
+                        <input
+                            type="date"
+                            name="purchase_date"
+                            class="form-control"
+                        >
+
+                    </div>
+
+                    <!-- Calibration Frequency -->
+
+                    <div class="col-md-4">
+
+                        <label class="form-label">
+                            Calibration Frequency (Days)
+                        </label>
+
+                        <input
+                            type="number"
+                            name="calibration_frequency_days"
+                            class="form-control"
+                            value="365"
+                        >
+
+                    </div>
+
+                    <!-- Range -->
+
+                    <div class="col-md-6">
+
+                        <label class="form-label">
+                            Range Specification
+                        </label>
+
+                        <input
+                            type="text"
+                            name="range_specification"
+                            class="form-control"
+                            placeholder="0-300 mm"
+                        >
+
+                    </div>
+
+                    <!-- Accuracy -->
+
+                    <div class="col-md-6">
+
+                        <label class="form-label">
+                            Accuracy
+                        </label>
+
+                        <input
+                            type="text"
+                            name="accuracy"
+                            class="form-control"
+                            placeholder="±0.02 mm"
+                        >
+
+                    </div>
+
+                </div>
+
+
+                <hr>
+
+                <div class="text-end">
+
+                    <a href="{% url 'instrument_list' %}"
+                       class="btn btn-light">
+
+                        Cancel
+
+                    </a>
+
+                    <button
+                        type="submit"
+                        class="btn btn-primary">
+
+                        Save Instrument
+
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

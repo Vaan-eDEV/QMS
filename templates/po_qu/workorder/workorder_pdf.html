@@ -7,280 +7,651 @@
 <style>
 
 /* ================= PAGE ================= */
+
 @page {
     size: A4;
-    margin: 10mm 15mm 20mm 15mm;
+    margin: 10mm;
 
     @bottom-center {
-        content: "Page " counter(page) " of " counter(pages);
-        font-size: 10px;
-        color: #555;
+        content: "© VAAN — Page " counter(page) " of " counter(pages);
+        font-size: 9px;
+        color: #666;
     }
 }
 
 body {
-    font-family: "Helvetica Neue", Arial, sans-serif;
-    font-size: 12px;
-    color: #333;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 11px;
+    color: #222;
+    line-height: 1.4;
 }
 
-/* WATERMARK (optional) */
-body::before {
-    content: "";
+/* ================= WATERMARK ================= */
+
+.page-watermark {
     position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-image: url("{{ watermark|default:'' }}");
-    background-repeat: no-repeat;
-    background-position: center;
-    background-size: 80%;
-    opacity: 0.08;
+    top: 50%;
+    left: 50%;
+    width: 650px;
+    transform: translate(-50%, -50%);
+    opacity: 0.04;
     z-index: -1;
 }
 
-/* LOGO */
+/* ================= HEADER ================= */
+
+.header {
+    text-align: center;
+    margin-bottom: 15px;
+}
+
 .logo {
     height: 70px;
 }
 
-/* TABLE */
+.company-info {
+    font-size: 10px;
+    line-height: 1.5;
+    margin-top: 5px;
+}
+
+/* ================= TITLE ================= */
+
+.title {
+    text-align: left;
+    color: #2b7cff;
+    font-size: 28px;
+    font-weight: bold;
+    margin: 20px 0;
+}
+
+/* ================= TOP SECTION ================= */
+
+.top-section {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+}
+
+.top-section td {
+    vertical-align: top;
+}
+
+.block-title {
+    color: #2b7cff;
+    font-size: 14px;
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.qr {
+    text-align: right;
+}
+
+.qr img {
+    width: 100px;
+    height: auto;
+}
+
+/* ================= ADDRESS TABLE ================= */
+
+.address-table {
+    width: 100%;
+    margin-top: 15px;
+    border-collapse: collapse;
+}
+
+.address-table td {
+    vertical-align: top;
+    padding: 4px;
+}
+
+.customer-box {
+    width: 50%;
+    text-align: left;
+}
+
+.bank-box {
+    width: 50%;
+    text-align: right;
+}
+
+/* ================= ITEMS TABLE ================= */
+
 .po-items {
     width: 100%;
     border-collapse: collapse;
-    margin-bottom: 10px;
+    margin-top: 20px;
 }
 
 .po-items th {
-    background-color: #3399ff;
-    color: white;
-    padding: 6px;
-    font-size: 11px;
-    text-align: center;
+    background: #2b7cff;
+    color: #fff;
+    padding: 8px;
+    font-size: 10px;
+    text-align: left;
 }
 
 .po-items td {
-    border-bottom: 1px solid #dad9d9;
+    border-bottom: 1px solid #ddd;
     padding: 7px;
-    font-size: 11px;
+}
+
+.po-items tr:nth-child(even) {
+    background: #fafafa;
 }
 
 .num {
     text-align: right;
 }
 
-/* SIGNATURE */
-.signatures {
-    display: flex;
-    gap: 40px;
-    margin-top: 20px;
+/* ================= TOTALS ================= */
+
+.total {
+    width: 40%;
+    margin-left: auto;
+    margin-top: 15px;
+    border-collapse: collapse;
 }
 
-.signatures img {
-    max-width: 120px;
+.total td {
+    padding: 6px;
+    border-bottom: 1px solid #ddd;
 }
 
-/* FOOTER */
-.footer-note {
-    position: fixed;
-    bottom: 25px;
-    left: 15mm;
-    right: 15mm;
-    font-size: 10px;
+.grand-total td {
+    background: #f5f9ff;
+    border-top: 2px solid #2b7cff;
+    border-bottom: 2px solid #2b7cff;
+    font-weight: bold;
+    font-size: 12px;
+}
+
+/* ================= SIGNATURES ================= */
+
+.signature-table {
+    width: 100%;
+    margin-top: 15px;
+    border-collapse: separate;
+    border-spacing: 5px;
+}
+
+.signature-table td {
+    width: 33.33%;
+    vertical-align: top;
+}
+
+.digital-sign-box {
+    position: relative;
+    overflow: hidden;
+    padding: 5px;
+    min-height: 55px;
+    text-align: center;
+}
+
+/* VAAN WATERMARK */
+
+.sign-watermark {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 60px;
+    transform: translate(-50%, -50%);
+    opacity: 0.6;
+    z-index: 0;
+}
+
+.digital-sign-title,
+.digital-sign-name,
+.digital-sign-date,
+.digital-sign-id,
+.signature-role {
+    position: relative;
+    z-index: 10;
+}
+
+.digital-sign-title {
+    font-size: 7px;
     color: #444;
 }
 
+.digital-sign-name {
+    font-size: 9px;
+    font-weight: bold;
+}
+
+.digital-sign-date {
+    font-size: 7px;
+    color: #333;
+}
+
+.digital-sign-id {
+    font-size: 6px;
+    color: #666;
+    word-break: break-word;
+}
+
+.signature-role {
+    font-size: 7px;
+    color: #666;
+    font-weight: bold;
+    margin-top: 2px;
+}
+
+/* ================= NOTES & TERMS ================= */
+.notes-terms{
+margin-top:20px;
+font-size:10px;
+line-height:1.6;
+}
+
+.notes-terms div{
+padding:8px 0;
+border-bottom:1px solid #e5e7eb;
+}
+
+.notes-terms b{
+color:#2b7cff;
+font-size:11px;
+}
+
+
+/* ================= FOOTER ================= */
+
+.footer {
+    position: fixed;
+    bottom: 5mm;
+    left: 18mm;
+    right: 18mm;
+    text-align: center;
+    font-size: 9px;
+    color: #666;
+}
+
+/* ================= HELPERS ================= */
+
+pre {
+    margin: 0;
+    white-space: pre-wrap;
+    font-family: inherit;
+}
 
 </style>
+
+
+
 </head>
 
 <body>
 
-<!-- ================= COMPANY ================= -->
-<div style="text-align:center; margin-bottom:20px;">
-    {% if logo_path %}
-    <img src="{{ logo_path }}" class="logo">
-    {% endif %}
+<!-- PAGE WATERMARK -->
 
-    <div style="font-size:10px; color:#555;">
-        {{ company_address }} <br>
-        Phone: {{ company_phone }} | Email: {{ company_email }}
-    </div>
+<img src="{{ logo_path }}" class="page-watermark">
+
+<!-- HEADER -->
+
+<div class="header">
+
+
+{% if logo_path %}
+    <img src="{{ logo_path }}" class="logo">
+{% endif %}
+
+<div class="company-info">
+    {{ company_address }}<br>
+    GSTIN: {{ company_gstin }} | 33AALCV0503H1ZN<br>
+    Phone: {{ company_phone }}
 </div>
 
-<!-- ================= HEADER ================= -->
-<table style="width:100%; margin-bottom:15px;">
+
+</div>
+
+<!-- TITLE -->
+
+<div class="title">
+    <table style="width:100%; margin:20px 0 15px 0; border-collapse:collapse;">
+
 <tr>
 
-<td>
-    <span style="color:#3399ff; font-size:28px; font-weight:bold;">
-        wo #{{ wo.wo_number }}
-    </span><br><br>
 
-    <small>Date: {{ wo.date|date:"d M Y" }}</small><br><br>
-
-    <strong>Customer</strong><br>
-    <b>{{ wo.customer_name }}</b><br>
-
-    <span style="white-space: pre-line;">
-        {{ wo.customer_address }}
-    </span><br>
-
-    <small>Email: {{ wo.customer_email }}</small><br>
-    <small>Phone: {{ wo.customer_phone }}</small>
+<td style="
+    text-align:left;
+    color:#2b7cff;
+    font-size:28px;
+    font-weight:bold;
+">
+    Work Order #{{ wo.wo_number }}
 </td>
 
-<td style="text-align:right;">
+<td style="
+    text-align:right;
+    font-size:12px;
+    color:#555;
+">
+    <strong>Date:</strong>
+    {{ wo.date|date:"d M Y" }}
+</td>
+
+
+</tr>
+
+</table>
+
+</div>
+
+<!-- CUSTOMER DETAILS + QR -->
+
+<table class="top-section">
+<tr>
+
+
+<td width="70%">
+
+    <div class="block-title">Customer Details</div>
+
+    <strong>{{ wo.customer_name }}</strong><br>
+
+    {{ wo.customer_address }}<br>
+
+
+
+</td>
+
+<td width="30%" class="qr">
 
     {% if qr_code_path %}
-    <img src="{{ qr_code_path }}" style="width:100px; border:1px solid #eee; padding:2px;">
+        <img src="{{ qr_code_path }}">
     {% endif %}
 
-    <br><br>
-
-    <strong>Bank Details</strong><br>
-    <small>Bank: {{wo.bank_name }}</small><br>
-    <small>A/C: {{ wo.bank_account }}</small><br>
-    <small>IFSC: {{ wo.ifsc }}</small>
-
 </td>
+
 
 </tr>
 </table>
 
-<!-- ================= ITEMS ================= -->
-<table class="po-items">
-<thead>
+<!-- BANK DETAILS -->
+
+<table class="address-table">
+
 <tr>
-    <th>#</th>
-    <th>Description</th>
-    <th>HSN/SAC</th>
-    <th>Unit</th>
-    <th>Qty</th>
-    <th>Rate</th>
-    <th>Amount</th>
+
+
+
+<table class="address-table">
+<tr>
+
+<td width="50%">
+
+    <div class="block-title">
+        Work Order Details
+    </div>
+
+    WO Number: {{ wo.wo_number }}<br>
+
+    PO Number: {{ wo.po_number|default:"-" }}<br>
+
+    PO Date:
+    {{ wo.po_date|date:"d M Y"|default:"-" }}<br>
+
+    RFQ Ref:
+    {{ wo.rfq_ref|default:"-" }}<br><br>
+
+</td>
+
+
 </tr>
+</table>
+
+
+</tr>
+
+</table>
+
+<!-- ITEMS -->
+
+<table class="po-items">
+
+<!-- ITEMS -->
+
+<table class="po-items">
+
+<thead>
+    <tr>
+        <th>#</th>
+        <th>Product Code</th>
+        <th>Product Name</th>
+        <th>Material</th>
+        <th>Qty</th>
+        <th>Unit</th>
+        <th>Dispatch Schedule</th>
+    </tr>
 </thead>
 
 <tbody>
-{% for item in items %}
-<tr>
-    <td>{{ forloop.counter }}</td>
-    <td>{{ item.description }}</td>
-    <td>{{ item.hsn_code }}</td>
-    <td>{{ item.unit }}</td>
-    <td class="num">{{ item.quantity }}</td>
-    <td class="num">{{ item.rate|floatformat:2 }}</td>
-    <td class="num">{{ item.amount|floatformat:2 }}</td>
-</tr>
+
+{% for item in wo.items.all %}
+
+    <tr>
+
+        <td>
+            {{ forloop.counter }}
+        </td>
+
+        <td>
+            {{ item.product_code }}
+        </td>
+
+        <td>
+            {{ item.product_name }}
+        </td>
+
+        <td>
+            {{ item.material|default:"-" }}
+        </td>
+
+        <td class="num">
+            {{ item.quantity }}
+        </td>
+
+        <td>
+            {{ item.unit }}
+        </td>
+
+        <td>
+
+            {% for d in item.deliveries.all %}
+
+                {{ d.delivery_date|date:"d M Y" }}
+                ({{ d.quantity }})<br>
+
+            {% empty %}
+
+                -
+
+            {% endfor %}
+
+        </td>
+
+    </tr>
+
 {% endfor %}
+
 </tbody>
+
+
 </table>
 
-<!-- ================= TOTAL ================= -->
-<table class="po-items">
-<tr>
-    <td colspan="6"></td>
-    <td class="num"><b>Subtotal : ₹ {{rfq.subtotal|floatformat:2 }}</b></td>
-</tr>
 
-<tr>
-    <td colspan="6"></td>
-    <td class="num">
-        Discount ({{ wo.discount_percent }}%) :
-        ₹ -{{ rfq.discount_amount|floatformat:2 }}
-    </td>
-</tr>
-
-<tr>
-    <td colspan="6"></td>
-    <td class="num">CGST : ₹ {{ rfq.cgst_amount|floatformat:2 }}</td>
-</tr>
-
-<tr>
-    <td colspan="6"></td>
-    <td class="num">AGST: ₹ {{ rfq.agst_amount | floatformat:2}} </td>
-    <td class="num">CGST : ₹ {{ rfq.cgst_amount|floatformat:2 }}</td>
-</tr>
-
-
-<tr>
-    <td colspan="6"></td>
-    <td class="num">SGST : ₹ {{ rfq.sgst_amount|floatformat:2 }}</td>
-</tr>
-
-<tr>
-    <td colspan="6"></td>
-    <td class="num">IGST : ₹ {{ rfq.igst_amount|floatformat:2 }}</td>
-</tr>
-
-<tr>
-    <td colspan="6"></td>
-    <td class="num">
-        <b>Grand Total : ₹ {{ rfq.grand_total|floatformat:2 }}</b>
-    </td>
-</tr>
-
-
-<tr>
-    <td colspan="6"></td>
-    <td class="num">
-        <b>SGST : ₹ {{ rfq.grand_total|floatformat:2 }}</b>
-
-
-
-        
-    </td>
-</tr>
 </table>
 
-<!-- ================= SIGNATURE ================= -->
-<div class="signatures">
 
-    <div style="text-align:center;">
-        <div style="font-size:11px;">
-            <b>Prepared By</b><br>
-            {{ rfq.prepared_by|default:"—" }}<br>
-            {{ rfq.prepared_at|date:"d M Y H:i"|default:"—" }}<br>
 
-            {% if rfq.prepared_signature_id %}
-            ID: {{ rfq.prepared_signature_id }}
-            {% endif %}
-        </div>
-    </div>
+<!-- NOTES SECTION -->
 
-    <div style="text-align:center;">
-        <div style="font-size:11px;">
-            <b>Approved By</b><br>
-            {{ rfq.approved_by|default:"—" }}<br>
-            {{ rfq.approved_at|date:"d M Y H:i"|default:"—" }}<br>
+<div class="notes-terms">
 
-            {% if rfq.approved_signature_id %}
-            ID: {{ rfq.approved_signature_id }}
-            {% endif %}
-        </div>
-    </div>
+
+{% if wo.product_notes %}
+<div>
+    <b>Product Notes</b><br>
+    {{ wo.product_notes |linebreaksbr}}
+</div>
+{% endif %}
+
+{% if wo.process_notes %}
+<div style="margin-top:10px;">
+    <b>Process Notes</b><br>
+    {{ wo.process_notes |linebreaksbr }}
+</div>
+{% endif %}
+
+{% if wo.packing_notes %}
+<div style="margin-top:10px;">
+    <b>Packing Notes</b><br>
+    {{ wo.packing_notes |linebreaksbr}}
+</div>
+{% endif %}
+
+{% if wo.delivery_notes %}
+<div style="margin-top:10px;">
+    <b>Delivery Notes</b><br>
+    {{ wo.delivery_notes |linebreaksbr }}
+</div>
+{% endif %}
+
+{% if wo.documentation_notes %}
+<div style="margin-top:10px;">
+    <b>Documentation Notes</b><br>
+    {{ wo.documentation_notes |linebreaksbr }}
+</div>
+{% endif %}
+
+{% if wo.other_notes %}
+<div style="margin-top:10px;">
+    <b>Other Notes</b><br>
+    {{ wo.other_notes |linebreaksbr}}
+</div>
+{% endif %}
+
 
 </div>
-<!-- ================= NOTES ================= -->
-<div class="footer-note">
 
-    {% if rfq.note %}
-    <div>
-        <b>Note:</b><br>
-        {{ rfq.note|default:"-" }}
-    </div>
-    {% endif %}
 
-    {% if rfq.terms %}
-    <div style="margin-top:6px;">
-        <b>Terms:</b><br>
-        {{ rfq.terms|default:"-" }}
-    </div>
-    {% endif %}
+
+
+<!-- SIGNATURES -->
+
+<table class="signature-table">
+<tr>
+
+<!-- PREPARED -->
+
+<td>
+
+<div class="digital-sign-box">
+
+
+<img src="{{ logo_path }}" class="sign-watermark">
+
+<div class="digital-sign-title">
+    ✓ Digitally Signed
+</div>
+
+<div class="digital-sign-name">
+    {{ wo.prepared_by.first_name }}
+    {{ wo.prepared_by.last_name }}
+</div>
+
+<div class="digital-sign-date">
+    {{ wo.prepared_at|date:"d M Y, g:i a" }}
+</div>
+
+<div class="digital-sign-id">
+    {{ wo.prepared_signature_id|default:"-" }}
+</div>
+
+<div class="signature-role">
+    Prepared By
+</div>
+
 
 </div>
+
+</td>
+
+<!-- REVIEWED -->
+
+<td>
+
+<div class="digital-sign-box">
+
+
+<img src="{{ logo_path }}" class="sign-watermark">
+
+<div class="digital-sign-title">
+    ✓ Digitally Signed
+</div>
+
+<div class="digital-sign-name">
+    {{ wo.reviewed_by.first_name }}
+    {{ wo.reviewed_by.last_name }}
+</div>
+
+<div class="digital-sign-date">
+    {{ wo.reviewed_at|date:"d M Y, g:i a" }}
+</div>
+
+<div class="digital-sign-id">
+    {{ wo.reviewed_signature_id|default:"-" }}
+</div>
+
+<div class="signature-role">
+    Reviewed By
+</div>
+
+
+</div>
+
+</td>
+
+<!-- APPROVED -->
+
+<td>
+
+<div class="digital-sign-box">
+
+
+<img src="{{ logo_path }}" class="sign-watermark">
+
+<div class="digital-sign-title">
+    ✓ Digitally Signed
+</div>
+
+<div class="digital-sign-name">
+    {{ wo.approved_by.first_name }}
+    {{ wo.approved_by.last_name }}
+</div>
+
+<div class="digital-sign-date">
+    {{ wo.approved_at|date:"d M Y, g:i a" }}
+</div>
+
+<div class="digital-sign-id">
+    {{ wo.approved_signature_id|default:"-" }}
+</div>
+
+<div class="signature-role">
+    Approved By
+</div>
+
+
+</div>
+
+</td>
+
+</tr>
+</table>
 
 </body>
+
 </html>

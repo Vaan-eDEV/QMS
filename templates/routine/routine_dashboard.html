@@ -1,0 +1,1193 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+
+
+
+<div class="container-fluid py-4">
+
+
+<!-- Header -->
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+
+    <div>
+
+        <h2 class="fw-bold">
+            Routine Dashboard
+        </h2>
+
+        <p class="text-muted mb-0">
+            Routine Inspection Management
+        </p>
+
+    </div>
+
+    <a href="{% url 'routine:create_routine' %}"
+       class="btn btn-primary">
+
+        <i class="fas fa-plus me-2"></i>
+        Create Routine
+
+    </a>
+
+</div>
+
+<!-- KPI CARDS -->
+
+<div class="row g-3 mb-4">
+
+
+<!-- Total Routines -->
+
+<div class="col-xl-2 col-md-4">
+
+    <div class="card border-0 shadow-sm h-100">
+
+        <div class="card-body">
+
+            <div class="d-flex justify-content-between">
+
+                <div>
+
+                    <small class="text-muted">
+
+                        Total Routines
+
+                    </small>
+
+                    <h2 class="fw-bold mb-0">
+
+                        {{ total_routines }}
+
+                    </h2>
+
+                </div>
+
+                <div>
+
+                    <i class="fas fa-clipboard-list fa-2x text-primary"></i>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- Scheduled -->
+
+<div class="col-xl-2 col-md-4">
+
+    <div class="card border-0 shadow-sm h-100">
+
+        <div class="card-body">
+
+            <div class="d-flex justify-content-between">
+
+                <div>
+
+                    <small class="text-muted">
+
+                        Scheduled
+
+                    </small>
+
+                    <h2 class="fw-bold text-primary mb-0">
+
+                        {{ total_schedules }}
+
+                    </h2>
+
+                </div>
+
+                <div>
+
+                    <i class="fas fa-calendar-check fa-2x text-primary"></i>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- Pending -->
+
+<div class="col-xl-2 col-md-4">
+
+    <div class="card border-0 shadow-sm h-100">
+
+        <div class="card-body">
+
+            <div class="d-flex justify-content-between">
+
+                <div>
+
+                    <small class="text-muted">
+
+                        Pending
+
+                    </small>
+
+                    <h2 class="fw-bold text-warning mb-0">
+
+                        {{ pending }}
+
+                    </h2>
+
+                </div>
+
+                <div>
+
+                    <i class="fas fa-hourglass-half fa-2x text-warning"></i>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+
+<div class="col-xl-2 col-md-4">
+
+    <div class="card border-0 shadow-sm h-100">
+
+        <div class="card-body">
+
+            <div class="d-flex justify-content-between">
+
+                <div>
+
+                    <small class="text-muted">
+
+                        Approved
+
+                    </small>
+
+                    <h2 class="fw-bold text-success mb-0">
+
+                        {{ completed }}
+
+                    </h2>
+
+                </div>
+
+                <div>
+
+                    <i class="fas fa-check-circle fa-2x text-success"></i>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div> 
+
+<!-- Overdue -->
+
+<div class="col-xl-2 col-md-4">
+
+    <div class="card border-0 shadow-sm h-100">
+
+        <div class="card-body">
+
+            <div class="d-flex justify-content-between">
+
+                <div>
+
+                    <small class="text-muted">
+
+                        Overdue
+
+                    </small>
+
+                    <h2 class="fw-bold text-danger mb-0">
+
+                        {{ overdue }}
+
+                    </h2>
+
+                </div>
+
+                <div>
+
+                    <i class="fas fa-exclamation-triangle fa-2x text-danger"></i>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- Compliance -->
+
+<div class="col-xl-2 col-md-4">
+
+    <div class="card border-0 shadow-sm h-100">
+
+        <div class="card-body text-center">
+
+            <small class="text-muted">
+
+                Compliance
+
+            </small>
+
+            <h2 class="fw-bold text-info mb-1">
+
+                {{ completion_rate }}%
+
+            </h2>
+
+            <div class="progress">
+
+                <div class="progress-bar bg-info"
+                     style="width: {{ completion_rate }}%;">
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+</div>
+
+
+
+
+
+
+<!-- MAIN CONTENT -->
+
+<div class="row">
+
+    <!-- ROUTINES -->
+
+    <div class="col-lg-8">
+
+
+<div class="card border-0 shadow-sm">
+
+    <div class="card-header bg-primary text-white">
+
+        <div class="d-flex justify-content-between align-items-center">
+
+            <div>
+
+                <h5 class="mb-0">
+                    <i class="fas fa-clipboard-check me-2"></i>
+                    Routine Checklist
+                </h5>
+
+                <small>
+                    Active routine inspections ready for execution
+                </small>
+
+            </div>
+
+            <span class="badge bg-light text-dark">
+
+                {{ routines.count }} Routines
+
+            </span>
+
+        </div>
+
+    </div>
+
+    <div class="card-body" style="
+        height: 500px;
+        overflow-y: auto;
+        overflow-x: hidden;
+     ">
+
+        <div class="row mb-3">
+
+            <div class="col-md-6">
+
+                <input
+                    type="text"
+                    id="routineSearch"
+                    class="form-control"
+                    placeholder="Search Routine...">
+
+            </div>
+
+        </div>
+
+        <div class="table-responsive">
+
+            <table
+                class="table table-hover align-middle"
+                id="routineTable">
+
+                <thead class="table-light">
+
+                    <tr>
+
+                        <th>Routine No</th>
+
+                        <th>Routine Name</th>
+
+                        <th>Department</th>
+
+                        <th>Frequency</th>
+
+                        <!-- <th>Due Time</th> -->
+
+                        <th>Assigned To</th>
+
+                        <th>Status</th>
+
+                        <th width="250">
+
+                            Action
+
+                        </th>
+
+                    </tr>
+
+                </thead>
+
+                <tbody>
+
+                    {% for routine in routines %}
+
+                    <tr>
+
+                        <td>
+
+                            <span class="fw-bold text-primary">
+
+                                {{ routine.routine_no }}
+
+                            </span>
+
+                        </td>
+
+                        <td>
+
+                            <div class="fw-semibold">
+
+                                {{ routine.routine_name }}
+
+                            </div>
+
+                            <small class="text-muted">
+
+                                {{ routine.location }}
+
+                            </small>
+
+                        </td>
+
+                        <td>
+
+                            <span class="badge bg-secondary">
+
+                                {{ routine.department }}
+
+                            </span>
+
+                        </td>
+
+                        <td>
+
+{% with schedule=routine.routineschedule_set.first %}
+
+    {% if schedule %}
+
+        {{ schedule.get_frequency_display }}
+
+    {% else %}
+
+        -
+
+    {% endif %}
+
+{% endwith %}
+
+</td>
+
+<!-- <td>
+
+{% with schedule=routine.routineschedule_set.first %}
+
+    {% if schedule %}
+
+        {{ schedule.due_time|time:"H:i" }}
+
+    {% else %}
+
+        -
+
+    {% endif %}
+
+{% endwith %}
+
+</td> -->
+
+<td>
+
+{% with schedule=routine.routineschedule_set.first %}
+
+    {% if schedule %}
+
+        {{ schedule.assigned_to }}
+
+    {% else %}
+
+        -
+
+    {% endif %}
+
+{% endwith %}
+
+</td>
+                        <td>
+
+                            {% if routine.status == 'active' %}
+
+                                <span class="badge bg-success">
+
+                                    Active
+
+                                </span>
+
+                            {% else %}
+
+                                <span class="badge bg-danger">
+
+                                    Inactive
+
+                                </span>
+
+                            {% endif %}
+
+                        </td>
+
+                        <td>
+
+                            <div class="d-flex gap-2">
+
+                                <a href="{% url 'routine:my_checklists' %}"
+   class="btn btn-primary btn-sm">
+
+    My Checklists
+
+</a>
+
+                                <button
+    type="button"
+    class="btn btn-info btn-sm"
+    data-bs-toggle="modal"
+    data-bs-target="#viewRoutineModal{{ routine.id }}">
+
+    <i class="fas fa-eye"></i>
+    View
+
+</button>
+
+                            </div>
+
+                        </td>
+
+                    </tr>
+
+                    {% empty %}
+
+                    <tr>
+
+                        <td colspan="6"
+                            class="text-center py-5">
+
+                            <i class="fas fa-clipboard-list fa-3x text-muted mb-3"></i>
+
+                            <h6 class="text-muted">
+
+                                No Routine Available
+
+                            </h6>
+
+                        </td>
+
+                    </tr>
+
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+            {% for routine in routines %}
+
+<div class="modal fade"
+     id="viewRoutineModal{{ routine.id }}"
+     tabindex="-1">
+
+    <div class="modal-dialog modal-lg">
+
+        <div class="modal-content">
+
+            <div class="modal-header bg-primary text-white">
+
+                <h5 class="modal-title">
+
+                    Routine Details
+
+                </h5>
+
+                <button
+                    type="button"
+                    class="btn-close btn-close-white"
+                    data-bs-dismiss="modal">
+                </button>
+
+            </div>
+
+            <div class="modal-body">
+
+                <div class="row">
+
+                    <div class="col-md-6 mb-3">
+
+                        <label class="fw-bold">
+
+                            Routine No
+
+                        </label>
+
+                        <div>
+
+                            {{ routine.routine_no }}
+
+                        </div>
+
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+
+                        <label class="fw-bold">
+
+                            Routine Name
+
+                        </label>
+
+                        <div>
+
+                            {{ routine.routine_name }}
+
+                        </div>
+
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+
+                        <label class="fw-bold">
+
+                            Category
+
+                        </label>
+
+                        <div>
+
+                            {{ routine.category }}
+
+                        </div>
+
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+
+                        <label class="fw-bold">
+
+                            Department
+
+                        </label>
+
+                        <div>
+
+                            {{ routine.department }}
+
+                        </div>
+
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+
+                        <label class="fw-bold">
+
+                            Location
+
+                        </label>
+
+                        <div>
+
+                            {{ routine.location }}
+
+                        </div>
+
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+
+                        <label class="fw-bold">
+
+                            Asset
+
+                        </label>
+
+                        <div>
+
+                            {{ routine.machine_asset|default:"-" }}
+
+                        </div>
+
+                    </div>
+
+                    <div class="col-md-12 mb-3">
+
+                        <label class="fw-bold">
+
+                            Description
+
+                        </label>
+
+                        <div>
+
+                            {{ routine.description|default:"-" }}
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <hr>
+
+                <h5 class="mb-3">
+
+                    Schedule Information
+
+                </h5>
+
+                {% with schedule=routine.routineschedule_set.first %}
+
+                    {% if schedule %}
+
+                    <table class="table table-bordered">
+
+                        <tr>
+
+                            <th width="35%">
+                                Frequency
+                            </th>
+
+                            <td>
+                                {{ schedule.get_frequency_display }}
+                            </td>
+
+                        </tr>
+
+                        <tr>
+
+                            <th>
+                                Start Date
+                            </th>
+
+                            <td>
+                                {{ schedule.start_date }}
+                            </td>
+
+                        </tr>
+
+                        <tr>
+
+                            <th>
+                                End Date
+                            </th>
+
+                            <td>
+                                {{ schedule.end_date|default:"-" }}
+                            </td>
+
+                        </tr>
+
+                        <tr>
+
+                            <th>
+                                Due Time
+                            </th>
+
+                            <td>
+                                {{ schedule.due_time }}
+                            </td>
+
+                        </tr>
+
+                        <tr>
+
+                            <th>
+                                Assigned To
+                            </th>
+
+                            <td>
+                                {{ schedule.assigned_to }}
+                            </td>
+
+                        </tr>
+
+                        <tr>
+
+                            <th>
+                                Reviewer
+                            </th>
+
+                            <td>
+                                {{ schedule.reviewer }}
+                            </td>
+
+                        </tr>
+
+                        <tr>
+
+                            <th>
+                                Approver
+                            </th>
+
+                            <td>
+                                {{ schedule.approver }}
+                            </td>
+
+                        </tr>
+
+                        <tr>
+
+                            <th>
+                                Escalation User
+                            </th>
+
+                            <td>
+                                {{ schedule.escalation_user }}
+                            </td>
+
+                        </tr>
+
+                        <tr>
+
+                            <th>
+                                Grace Hours
+                            </th>
+
+                            <td>
+                                {{ schedule.grace_hours }}
+                            </td>
+
+                        </tr>
+
+                        <tr>
+
+                            <th>
+                                Escalation After
+                            </th>
+
+                            <td>
+                                {{ schedule.escalation_after_days }} Day(s)
+                            </td>
+
+                        </tr>
+
+                    </table>
+
+                    {% else %}
+
+                    <div class="alert alert-warning">
+
+                        This routine has not been scheduled yet.
+
+                    </div>
+
+                    {% endif %}
+
+                {% endwith %}
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endfor %}
+
+        </div>
+
+    </div>
+
+</div>
+
+</div>
+
+
+
+
+
+
+
+
+    
+
+    <!-- CATEGORIES -->
+
+    <div class="col-lg-4">
+
+        <div class="card border-0 shadow-sm">
+
+            <div class="card-header bg-white">
+
+                <h5 class="mb-0">
+                    Categories
+                </h5>
+
+            </div>
+
+            <div class="card-body">
+
+                {% for category in categories %}
+
+                <div class="border rounded p-3 mb-2">
+
+                    <div class="fw-semibold">
+
+                        {{ category.category_name }}
+
+                    </div>
+
+                    <small class="text-muted">
+
+                        {{ category.description|default:"No description" }}
+
+                    </small>
+
+                </div>
+
+                {% empty %}
+
+                <div class="text-center text-muted">
+
+                    No categories found.
+
+                </div>
+
+                {% endfor %}
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+</div>
+
+
+
+<!-- RECENT CHECKLIST RECORDS -->
+
+<div class="row mt-4">
+
+    <div class="col-lg-12">
+
+        <div class="card border-0 shadow-sm">
+
+            <div class="card-header bg-white">
+
+                <div class="d-flex justify-content-between">
+
+                    <h5 class="mb-0">
+
+                        Checklists
+
+                    </h5>
+
+                    <a href="{% url 'routine:my_checklists' %}"
+                       class="btn btn-sm btn-primary">
+
+                        View All
+
+                    </a>
+
+                </div>
+
+            </div>
+
+            <div class="card-body p-0" style="
+        height: 250px;
+        overflow-y: auto;
+        overflow-x: hidden;
+     ">
+
+                <div class="table-responsive">
+
+                    <table class="table table-hover mb-0">
+
+                        <thead class="table-light">
+<tr>
+
+    <th>Routine</th>
+    <th>Department</th>
+    <th>Question</th>
+    <th>Response</th>
+    <th>Comments</th>
+    <th>Checked By</th>
+    <th>Date</th>
+    <th>status</th>
+    <th>Photo</th>
+
+</tr>
+</thead>
+                      
+
+                        <tbody>
+
+{% for record in recent_records %}
+
+<tr>
+
+    <td>
+        {{ record.checklist_item.routine.routine_name }}
+    </td>
+
+    <td>
+        {{ record.checklist_item.routine.department }}
+    </td>
+
+    <td>
+        {{ record.checklist_item.question }}
+    </td>
+
+    <td>
+
+        {% if record.response == "Pass" %}
+
+            <span class="badge bg-success">
+                Pass
+            </span>
+
+        {% elif record.response == "Fail" %}
+
+            <span class="badge bg-danger">
+                Fail
+            </span>
+
+        {% else %}
+
+            {{ record.response }}
+
+        {% endif %}
+
+    </td>
+
+    <td>
+        {{ record.comments|default:"-" }}
+    </td>
+
+    <td>
+        {{ record.submitted_by }}
+    </td>
+
+    <td>
+        {{ record.submitted_at|date:"d-M-Y H:i" }}
+    </td>
+
+    <td>
+
+    {% if record.execution.status == "submitted" %}
+
+        {% if record.execution.is_late %}
+
+            <span class="badge bg-danger">
+
+                Overdue Submitted
+
+            </span>
+
+        {% else %}
+
+            <span class="badge bg-success">
+
+                Submitted
+
+            </span>
+
+        {% endif %}
+
+    {% elif record.execution.status == "overdue" %}
+
+        <span class="badge bg-danger">
+
+            Overdue
+
+        </span>
+
+    {% else %}
+
+        <span class="badge bg-secondary">
+
+            {{ record.execution.status }}
+
+        </span>
+
+    {% endif %}
+
+</td>
+
+    <td>
+
+        {% if record.routinephoto_set.first %}
+
+            <button
+                type="button"
+                class="btn btn-sm btn-info"
+                data-bs-toggle="modal"
+                data-bs-target="#photoModal{{ record.id }}">
+
+                View
+            </button>
+
+            <div class="modal fade"
+                 id="photoModal{{ record.id }}"
+                 tabindex="-1">
+
+                <div class="modal-dialog modal-lg">
+
+                    <div class="modal-content">
+
+                        <div class="modal-header">
+
+                            <h5 class="modal-title">
+
+                                Checklist Evidence
+
+                            </h5>
+
+                            <button
+                                type="button"
+                                class="btn-close"
+                                data-bs-dismiss="modal">
+                            </button>
+
+                        </div>
+
+                        <div class="modal-body text-center">
+
+                            <img
+                                src="{{ record.routinephoto_set.first.photo.url }}"
+                                class="img-fluid rounded shadow">
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        {% else %}
+
+            -
+
+        {% endif %}
+
+    </td>
+
+</tr>
+
+{% empty %}
+
+<tr>
+
+    <td colspan="8"
+        class="text-center text-muted py-4">
+
+        No checklist records found.
+
+    </td>
+
+</tr>
+
+{% endfor %}
+
+</tbody>
+
+                    </table>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+</div>
+<script>
+
+document.getElementById(
+    "routineSearch"
+).addEventListener(
+    "keyup",
+    function(){
+
+        let value =
+            this.value.toLowerCase();
+
+        let rows =
+            document.querySelectorAll(
+                "#routineTable tbody tr"
+            );
+
+        rows.forEach(row => {
+
+            row.style.display =
+                row.innerText
+                    .toLowerCase()
+                    .includes(value)
+                ? ""
+                : "none";
+
+        });
+
+    }
+);
+
+</script>
+{% endblock %}
