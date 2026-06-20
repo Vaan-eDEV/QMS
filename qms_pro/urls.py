@@ -33,6 +33,7 @@ urlpatterns = [
     path('sm/',include('sm.urls')),
     path('routine/',include('routine.urls')),
     path('quality/',include('quality.urls')),
+    path('activity_log',include('activity_log.urls'))
 
 ]
 if settings.DEBUG:

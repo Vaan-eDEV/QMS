@@ -677,6 +677,260 @@ def msa_add_reading(
 
 
 
-#
+# =============================================================================================
 # ============================================== SPC ==========================================
-#
+# =============================================================================================
+@login_required
+def spc_dashboard(request):
+
+    plans = (
+        SPCControlPlan.objects
+        .select_related("instrument")
+        .order_by("-created_at")
+    )
+
+    plan_count = plans.count()
+
+    reading_count = (
+        SPCReading.objects.count()
+    )
+
+    recent_plans = plans[:10]
+
+    cp_values = []
+
+    cpk_values = []
+
+    for plan in plans:
+
+        if plan.cp is not None:
+            cp_values.append(
+                float(plan.cp)
+            )
+
+        if plan.cpk is not None:
+            cpk_values.append(
+                float(plan.cpk)
+            )
+
+    average_cp = None
+
+    if cp_values:
+
+        average_cp = round(
+            sum(cp_values)
+            /
+            len(cp_values),
+            2
+        )
+
+    average_cpk = None
+
+    if cpk_values:
+
+        average_cpk = round(
+            sum(cpk_values)
+            /
+            len(cpk_values),
+            2
+        )
+
+    context = {
+
+        "plan_count": plan_count,
+
+        "reading_count": reading_count,
+
+        "average_cp": average_cp,
+
+        "average_cpk": average_cpk,
+
+        "recent_plans": recent_plans,
+    }
+
+    return render(
+        request,
+        "quality/spc/spc_dashboard.html",
+        context
+    )
+@login_required
+def spc_list(request):
+
+    plans = (
+        SPCControlPlan.objects
+        .select_related("instrument")
+        .order_by("-created_at")
+    )
+
+    instruments = (
+        Instrument.objects.all()
+    )
+
+    return render(
+        request,
+        "quality/spc/spc_list.html",
+        {
+            "plans": plans,
+            "instruments": instruments,
+        }
+    ) 
+
+@login_required
+def spc_create(request):
+
+    if request.method == "POST":
+
+        SPCControlPlan.objects.create(
+
+            plan_no=request.POST.get(
+                "plan_no"
+            ),
+
+            part_number=request.POST.get(
+                "part_number"
+            ),
+
+            characteristic=request.POST.get(
+                "characteristic"
+            ),
+
+            instrument_id=request.POST.get(
+                "instrument"
+            ),
+
+            lsl=request.POST.get(
+                "lsl"
+            ),
+
+            target=request.POST.get(
+                "target"
+            ),
+
+            usl=request.POST.get(
+                "usl"
+            ),
+
+            sample_size=request.POST.get(
+                "sample_size"
+            ) or 5,
+
+            frequency=request.POST.get(
+                "frequency"
+            ),
+
+            created_by=request.user
+        )
+
+        messages.success(
+            request,
+            "SPC Control Plan created successfully."
+        )
+
+        return redirect(
+            "spc_list"
+        )
+
+    return redirect(
+        "spc_list"
+    )
+
+
+@login_required
+def spc_detail(
+    request,
+    plan_id
+):
+
+    plan = get_object_or_404(
+        SPCControlPlan,
+        id=plan_id
+    )
+
+    readings = (
+        plan.readings.all()
+        .order_by("-reading_date")
+    )
+
+    return render(
+        request,
+        "quality/spc/spc_detail.html",
+        {
+            "plan": plan,
+            "readings": readings,
+        }
+    )
+
+
+@login_required
+def spc_add_reading(
+    request,
+    plan_id
+):
+
+    plan = get_object_or_404(
+        SPCControlPlan,
+        id=plan_id
+    )
+
+    if request.method == "POST":
+
+        SPCReading.objects.create(
+
+            control_plan=plan,
+
+            sample_no=request.POST.get(
+                "sample_no"
+            ),
+
+            measured_value=request.POST.get(
+                "measured_value"
+            ),
+
+            recorded_by=request.user
+        )
+
+        messages.success(
+            request,
+            "Reading added successfully."
+        )
+
+        return redirect(
+            "spc_add_reading",
+            plan.id
+        )
+
+    return render(
+        request,
+        "quality/spc/spc_add_reading.html",
+        {
+            "plan": plan
+        }
+    )  
+
+
+@login_required
+def spc_delete_reading(
+    request,
+    reading_id
+):
+
+    reading = get_object_or_404(
+        SPCReading,
+        id=reading_id
+    )
+
+    plan_id = (
+        reading.control_plan.id
+    )
+
+    reading.delete()
+
+    messages.success(
+        request,
+        "Reading deleted successfully."
+    )
+
+    return redirect(
+        "spc_add_reading",
+        plan_id
+    )

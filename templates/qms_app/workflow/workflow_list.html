@@ -208,14 +208,25 @@
          class="btn btn-sm btn-primary">
             profile label
         </a>
-        <a href="{% url 'production' a. %}"
-            class="btn btn-sm btn-primary">
-            profile Photo
+
+        <a href="{% url 'production' b.form %}" class="btn btn-sm btn-primary">
+            work To do
         </a>
-        <a href="{% url 'production' a. %}"
-            class="btn btn-sm btn-primary">
-            profile Photo
+
+        <a href="{% url 'production' a.form %}" class="btn btn-sm btn-primary">
+            Profile label
         </a>
+
+        <a href="{% url 'production' a.form %}" class="btn btn-sm btn-primary">
+            Profile content
+        </a>
+
+        <a href="{% url 'production' a.form %}" class="btn btn-sm btn-primary">
+            Profile label
+        </a>
+
+
+
         <a href="">
         </a>
         <a href="{% url 'register_detail_api' a.form id.submission_batch %}"
@@ -233,7 +244,9 @@
         <li class="list-group-item text-muted">Packaging material</li>
         <li class="list-group-item text-muted">PPE Kit</li>
         <li class="list-group-item text-muted">Reference Block</li>
-        <li class="list-group-item text-muted">Electronic Inventory</li>        
+        <li class="list-group-item text-muted">Electronic Inventory</li>
+        <li class="list-group-item text-muted">Reference Block</li>
+        
     </li>
     {% empty %}
     <li class="list-group-item text-muted">
@@ -301,6 +314,7 @@
 <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#exampleModal" data-bs-whatever="@fat">Open modal for @fat</button>
 <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#exampleModal" data-bs-whatever="@getbootstrap">Open modal for @getbootstrap</button>
 
+
 <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
   <div class="modal-dialog">
     <div class="modal-content">
@@ -324,9 +338,22 @@
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
         <button type="button" class="btn btn-primary">Send message</button>
       </div>
+
+
+      <div class="modal-body">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary">Send message</button>
+        <button type="button" class="btn btn-close">Recipient</button>
+        <button type="file" class="btn btn-dark">Recipient2</button>
+        <button type="reset"></button>
+        <textarea class="form-control" id="message-text"></textarea>
+        <input type="text" class="form-control" id="recipient-name">
+        <
+      </div>
     </div>
   </div>
 </div>
+
 
 {% endfor %}
 

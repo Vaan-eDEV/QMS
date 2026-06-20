@@ -1,0 +1,805 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+.dashboard-header{
+    background: linear-gradient(135deg,#028bbd,#06b6d4);
+    color:white;
+    border-radius:15px;
+    padding:25px;
+}
+
+.stat-card{
+    border:none;
+    border-radius:15px;
+    transition:.3s;
+    overflow:hidden;
+}
+
+.stat-card:hover{
+    transform:translateY(-4px);
+}
+
+.stat-icon{
+    font-size:32px;
+    opacity:.8;
+}
+
+.stat-value{
+    font-size:32px;
+    font-weight:700;
+}
+
+.history-card{
+    border:none;
+    border-radius:15px;
+}
+
+.table thead{
+    background:#f8fafc;
+}
+
+.table tbody tr:hover{
+    background:#f8fbff;
+}
+
+.filter-card{
+    border:none;
+    border-radius:15px;
+}
+
+.badge-open{
+    background:#fff3cd;
+    color:#856404;
+}
+
+.badge-closed{
+    background:#d1e7dd;
+    color:#0f5132;
+}
+</style>
+<div class="container-fluid mt-4">
+
+
+<!-- PAGE HEADER -->
+<div class="dashboard-header shadow-sm mb-4">
+
+    <div class="row align-items-center">
+
+        <div class="col-md-8">
+
+            <h2 class="fw-bold mb-2">
+                Activity Log Dashboard
+            </h2>
+
+            <p class="mb-0">
+                Employee Activity Monitoring & Productivity Tracking
+            </p>
+
+        </div>
+
+        <div class="col-md-4 text-end">
+
+            <a href="{% url 'activity_log_list' %}"
+               class="btn btn-light">
+
+                <i class="fas fa-list me-2"></i>
+                Activity Logs
+
+            </a>
+
+        </div>
+
+    </div>
+
+</div>
+<!-- FILTERS -->
+
+{% if request.user.is_superuser %}
+
+<div class="card border-0 shadow-sm mb-4">
+
+    <div class="card-header bg-white">
+
+        <h6 class="mb-0">
+            Filters
+        </h6>
+
+    </div>
+
+    <div class="card-body">
+
+        <form method="get">
+
+            <div class="row g-3 align-items-end">
+
+                <!-- USER -->
+
+                <div class="col-md-4">
+
+                    <label class="form-label fw-semibold">
+                        Select Employee
+                    </label>
+
+                    <select name="user"
+                            class="form-select">
+
+                        <option value="">
+                            All Employees
+                        </option>
+
+                        {% for user in users %}
+
+                        <option value="{{ user.id }}"
+                            {% if selected_user == user.id|stringformat:"s" %}
+                                selected
+                            {% endif %}>
+
+                            {{ user.email }}
+
+                        </option>
+
+                        {% endfor %}
+
+                    </select>
+
+                </div>
+
+                <!-- FROM DATE -->
+
+                <div class="col-md-3">
+
+                    <label class="form-label fw-semibold">
+                        From Date
+                    </label>
+
+                    <input type="date"
+                           name="from_date"
+                           value="{{ request.GET.from_date }}"
+                           class="form-control">
+
+                </div>
+
+                <!-- TO DATE -->
+
+                <div class="col-md-3">
+
+                    <label class="form-label fw-semibold">
+                        To Date
+                    </label>
+
+                    <input type="date"
+                           name="to_date"
+                           value="{{ request.GET.to_date }}"
+                           class="form-control">
+
+                </div>
+
+                <!-- BUTTONS -->
+
+                <div class="col-md-2 d-grid">
+
+                    <button type="submit"
+                            class="btn btn-primary">
+
+                        <i class="fas fa-filter me-1"></i>
+
+                        Filter
+
+                    </button>
+
+                </div>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+{% endif %}
+<!-- KPI CARDS -->
+
+<div class="row g-3 mb-4">
+
+    <div class="col-md-3">
+
+        <div class="card stat-card shadow-sm">
+
+            <div class="card-body">
+
+                <div class="d-flex justify-content-between">
+
+                    <div>
+
+                        <small>Total Logs</small>
+
+                        <div class="stat-value">
+                            {{ total_logs }}
+                        </div>
+
+                    </div>
+
+                    <div class="stat-icon text-primary">
+                        <i class="fas fa-clipboard-list"></i>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="col-md-3">
+
+        <div class="card stat-card shadow-sm">
+
+            <div class="card-body">
+
+                <div class="d-flex justify-content-between">
+
+                    <div>
+
+                        <small>Today's Logs</small>
+
+                        <div class="stat-value">
+                            {{ today_logs }}
+                        </div>
+
+                    </div>
+
+                    <div class="stat-icon text-success">
+                        <i class="fas fa-calendar-day"></i>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="col-md-3">
+
+        <div class="card stat-card shadow-sm">
+
+            <div class="card-body">
+
+                <div class="d-flex justify-content-between">
+
+                    <div>
+
+                        <small>Open Logs</small>
+
+                        <div class="stat-value text-warning">
+                            {{ open_logs }}
+                        </div>
+
+                    </div>
+
+                    <div class="stat-icon text-warning">
+                        <i class="fas fa-folder-open"></i>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="col-md-3">
+
+        <div class="card stat-card shadow-sm">
+
+            <div class="card-body">
+
+                <div class="d-flex justify-content-between">
+
+                    <div>
+
+                        <small>Closed Logs</small>
+
+                        <div class="stat-value text-success">
+                            {{ closed_logs }}
+                        </div>
+
+                    </div>
+
+                    <div class="stat-icon text-success">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+<!-- ACTIVITY HISTORY -->
+<div class="card border-0 shadow-sm rounded-4">
+
+    <div class="card-header bg-white border-0 py-3">
+
+        <div class="d-flex justify-content-between align-items-center">
+
+            <div>
+                <h5 class="fw-bold mb-0">
+                    <i class="fas fa-history text-primary me-2"></i>
+                    Activity History
+                </h5>
+
+                <small class="text-muted">
+                    Complete employee activity records
+                </small>
+            </div>
+
+            <span class="badge bg-primary fs-6">
+                {{ logs.count }} Records
+            </span>
+
+        </div>
+
+    </div>
+
+    <div class="card-body p-0">
+
+        <div class="table-responsive">
+
+            <table class="table align-middle mb-0">
+
+                <thead style="background:#f8fafc;">
+
+                    <tr>
+
+                        <th class="ps-4">Date</th>
+
+                        {% if request.user.is_superuser %}
+                        <th>User</th>
+                        {% endif %}
+
+                        <th>Shift</th>
+
+                        <th>Area</th>
+
+                        <th>Task Description</th>
+
+                        <th>Duration</th>
+
+                        <th>Status</th>
+
+                        <th class="text-center">Actions</th>
+
+                    </tr>
+
+                </thead>
+
+                <tbody>
+
+                    {% for log in logs %}
+
+                    <tr class="border-bottom">
+
+                        <td class="ps-4">
+
+                            <div class="fw-semibold">
+                                {{ log.date }}
+                            </div>
+
+                            <small class="text-muted">
+                                {{ log.created_at|date:"h:i A" }}
+                            </small>
+
+                        </td>
+
+                        {% if request.user.is_superuser %}
+                        <td>
+
+                            <div class="d-flex align-items-center">
+
+                                <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center"
+                                     style="width:38px;height:38px;">
+
+                                    {{ log.created_by.email|first|upper }}
+
+                                </div>
+
+                                <div class="ms-2">
+
+                                    <div class="fw-semibold">
+                                        {{ log.created_by.email }}
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+                        </td>
+                        {% endif %}
+
+                        <td>
+
+                            {% if log.shift == "DAY" %}
+                                <span class="badge bg-info">
+                                    Day
+                                </span>
+                            {% elif log.shift == "NIGHT" %}
+                                <span class="badge bg-dark">
+                                    Night
+                                </span>
+                            {% else %}
+                                <span class="badge bg-secondary">
+                                    General
+                                </span>
+                            {% endif %}
+
+                        </td>
+
+                        <td>
+
+                            <span class="fw-semibold">
+                                {{ log.task_area }}
+                            </span>
+
+                        </td>
+
+                        <td style="max-width:300px;">
+
+                            {{ log.task_description|truncatechars:90 }}
+
+                        </td>
+
+                        <td>
+
+                            <small class="text-muted">
+
+                                {{ log.start_time }}
+                                <br>
+                                ↓
+                                <br>
+                                {{ log.end_time }}
+
+                            </small>
+
+                        </td>
+
+                        <td>
+
+                            {% if log.status == "OPEN" %}
+
+                                <span class="badge rounded-pill bg-warning text-dark px-3">
+                                    Open
+                                </span>
+
+                            {% else %}
+
+                                <span class="badge rounded-pill bg-success px-3">
+                                    Closed
+                                </span>
+
+                            {% endif %}
+
+                        </td>
+
+                        <td class="text-center">
+
+                            <button class="btn btn-sm btn-outline-primary rounded-pill"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#viewModal{{ log.id }}">
+
+                                <i class="fas fa-eye"></i>
+
+                            </button>
+
+                        </td>
+
+                    </tr>
+
+
+
+                    <!-- View Modal -->
+<div class="modal fade"
+     id="viewModal{{ log.id }}"
+     tabindex="-1">
+
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+
+        <div class="modal-content border-0 shadow">
+
+            <div class="modal-header bg-primary text-white">
+
+                <h5 class="modal-title">
+
+                    <i class="fas fa-clipboard-list me-2"></i>
+
+                    Activity Log Details
+
+                </h5>
+
+                <button type="button"
+                        class="btn-close btn-close-white"
+                        data-bs-dismiss="modal">
+                </button>
+
+            </div>
+
+            <div class="modal-body">
+
+                <div class="row g-3">
+
+                    <div class="col-md-6">
+
+                        <div class="card border-0 bg-light">
+
+                            <div class="card-body">
+
+                                <small class="text-muted">
+                                    Date
+                                </small>
+
+                                <h6 class="mb-0">
+                                    {{ log.date }}
+                                </h6>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    <div class="col-md-6">
+
+                        <div class="card border-0 bg-light">
+
+                            <div class="card-body">
+
+                                <small class="text-muted">
+                                    Shift
+                                </small>
+
+                                <h6 class="mb-0">
+                                    {{ log.shift }}
+                                </h6>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    <div class="col-md-6">
+
+                        <div class="card border-0 bg-light">
+
+                            <div class="card-body">
+
+                                <small class="text-muted">
+                                    Start Time
+                                </small>
+
+                                <h6 class="mb-0">
+                                    {{ log.start_time }}
+                                </h6>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    <div class="col-md-6">
+
+                        <div class="card border-0 bg-light">
+
+                            <div class="card-body">
+
+                                <small class="text-muted">
+                                    End Time
+                                </small>
+
+                                <h6 class="mb-0">
+                                    {{ log.end_time }}
+                                </h6>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    <div class="col-md-12">
+
+                        <div class="card border-0 bg-light">
+
+                            <div class="card-body">
+
+                                <small class="text-muted">
+                                    Area of Task Performed
+                                </small>
+
+                                <h6 class="mb-0">
+                                    {{ log.task_area }}
+                                </h6>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    <div class="col-md-12">
+
+                        <div class="card border-0 bg-light">
+
+                            <div class="card-body">
+
+                                <small class="text-muted">
+                                    Task Description
+                                </small>
+
+                                <p class="mb-0 mt-2">
+                                    {{ log.task_description }}
+                                </p>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    <div class="col-md-12">
+
+                        <div class="card border-0 bg-light">
+
+                            <div class="card-body">
+
+                                <small class="text-muted">
+                                    Issues / Observations
+                                </small>
+
+                                <p class="mb-0 mt-2">
+                                    {{ log.issues_observations|default:"No observations recorded" }}
+                                </p>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    <div class="col-md-6">
+
+                        <div class="card border-0 bg-light">
+
+                            <div class="card-body">
+
+                                <small class="text-muted">
+                                    Status
+                                </small>
+
+                                <br>
+
+                                {% if log.status == "OPEN" %}
+                                    <span class="badge bg-warning text-dark">
+                                        Open
+                                    </span>
+                                {% else %}
+                                    <span class="badge bg-success">
+                                        Closed
+                                    </span>
+                                {% endif %}
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    <div class="col-md-6">
+
+                        <div class="card border-0 bg-light">
+
+                            <div class="card-body">
+
+                                <small class="text-muted">
+                                    Created By
+                                </small>
+
+                                <h6 class="mb-0">
+                                    {{ log.created_by.email }}
+                                </h6>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    <div class="col-md-12">
+
+                        <div class="card border-0 bg-light">
+
+                            <div class="card-body">
+
+                                <small class="text-muted">
+                                    Created At
+                                </small>
+
+                                <h6 class="mb-0">
+                                    {{ log.created_at }}
+                                </h6>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            <div class="modal-footer">
+
+                <button type="button"
+                        class="btn btn-secondary"
+                        data-bs-dismiss="modal">
+                    Close
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+                    {% empty %}
+
+                    <tr>
+
+                        <td colspan="8" class="text-center py-5">
+
+                            <div class="mb-3">
+
+                                <i class="fas fa-clipboard-list text-secondary"
+                                   style="font-size:50px;">
+                                </i>
+
+                            </div>
+
+                            <h5 class="text-muted">
+                                No Activity Logs Found
+                            </h5>
+
+                            <p class="text-muted">
+                                Activity records will appear here.
+                            </p>
+
+                        </td>
+
+                    </tr>
+
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+</div>
+
+{% endblock %}

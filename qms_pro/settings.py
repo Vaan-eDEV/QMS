@@ -70,7 +70,8 @@ INSTALLED_APPS = [
     'feedback',
     'sm',
     'routine',
-    'quality'
+    'quality',
+    'activity_log',
 ]
 
 MIDDLEWARE = [

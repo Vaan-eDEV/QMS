@@ -1,0 +1,552 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="container-fluid">
+
+    <!-- HEADER -->
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+
+        <div>
+
+            <h2 class="fw-bold mb-0">
+                SPC Control Plans
+            </h2>
+
+            <small class="text-muted">
+                Statistical Process Control
+            </small>
+
+        </div>
+
+        <div>
+
+            <a href="{% url 'spc_dashboard' %}"
+               class="btn btn-secondary">
+
+                Dashboard
+
+            </a>
+
+            <button
+                class="btn btn-primary"
+                data-bs-toggle="modal"
+                data-bs-target="#spcModal">
+
+                + New Control Plan
+
+            </button>
+
+        </div>
+
+    </div>
+
+    <!-- CONTROL PLAN TABLE -->
+
+    <div class="card shadow-sm border-0">
+
+        <div class="card-body">
+
+            <div class="table-responsive">
+
+                <table class="table table-hover align-middle">
+
+                    <thead class="table-light">
+
+                        <tr>
+
+                            <th>Plan No</th>
+
+                            <th>Part Number</th>
+
+                            <th>Characteristic</th>
+
+                            <th>Instrument</th>
+
+                            <th>LSL</th>
+
+                            <th>Target</th>
+
+                            <th>USL</th>
+
+                            <th>Cp</th>
+
+                            <th>Cpk</th>
+
+                            <th width="220">
+                                Actions
+                            </th>
+
+                        </tr>
+
+                    </thead>
+
+                    <tbody>
+
+                        {% for plan in plans %}
+
+                        <tr>
+
+                            <td>
+                                <strong>
+                                    {{ plan.plan_no }}
+                                </strong>
+                            </td>
+
+                            <td>
+                                {{ plan.part_number }}
+                            </td>
+
+                            <td>
+                                {{ plan.characteristic }}
+                            </td>
+
+                            <td>
+                                {{ plan.instrument.name }}
+                            </td>
+
+                            <td>
+                                {{ plan.lsl }}
+                            </td>
+
+                            <td>
+                                {{ plan.target }}
+                            </td>
+
+                            <td>
+                                {{ plan.usl }}
+                            </td>
+
+                            <td>
+
+                                {% if plan.cp %}
+                                    {{ plan.cp }}
+                                {% else %}
+                                    -
+                                {% endif %}
+
+                            </td>
+
+                            <td>
+
+                                {% if plan.cpk %}
+                                    {{ plan.cpk }}
+                                {% else %}
+                                    -
+                                {% endif %}
+
+                            </td>
+
+                            <td>
+
+                                <button
+                                    class="btn btn-sm btn-primary"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#planDetail{{ plan.id }}">
+
+                                    View
+
+                                </button>
+
+                                <a href="{% url 'spc_add_reading' plan.id %}"
+                                   class="btn btn-sm btn-success">
+
+                                    Readings
+
+                                </a>
+
+                            </td>
+
+                        </tr>
+
+                        <!-- PLAN DETAIL MODAL -->
+
+                        <div class="modal fade"
+                             id="planDetail{{ plan.id }}"
+                             tabindex="-1">
+
+                            <div class="modal-dialog modal-lg">
+
+                                <div class="modal-content">
+
+                                    <div class="modal-header">
+
+                                        <h5 class="modal-title">
+
+                                            {{ plan.plan_no }}
+
+                                        </h5>
+
+                                        <button
+                                            type="button"
+                                            class="btn-close"
+                                            data-bs-dismiss="modal">
+                                        </button>
+
+                                    </div>
+
+                                    <div class="modal-body">
+
+                                        <div class="row g-3">
+
+                                            <div class="col-md-6">
+
+                                                <strong>Part Number</strong>
+                                                <br>
+                                                {{ plan.part_number }}
+
+                                            </div>
+
+                                            <div class="col-md-6">
+
+                                                <strong>Characteristic</strong>
+                                                <br>
+                                                {{ plan.characteristic }}
+
+                                            </div>
+
+                                            <div class="col-md-6">
+
+                                                <strong>Instrument</strong>
+                                                <br>
+                                                {{ plan.instrument.name }}
+
+                                            </div>
+
+                                            <div class="col-md-6">
+
+                                                <strong>Frequency</strong>
+                                                <br>
+                                                {{ plan.frequency }}
+
+                                            </div>
+
+                                            <div class="col-md-4">
+
+                                                <strong>LSL</strong>
+                                                <br>
+                                                {{ plan.lsl }}
+
+                                            </div>
+
+                                            <div class="col-md-4">
+
+                                                <strong>Target</strong>
+                                                <br>
+                                                {{ plan.target }}
+
+                                            </div>
+
+                                            <div class="col-md-4">
+
+                                                <strong>USL</strong>
+                                                <br>
+                                                {{ plan.usl }}
+
+                                            </div>
+
+                                            <div class="col-md-4">
+
+                                                <strong>Average</strong>
+                                                <br>
+                                                {{ plan.average|default:"-" }}
+
+                                            </div>
+
+                                            <div class="col-md-4">
+
+                                                <strong>Cp</strong>
+                                                <br>
+                                                {{ plan.cp|default:"-" }}
+
+                                            </div>
+
+                                            <div class="col-md-4">
+
+                                                <strong>Cpk</strong>
+                                                <br>
+                                                {{ plan.cpk|default:"-" }}
+
+                                            </div>
+
+                                            <div class="col-md-12">
+
+                                                <strong>Total Readings</strong>
+                                                <br>
+                                                {{ plan.readings.count }}
+
+                                            </div>
+
+                                        </div>
+
+                                    </div>
+
+                                    <div class="modal-footer">
+
+                                        <a href="{% url 'spc_add_reading' plan.id %}"
+                                           class="btn btn-success">
+
+                                            Add Reading
+
+                                        </a>
+
+                                        <button
+                                            type="button"
+                                            class="btn btn-secondary"
+                                            data-bs-dismiss="modal">
+
+                                            Close
+
+                                        </button>
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                        {% empty %}
+
+                        <tr>
+
+                            <td colspan="10"
+                                class="text-center py-5">
+
+                                <h5 class="text-muted">
+                                    No Control Plans Found
+                                </h5>
+
+                            </td>
+
+                        </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- CREATE CONTROL PLAN MODAL -->
+
+<div class="modal fade"
+     id="spcModal"
+     tabindex="-1">
+
+    <div class="modal-dialog modal-lg">
+
+        <div class="modal-content">
+
+            <form method="post"
+                  action="{% url 'spc_create' %}">
+
+                {% csrf_token %}
+
+                <div class="modal-header">
+
+                    <h5 class="modal-title">
+
+                        Create Control Plan
+
+                    </h5>
+
+                    <button
+                        type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal">
+                    </button>
+
+                </div>
+
+                <div class="modal-body">
+
+                    <div class="row g-3">
+
+                        <div class="col-md-6">
+
+                            <label class="form-label">
+                                Plan Number
+                            </label>
+
+                            <input
+                                type="text"
+                                name="plan_no"
+                                class="form-control"
+                                required>
+
+                        </div>
+
+                        <div class="col-md-6">
+
+                            <label class="form-label">
+                                Part Number
+                            </label>
+
+                            <input
+                                type="text"
+                                name="part_number"
+                                class="form-control"
+                                required>
+
+                        </div>
+
+                        <div class="col-md-6">
+
+                            <label class="form-label">
+                                Characteristic
+                            </label>
+
+                            <input
+                                type="text"
+                                name="characteristic"
+                                class="form-control"
+                                required>
+
+                        </div>
+
+                        <div class="col-md-6">
+
+                            <label class="form-label">
+                                Instrument
+                            </label>
+
+                            <select
+                                name="instrument"
+                                class="form-select"
+                                required>
+
+                                <option value="">
+                                    Select Instrument
+                                </option>
+
+                                {% for instrument in instruments %}
+
+                                <option value="{{ instrument.id }}">
+                                    {{ instrument.instrument_id }}
+                                    -
+                                    {{ instrument.name }}
+                                </option>
+
+                                {% endfor %}
+
+                            </select>
+
+                        </div>
+
+                        <div class="col-md-4">
+
+                            <label class="form-label">
+                                LSL
+                            </label>
+
+                            <input
+                                type="number"
+                                step="0.0001"
+                                name="lsl"
+                                class="form-control"
+                                required>
+
+                        </div>
+
+                        <div class="col-md-4">
+
+                            <label class="form-label">
+                                Target
+                            </label>
+
+                            <input
+                                type="number"
+                                step="0.0001"
+                                name="target"
+                                class="form-control"
+                                required>
+
+                        </div>
+
+                        <div class="col-md-4">
+
+                            <label class="form-label">
+                                USL
+                            </label>
+
+                            <input
+                                type="number"
+                                step="0.0001"
+                                name="usl"
+                                class="form-control"
+                                required>
+
+                        </div>
+
+                        <div class="col-md-6">
+
+                            <label class="form-label">
+                                Sample Size
+                            </label>
+
+                            <input
+                                type="number"
+                                name="sample_size"
+                                value="5"
+                                class="form-control">
+
+                        </div>
+
+                        <div class="col-md-6">
+
+                            <label class="form-label">
+                                Frequency
+                            </label>
+
+                            <input
+                                type="text"
+                                name="frequency"
+                                value="Hourly"
+                                class="form-control">
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <div class="modal-footer">
+
+                    <button
+                        type="button"
+                        class="btn btn-secondary"
+                        data-bs-dismiss="modal">
+
+                        Close
+
+                    </button>
+
+                    <button
+                        type="submit"
+                        class="btn btn-primary">
+
+                        Create Plan
+
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

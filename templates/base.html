@@ -569,6 +569,23 @@
 </div>
 
 
+<hr class="text-secondary mx-2">
+<div class="submenu-toggle">
+    Activity Logs ▾
+</div>
+
+<div class="submenu">
+
+    <a href="{% url 'activity_dashboard' %}">
+        Dashboard
+    </a>
+
+    <a href="{% url 'activity_log_list' %}">
+        Activity Logs
+    </a>
+
+</div>
+
   {% if request.user.is_superuser %}
     <hr class="text-secondary mx-2">
     <div class="submenu-toggle">Settings ▾</div>
@@ -583,6 +600,9 @@
 
 
 
+
+
+  
 <hr class="text-secondary mx-2">
 
 <div class="submenu-toggle">
@@ -617,7 +637,7 @@
 
     <!-- SPC -->
 
-    <a href="#">
+    <a href="{% url 'spc_dashboard' %}">
         📈 SPC Control Plans
     </a>
 
@@ -627,12 +647,16 @@
         🎯 Six Sigma Projects
     </a>
 
-
-
+</div>
 </div>
 
 
-</div>
+
+
+
+
+
+
 
 <!-- SIDEBAR ARROW -->
 <div class="sidebar-arrow" id="sidebarArrow">❮</div>

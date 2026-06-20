@@ -1,0 +1,164 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="container-fluid mt-4">
+
+    <div class="card border-0 shadow-sm">
+
+        <div class="card-header text-white"
+             style="background:linear-gradient(135deg,#028bbd,#0ea5e9);">
+
+            <h4 class="mb-0">
+                Edit Activity Log
+            </h4>
+
+        </div>
+
+        <div class="card-body">
+
+            <form method="post">
+
+                {% csrf_token %}
+
+                <div class="row g-3">
+
+                    <div class="col-md-3">
+
+                        <label class="form-label">
+                            Date
+                        </label>
+
+                        <input type="date"
+                               name="date"
+                               value="{{ log.date|date:'Y-m-d' }}"
+                               class="form-control"
+                               required>
+
+                    </div>
+
+                    <div class="col-md-3">
+
+                        <label class="form-label">
+                            Shift
+                        </label>
+
+                        <select name="shift"
+                                class="form-select">
+
+                            <option value="GENERAL"
+                                {% if log.shift == "GENERAL" %}
+                                selected
+                                {% endif %}>
+                                General
+                            </option>
+
+                            <option value="DAY"
+                                {% if log.shift == "DAY" %}
+                                selected
+                                {% endif %}>
+                                Day Shift
+                            </option>
+
+                            <option value="NIGHT"
+                                {% if log.shift == "NIGHT" %}
+                                selected
+                                {% endif %}>
+                                Night Shift
+                            </option>
+
+                        </select>
+
+                    </div>
+
+                    <div class="col-md-3">
+
+                        <label class="form-label">
+                            Start Time
+                        </label>
+
+                        <input type="time"
+                               name="start_time"
+                               value="{{ log.start_time|time:'H:i' }}"
+                               class="form-control">
+
+                    </div>
+
+                    <div class="col-md-3">
+
+                        <label class="form-label">
+                            End Time
+                        </label>
+
+                        <input type="time"
+                               name="end_time"
+                               value="{{ log.end_time|time:'H:i' }}"
+                               class="form-control">
+
+                    </div>
+
+                    <div class="col-md-12">
+
+                        <label class="form-label">
+                            Area of Task Performed
+                        </label>
+
+                        <input type="text"
+                               name="task_area"
+                               value="{{ log.task_area }}"
+                               class="form-control">
+
+                    </div>
+
+                    <div class="col-md-12">
+
+                        <label class="form-label">
+                            Task Description
+                        </label>
+
+                        <textarea name="task_description"
+                                  rows="5"
+                                  class="form-control">{{ log.task_description }}</textarea>
+
+                    </div>
+
+                    <div class="col-md-12">
+
+                        <label class="form-label">
+                            Issues / Observations
+                        </label>
+
+                        <textarea name="issues_observations"
+                                  rows="4"
+                                  class="form-control">{{ log.issues_observations }}</textarea>
+
+                    </div>
+
+                </div>
+
+                <div class="mt-4">
+
+                    <button type="submit"
+                            class="btn btn-primary">
+
+                        Update Activity Log
+
+                    </button>
+
+                    <a href="{% url 'activity_log_list' %}"
+                       class="btn btn-secondary">
+
+                        Cancel
+
+                    </a>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

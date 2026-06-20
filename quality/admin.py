@@ -1,12 +1,6 @@
 from django.contrib import admin
 
-from .models import (
-    Instrument,
-    CalibrationRecord,
-    MSAStudy,
-    MSAReading,
-)
-
+from .models import *
 
 @admin.register(Instrument)
 class InstrumentAdmin(admin.ModelAdmin):
@@ -107,4 +101,47 @@ class MSAReadingAdmin(admin.ModelAdmin):
         "operator",
         "part_no",
         "study__msa_no",
+    )
+
+
+class SPCReadingInline(admin.TabularInline):
+    model = SPCReading
+    extra = 0
+
+@admin.register(SPCControlPlan)
+class SPCControlPlanAdmin(admin.ModelAdmin):
+
+    list_display = (
+        "plan_no",
+        "part_number",
+        "characteristic",
+        "instrument",
+        "lsl",
+        "target",
+        "usl",
+        "average",
+    )
+
+    search_fields = (
+        "plan_no",
+        "part_number",
+        "characteristic",
+    )
+
+    inlines = [
+        SPCReadingInline
+    ]
+
+@admin.register(SPCReading)
+class SPCReadingAdmin(admin.ModelAdmin):
+
+    list_display = (
+        "control_plan",
+        "sample_no",
+        "measured_value",
+        "reading_date",
+    )
+
+    search_fields = (
+        "sample_no",
     )

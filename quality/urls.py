@@ -29,4 +29,16 @@ urlpatterns = [
     path("msa/create/",views.msa_create,name="msa_create"),
     path("msa/<int:study_id>/",views.msa_detail,name="msa_detail"),
     path("msa/<int:study_id>/add-reading/",views.msa_add_reading,name="msa_add_reading"),
+    # ==========================================
+    # SPC MODULE
+    # ==========================================
+    path("spc/",views.spc_dashboard,name="spc_dashboard"),
+    path("spc/list/",views.spc_list,name="spc_list"),
+    path("spc/create/",views.spc_create,name="spc_create"),
+    path("spc/<int:plan_id>/",views.spc_detail,name="spc_detail"),
+    path("spc/<int:plan_id>/add-reading/",views.spc_add_reading,name="spc_add_reading"),
+    path("spc/reading/<int:reading_id>/delete/",views.spc_delete_reading,name="spc_delete_reading"),
+
+
+
 ]
