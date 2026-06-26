@@ -602,6 +602,56 @@
 
 
 
+
+
+
+<hr class="text-secondary mx-2">
+
+<div class="submenu-toggle d-flex justify-content-between align-items-center">
+
+    <span>
+        Communication ▾
+    </span>
+
+    <span onclick="event.stopPropagation();toggleChatNotif();"
+          style="position:relative;cursor:pointer;">
+
+        💬
+
+        <span id="chatNotifBadge"
+              class="badge bg-danger"
+              style="
+                position:absolute;
+                top:-8px;
+                right:-10px;
+                display:none;
+              ">
+        </span>
+
+    </span>
+
+</div>
+
+<div class="submenu">
+
+    <a href="{% url 'communication_center' %}">
+        💬 Communication Center
+    </a>
+
+</div>
+
+<div id="chatNotifBox"
+     class="notif-box d-none">
+</div>
+
+
+
+
+
+
+
+
+
   
 <hr class="text-secondary mx-2">
 
@@ -875,7 +925,98 @@ setInterval(loadGlobalNotifications, 5000);
 // First load
 document.addEventListener("DOMContentLoaded", loadGlobalNotifications);
 
+function toggleChatNotif(){
 
+    document
+    .getElementById(
+        "chatNotifBox"
+    )
+    .classList.toggle(
+        "d-none"
+    );
+
+}
+
+function loadChatNotifications(){
+
+    fetch(
+        "/communication/chat-notifications/"
+    )
+
+    .then(res => res.json())
+
+    .then(data => {
+
+        const badge =
+        document.getElementById(
+            "chatNotifBadge"
+        );
+
+        const box =
+        document.getElementById(
+            "chatNotifBox"
+        );
+
+        if(
+            !badge ||
+            !box
+        ){
+            return;
+        }
+
+        if(
+            data.notifications.length === 0
+        ){
+
+            badge.style.display =
+            "none";
+
+            box.innerHTML =
+            "<div class='p-3'>No new messages</div>";
+
+            return;
+        }
+
+        badge.innerText =
+        data.notifications.length;
+
+        badge.style.display =
+        "inline-block";
+
+        let html = "";
+
+        data.notifications.forEach(n => {
+
+            html += `
+
+            <div class="notif-item">
+
+                <strong>
+                    ${n.sender}
+                </strong>
+
+                <br>
+
+                ${n.message}
+
+            </div>
+
+            `;
+
+        });
+
+        box.innerHTML = html;
+
+    });
+
+}
+
+setInterval(
+    loadChatNotifications,
+    1000
+);
+
+loadChatNotifications();
 </script>
 
 

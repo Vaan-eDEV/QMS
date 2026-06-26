@@ -471,6 +471,13 @@ class BatchPart(models.Model):
         on_delete=models.SET_NULL,
         related_name="moved_parts"
     )
+    workorder_item = models.ForeignKey(
+        WorkOrderItem,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="batch_parts"
+    )
 
     created_at = models.DateTimeField(auto_now_add=True)
 

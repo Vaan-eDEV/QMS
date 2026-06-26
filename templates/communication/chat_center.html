@@ -1,0 +1,1367 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<style>
+.communication-wrapper{
+    display:flex;
+    gap:15px;
+    height:calc(100vh - 120px);
+}
+
+/* ========================================
+LEFT PANEL
+======================================== */
+
+.comm-sidebar{
+    width:320px;
+    min-width:320px;
+    background:#ffffff;
+    border:1px solid #e5e7eb;
+    border-radius:16px;
+    display:flex;
+    flex-direction:column;
+    overflow:hidden;
+    box-shadow:0 4px 20px rgba(0,0,0,.05);
+}
+
+.comm-sidebar-header{
+    padding:18px;
+    border-bottom:1px solid #eef2f7;
+    background:linear-gradient(135deg,#0d6efd,#3b82f6);
+    color:white;
+}
+
+.comm-sidebar-header h4{
+    margin:0 0 12px;
+    font-size:18px;
+    font-weight:600;
+}
+
+.create-channel-btn{
+    width:100%;
+    border:none;
+    font-weight:600;
+}
+
+.comm-channel-list{
+    flex:1;
+    overflow-y:auto;
+}
+
+.comm-channel-item{
+    display:flex;
+    align-items:center;
+    padding:14px 18px;
+    color:#374151;
+    text-decoration:none;
+    border-left:4px solid transparent;
+    transition:.2s;
+    font-weight:500;
+}
+
+.comm-channel-item:hover{
+    background:#f8fafc;
+    color:#0d6efd;
+}
+
+.comm-channel-item.active{
+    background:#eff6ff;
+    border-left:4px solid #0d6efd;
+    color:#0d6efd;
+    font-weight:600;
+}
+
+.comm-online-users{
+    padding:15px;
+    border-top:1px solid #eef2f7;
+    background:#fafafa;
+}
+
+.comm-online-users strong{
+    display:block;
+    margin-bottom:10px;
+}
+
+.user-row{
+    padding:6px 0;
+    font-size:13px;
+    color:#4b5563;
+}
+
+/* ========================================
+CHAT CONTAINER
+======================================== */
+
+.chat-container{
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    background:white;
+    border-radius:16px;
+    border:1px solid #e5e7eb;
+    overflow:hidden;
+    box-shadow:0 4px 20px rgba(0,0,0,.05);
+}
+.mention{
+    background:#fff3cd;
+    color:#856404;
+    padding:2px 6px;
+    border-radius:6px;
+    font-weight:600;
+}
+.message-avatar{
+    width:40px;
+    height:40px;
+    border-radius:50%;
+    background:#0d6efd;
+    color:white;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-weight:700;
+    margin-right:10px;
+    flex-shrink:0;
+}
+/* ========================================
+CHAT HEADER
+======================================== */
+
+.chat-header{
+    padding:18px 22px;
+    background:white;
+    border-bottom:1px solid #eef2f7;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+}
+
+.chat-header h5{
+    margin:0;
+    font-size:20px;
+    font-weight:700;
+    color:#111827;
+}
+
+.chat-header small{
+    color:#6b7280;
+}
+
+/* ========================================
+CHAT BODY
+======================================== */
+
+.chat-body{
+    flex:1;
+    overflow-y:auto;
+    padding:25px;
+    background:linear-gradient(180deg,#f8fafc 0%,#eef2f7 100%);
+}
+
+/* ========================================
+MESSAGE BUBBLES
+======================================== */
+
+.message-row{
+    display:flex;
+    margin-bottom:18px;
+}
+
+.message-row.mine{
+    justify-content:flex-end;
+}
+
+.message-row.other{
+    justify-content:flex-start;
+}
+
+.message-card{
+    max-width:70%;
+    padding:14px 16px;
+    border-radius:18px;
+    word-wrap:break-word;
+    position:relative;
+}
+
+.other .message-card{
+    background:white;
+    border:1px solid #e5e7eb;
+    box-shadow:0 2px 10px rgba(0,0,0,.05);
+}
+
+.mine .message-card{
+    background:linear-gradient(135deg,#4b8ff5,#2563eb);
+    color:white;
+    box-shadow:0 2px 10px rgba(13,110,253,.25);
+}
+
+.message-user{
+    font-size:13px;
+    font-weight:700;
+}
+
+.message-time{
+    font-size:11px;
+    opacity:.75;
+}
+
+.message-text{
+    margin-top:6px;
+    line-height:1.5;
+    white-space:pre-wrap;
+    font-size:14px;
+}
+
+/* ========================================
+ATTACHMENTS
+======================================== */
+
+.message-card .btn-light{
+    border-radius:12px;
+    font-size:12px;
+    padding:6px 10px;
+}
+.chat-image{
+    max-width:250px;
+    max-height:250px;
+    border-radius:12px;
+    margin-top:8px;
+    cursor:pointer;
+}
+
+.chat-image:hover{
+    transform:scale(1.03);
+}
+/* ========================================
+CHAT FOOTER
+======================================== */
+
+.chat-footer{
+    padding:16px;
+    background:white;
+    border-top:1px solid #eef2f7;
+}
+
+.chat-footer .row{
+    align-items:center;
+}
+
+.chat-footer textarea{
+    resize:none;
+    border-radius:12px;
+    min-height:48px;
+}
+
+.chat-footer input[type=file]{
+    border-radius:12px;
+}
+
+.chat-footer .btn-primary{
+    height:48px;
+    border-radius:12px;
+    font-weight:600;
+}
+.chat-action-btn{
+    width:34px;
+    height:34px;
+    border:none;
+    border-radius:10px;
+    background:rgba(255,255,255,.15);
+    color:white;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+    transition:all .2s ease;
+}
+
+.chat-action-btn:hover{
+    background:rgba(255,255,255,.25);
+    transform:scale(1.08);
+}
+
+.chat-action-btn:focus{
+    outline:none;
+    box-shadow:none;
+}
+/* ========================================
+SCROLLBAR
+======================================== */
+
+.chat-body::-webkit-scrollbar,
+.comm-channel-list::-webkit-scrollbar{
+    width:6px;
+}
+
+.chat-body::-webkit-scrollbar-thumb,
+.comm-channel-list::-webkit-scrollbar-thumb{
+    background:#cbd5e1;
+    border-radius:10px;
+}
+.chat-footer{
+    padding:15px;
+    background:#fff;
+    border-top:1px solid #e5e7eb;
+}
+
+.chat-footer textarea{
+    resize:none;
+    min-height:52px;
+    border-radius:12px;
+}
+
+.send-btn{
+    height:52px;
+    width:55px;
+    border-radius:12px;
+    font-size:18px;
+}
+
+.mention-dropdown{
+    position:absolute;
+    bottom:60px;
+    left:0;
+    width:280px;
+    background:#fff;
+    border:1px solid #dee2e6;
+    border-radius:12px;
+    display:none;
+    max-height:250px;
+    overflow-y:auto;
+    box-shadow:0 8px 20px rgba(0,0,0,.15);
+    z-index:9999;
+}
+
+.mention-dropdown div{
+    padding:10px 12px;
+    cursor:pointer;
+    border-bottom:1px solid #f1f1f1;
+}
+
+.mention-dropdown div:hover{
+    background:#f8f9fa;
+}
+
+@media(max-width:768px){
+
+    .chat-footer .d-flex{
+        flex-wrap:wrap;
+    }
+
+    .chat-footer textarea{
+        width:100%;
+    }
+
+    .chat-footer input[type=file]{
+        width:100% !important;
+    }
+
+    .send-btn{
+        width:100%;
+    }
+}
+/* ========================================
+MOBILE
+======================================== */
+
+@media(max-width:992px){
+
+    .communication-wrapper{
+        flex-direction:column;
+        height:calc(100vh - 100px);
+    }
+
+    .comm-sidebar{
+        width:100%;
+        min-width:100%;
+        max-height:180px;
+        overflow-y:auto;
+    }
+
+    .chat-container{
+        flex:1;
+        min-height:0;
+    }
+
+    .chat-body{
+        flex:1;
+        overflow-y:auto;
+        -webkit-overflow-scrolling:touch;
+    }
+
+    .message-card{
+        max-width:95%;
+    }
+
+}
+
+</style>
+
+<div class="communication-wrapper">
+
+
+<!-- LEFT SIDEBAR -->
+
+<div class="comm-sidebar">
+
+    <div class="comm-sidebar-header">
+        <h4>💬 Communication</h4>
+
+        <button
+            class="btn btn-primary btn-sm w-100 create-channel-btn"
+            data-bs-toggle="modal"
+            data-bs-target="#createChannelModal">
+
+            + Create Channel
+
+        </button>
+
+    </div>
+
+   <div class="comm-channel-list">
+
+        {% for channel in channels %}
+
+        <a href="?channel={{ channel.id }}"
+           class="comm-channel-item {% if selected_channel and selected_channel.id == channel.id %}active{% endif %}">
+
+            # {{ channel.name }}
+
+        </a>
+
+        {% endfor %}
+
+    </div>
+
+    <div class="comm-online-users">
+
+        <strong>🟢 Online Users</strong>
+
+        <div class="mt-2">
+
+            {% for user in online_users %}
+
+            <div class="user-row">
+
+                🟢 {{ user.get_display_name }}
+
+            </div>
+
+            {% empty %}
+
+            <div class="text-muted">
+
+                No users online
+
+            </div>
+
+            {% endfor %}
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- RIGHT CHAT AREA -->
+
+<div class="chat-container">
+
+    {% if selected_channel %}
+
+    <div class="chat-header">
+
+    <div class="chat-channel-info">
+        <h5># {{ selected_channel.name }}</h5>
+        <small>{{ selected_channel.description }}</small>
+    </div>
+
+    <button
+    class="btn btn-sm btn-outline-secondary"
+    data-bs-toggle="modal"
+    data-bs-target="#filesModal">
+
+    📎 Files
+
+</button>
+
+</div>
+
+    <div id="chat-box"
+         class="chat-body">
+
+        {% for msg in chat_messages %}
+
+        <div class="message-row {% if msg.sender == request.user %}mine{% else %}other{% endif %}">
+
+    {% if msg.sender != request.user %}
+    <div class="message-avatar">
+        {{ msg.sender.get_display_name|first|upper }}
+    </div>
+    {% endif %}
+
+    <div class="message-card">
+
+        <div class="d-flex justify-content-between">
+
+            <span class="message-user">
+                {{ msg.sender.get_display_name }}
+            </span>
+
+            <span class="message-time">
+                {{ msg.created_at|date:"H:i" }}
+            </span>
+
+        </div>
+
+        <div class="message-text">
+            {{ msg.message }}
+        </div>
+
+        {% for attachment in msg.attachments.all %}
+
+<div class="mt-2">
+
+    {% if attachment.is_image %}
+
+        <a href="{{ attachment.file.url }}"
+           target="_blank">
+
+            <img
+                src="{{ attachment.file.url }}"
+                class="chat-image">
+
+        </a>
+
+    {% else %}
+
+        <a href="{{ attachment.file.url }}"
+           target="_blank"
+           class="btn btn-sm btn-light">
+
+            📎 {{ attachment.filename }}
+
+        </a>
+
+    {% endif %}
+
+</div>
+
+{% endfor %}
+
+    </div>
+
+</div>
+
+        {% empty %}
+
+        <div class="alert alert-info">
+
+            No messages yet.
+
+        </div>
+
+        {% endfor %}
+
+    </div>
+
+   <div class="chat-footer">
+
+    <form method="post"
+          action="{% url 'send_message' selected_channel.id %}"
+          enctype="multipart/form-data">
+
+        {% csrf_token %}
+
+        <div class="d-flex gap-2 align-items-end">
+
+            <!-- MESSAGE BOX -->
+
+            <div class="flex-grow-1 position-relative">
+
+                <textarea
+                    id="messageInput"
+                    name="message"
+                    rows="2"
+                    class="form-control"
+                    placeholder="Type a message... Use @ to mention users"
+                    autocomplete="off"></textarea>
+
+                <!-- MENTION DROPDOWN -->
+
+                <div id="mentionBox"
+                     class="mention-dropdown">
+                </div>
+
+            </div>
+
+            <!-- FILE UPLOAD -->
+
+            <div style="width:220px;">
+
+                <input
+                    type="file"
+                    name="attachments"
+                    multiple
+                    class="form-control">
+
+            </div>
+
+            <!-- SEND BUTTON -->
+
+            <button
+                type="submit"
+                class="btn btn-primary send-btn">
+
+                <i class="fas fa-paper-plane"></i>
+
+            </button>
+
+        </div>
+
+    </form>
+
+</div>
+
+    {% else %}
+
+    <div class="d-flex align-items-center justify-content-center h-100">
+
+        <div class="text-center">
+
+            <h3>
+
+                💬 Communication Center
+
+            </h3>
+
+            <p class="text-muted">
+
+                Select a channel to start chatting
+
+            </p>
+
+        </div>
+
+    </div>
+
+    {% endif %}
+
+</div>
+
+
+</div>
+
+<!-- CREATE CHANNEL MODAL -->
+
+<div class="modal fade"
+     id="createChannelModal"
+     tabindex="-1">
+
+<div class="modal-dialog">
+
+    <div class="modal-content">
+
+        <form method="post"
+              action="{% url 'create_channel' %}">
+
+            {% csrf_token %}
+
+            <div class="modal-header">
+
+                <h5>Create Channel</h5>
+
+            </div>
+
+            <div class="modal-body">
+
+                <div class="mb-3">
+
+                    <label>Channel Name</label>
+
+                    <input
+                        type="text"
+                        name="name"
+                        class="form-control"
+                        required>
+
+                </div>
+
+                <div class="mb-3">
+
+                    <label>Description</label>
+
+                    <textarea
+                        name="description"
+                        class="form-control"></textarea>
+
+                </div>
+
+                <div class="mb-3">
+
+    <label>Channel Type</label>
+
+    <select
+        name="channel_type"
+        id="channelType"
+        class="form-select">
+
+        <option value="public">
+            Public
+        </option>
+
+        <option value="private">
+            Private
+        </option>
+
+    </select>
+
+</div>
+
+<div
+    class="mb-3"
+    id="memberSelection"
+    style="display:none;">
+
+    <label>
+        Select Members
+    </label>
+
+    <select
+        name="members"
+        multiple
+        class="form-select"
+        size="8">
+
+        {% for user in users %}
+
+        <option value="{{ user.id }}">
+
+            {{ user.get_display_name }}
+            ({{ user.email }})
+
+        </option>
+
+        {% endfor %}
+
+    </select>
+
+    <small class="text-muted">
+
+        Hold Ctrl (Windows) or Cmd (Mac)
+        to select multiple users.
+
+    </small>
+
+</div>
+
+            </div>
+
+            <div class="modal-footer">
+
+                <button
+                    type="submit"
+                    class="btn btn-success">
+
+                    Create
+
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+</div>
+
+
+<div class="modal fade"
+     id="filesModal"
+     tabindex="-1">
+
+    <div class="modal-dialog modal-lg">
+
+        <div class="modal-content">
+
+            <div class="modal-header">
+
+                <h5>Channel Files</h5>
+
+                <button
+                    type="button"
+                    class="btn-close"
+                    data-bs-dismiss="modal">
+                </button>
+
+            </div>
+
+            <div class="modal-body">
+
+    {% for msg in chat_messages %}
+
+        {% for attachment in msg.attachments.all %}
+
+            <div class="card mb-3 border-0 shadow-sm">
+
+                <div class="card-body">
+
+                    <div class="d-flex justify-content-between mb-2">
+
+                        <div>
+
+                            <strong>
+                                {{ msg.sender.get_display_name }}
+                            </strong>
+
+                        </div>
+
+                        <small class="text-muted">
+
+                            {{ msg.created_at|date:"d M Y h:i A" }}
+
+                        </small>
+
+                    </div>
+
+                    {% if attachment.is_image %}
+
+                        <a href="{{ attachment.file.url }}"
+                           target="_blank">
+
+                            <img
+                                src="{{ attachment.file.url }}"
+                                class="img-fluid rounded"
+                                style="
+                                    max-height:200px;
+                                    object-fit:cover;
+                                ">
+
+                        </a>
+
+                    {% else %}
+
+                        <a href="{{ attachment.file.url }}"
+                           target="_blank"
+                           class="btn btn-sm btn-light">
+
+                            📎 {{ attachment.filename }}
+
+                        </a>
+
+                    {% endif %}
+
+                </div>
+
+            </div>
+
+        {% endfor %}
+
+    {% empty %}
+
+        <div class="text-center text-muted py-4">
+
+            No files found.
+
+        </div>
+
+    {% endfor %}
+
+</div>
+        </div>
+
+    </div>
+
+</div>
+
+
+<script>
+let dropdownOpen = false;
+let forceRefresh = false;
+window.onload = function () {
+
+    const box = document.getElementById("chat-box");
+
+    if (box) {
+        box.scrollTop = box.scrollHeight;
+    }
+};
+
+
+/* ===========================
+   CREATE CHANNEL MODAL
+=========================== */
+
+document.addEventListener("DOMContentLoaded", function () {
+
+    const channelType = document.getElementById("channelType");
+    const memberSelection = document.getElementById("memberSelection");
+
+    function toggleMembers() {
+
+        if (!channelType || !memberSelection) return;
+
+        if (channelType.value === "private") {
+            memberSelection.style.display = "block";
+        } else {
+            memberSelection.style.display = "none";
+        }
+    }
+
+    if (channelType) {
+        channelType.addEventListener("change", toggleMembers);
+        toggleMembers();
+    }
+});
+
+
+/* ===========================
+   AUTO REFRESH CHAT (OPTIMIZED)
+=========================== */
+
+const channelId = "{{ selected_channel.id|default:'' }}";
+
+let lastMessageId = 0;
+
+function escapeHtml(text) {
+    if (!text) return "";
+    return text
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;");
+}
+
+const messageInput = document.getElementById("messageInput");
+const mentionBox = document.getElementById("mentionBox");
+
+let users = [];
+let cursorPosition = 0;
+
+/* Load users from backend (simple API) */
+fetch("/communication/api/users/")
+    .then(res => res.json())
+    .then(data => {
+        users = data.users;
+    });
+
+/* Detect @ typing */
+messageInput.addEventListener("keyup", function (e) {
+
+    const value = messageInput.value;
+    cursorPosition = messageInput.selectionStart;
+
+    const lastAt = value.lastIndexOf("@");
+
+    if (lastAt === -1) {
+        mentionBox.style.display = "none";
+        return;
+    }
+
+    const query = value.substring(lastAt + 1, cursorPosition);
+
+    if (query.length === 0) {
+        showUsers(users);
+        return;
+    }
+
+    const filtered = users.filter(u =>
+        u.name.toLowerCase().includes(query.toLowerCase())
+    );
+
+    showUsers(filtered);
+});
+
+function showUsers(list) {
+
+    if (list.length === 0) {
+        mentionBox.style.display = "none";
+        return;
+    }
+
+    mentionBox.innerHTML = "";
+
+    list.forEach(user => {
+
+        const div = document.createElement("div");
+
+        div.style.padding = "8px";
+        div.style.cursor = "pointer";
+        div.style.borderBottom = "1px solid #eee";
+
+        div.innerHTML = `👤 ${user.name}`;
+
+        div.onclick = function () {
+            insertMention(user.name);
+        };
+
+        mentionBox.appendChild(div);
+    });
+
+    mentionBox.style.display = "block";
+}
+
+function insertMention(name) {
+
+    const value = messageInput.value;
+    const lastAt = value.lastIndexOf("@");
+
+    messageInput.value =
+        value.substring(0, lastAt + 1) +
+        name +
+        " ";
+
+    mentionBox.style.display = "none";
+    messageInput.focus();
+}
+
+/* Hide on click outside */
+document.addEventListener("click", function (e) {
+    if (!mentionBox.contains(e.target) && e.target !== messageInput) {
+        mentionBox.style.display = "none";
+    }
+});
+
+/* ===========================
+   LOAD MESSAGES (FIXED VERSION)
+=========================== */
+
+function loadMessages() {
+
+    if (!channelId) return;
+
+    fetch(`/communication/api/messages/${channelId}/`)
+        .then(res => res.json())
+        .then(data => {
+
+            if (!data.messages || data.messages.length === 0) return;
+
+            const chatBox = document.getElementById("chat-box");
+
+            if (!chatBox) return;
+
+            /* ===========================
+               DROP DOWN PROTECTION
+            =========================== */
+            const isDropdownOpen = document.querySelector(".dropdown-menu.show");
+            if (isDropdownOpen) return;
+
+            /* ===========================
+               LAST MESSAGE TRACKING
+            =========================== */
+            const latest = data.messages[data.messages.length - 1];
+
+            if (latest) {
+                lastMessageId = latest.id;
+            }
+
+            let html = "";
+
+            data.messages.forEach(msg => {
+
+                /* SAFE MESSAGE */
+                let messageText = escapeHtml(msg.message || "");
+
+                /* MENTION HIGHLIGHT */
+                messageText = messageText.replace(
+                    /@([a-zA-Z0-9_]+)/g,
+                    '<span class="mention">@$1</span>'
+                );
+
+                /* ATTACHMENTS */
+                let attachmentsHtml = "";
+
+                if (msg.attachments && msg.attachments.length > 0) {
+
+                    msg.attachments.forEach(file => {
+
+                        const ext =
+file.filename.split('.').pop().toLowerCase();
+
+if(
+    ['jpg','jpeg','png','gif','webp']
+    .includes(ext)
+){
+
+    attachmentsHtml += `
+    <div class="mt-2">
+
+        <a href="${file.url}" target="_blank">
+
+            <img
+                src="${file.url}"
+                class="chat-image">
+
+        </a>
+
+    </div>
+    `;
+
+}else{
+
+    attachmentsHtml += `
+    <div class="mt-2">
+
+        <a href="${file.url}"
+           target="_blank"
+           class="btn btn-sm btn-light">
+
+            📎 ${file.filename}
+
+        </a>
+
+    </div>
+    `;
+}
+                    });
+                }
+
+                /* AVATAR */
+                let avatarHtml = "";
+
+                if (!msg.mine) {
+                    avatarHtml = `
+                        <div class="message-avatar">
+                            ${(msg.sender || "?").charAt(0).toUpperCase()}
+                        </div>
+                    `;
+                }
+
+                /* EDITED STATUS */
+                let editedHtml = msg.is_edited
+                    ? `<small class="text-muted ms-1">(edited)</small>`
+                    : "";
+
+                /* ACTIONS */
+                let actionsHtml = "";
+
+                if (msg.mine) {
+
+                    actionsHtml = `
+                        <div class="dropdown">
+<button
+    class="chat-action-btn"
+    data-bs-toggle="dropdown"
+    type="button">
+
+    ⚙️
+
+</button>
+
+                            <ul class="dropdown-menu">
+
+                                <li>
+                                    <a class="dropdown-item edit-message"
+                                       data-id="${msg.id}"
+                                       href="#">
+                                        Edit
+                                    </a>
+                                </li>
+
+                                <li>
+                                    <a class="dropdown-item text-danger delete-message"
+                                       data-id="${msg.id}"
+                                       href="#">
+                                        Delete
+                                    </a>
+                                </li>
+
+                            </ul>
+
+                        </div>
+                    `;
+                }
+
+                html += `
+                    <div class="message-row ${msg.mine ? 'mine' : 'other'}">
+
+                        ${!msg.mine ? avatarHtml : ''}
+
+                        <div class="message-card">
+
+                            <div class="d-flex justify-content-between align-items-center">
+
+                                <div>
+                                    <span class="message-user">
+                                        ${msg.sender}
+                                    </span>
+                                    ${editedHtml}
+                                </div>
+
+                                <div class="d-flex align-items-center">
+                                    <span class="message-time me-2">
+                                        ${msg.time}
+                                    </span>
+                                    ${actionsHtml}
+                                </div>
+
+                            </div>
+
+                            <div class="message-text">
+                                ${messageText}
+                            </div>
+
+                            ${attachmentsHtml}
+
+                        </div>
+
+                        ${msg.mine ? avatarHtml : ''}
+
+                    </div>
+                `;
+            });
+
+            /* ===========================
+               SMART SCROLL
+            =========================== */
+            const shouldScroll =
+                chatBox.scrollTop + chatBox.clientHeight >= chatBox.scrollHeight - 150;
+
+            requestAnimationFrame(() => {
+
+                chatBox.innerHTML = html;
+
+                if (shouldScroll) {
+                    chatBox.scrollTop = chatBox.scrollHeight;
+                }
+
+            });
+
+        })
+        .catch(err => {
+            console.error("Chat refresh failed:", err);
+        });
+}
+
+/* ===========================
+   EDIT MESSAGE
+=========================== */
+
+document.addEventListener("click", function(e){
+
+    if(
+        e.target.classList.contains(
+            "edit-message"
+        )
+    ){
+
+        e.preventDefault();
+
+        const messageId =
+        e.target.dataset.id;
+
+        const newMessage =
+        prompt(
+            "Edit message"
+        );
+
+        if(
+            !newMessage ||
+            newMessage.trim() === ""
+        ){
+            return;
+        }
+
+        fetch(
+            `/communication/message/${messageId}/edit/`,
+            {
+                method:"POST",
+
+                headers:{
+                    "X-CSRFToken":
+                    document.querySelector(
+                        "[name=csrfmiddlewaretoken]"
+                    ).value,
+
+                    "Content-Type":
+                    "application/x-www-form-urlencoded"
+                },
+
+                body:
+                `message=${encodeURIComponent(newMessage)}`
+            }
+        )
+        .then(res => res.json())
+        .then(data => {
+
+            if(data.success){
+
+                forceRefresh = true;
+
+                loadMessages();
+
+            }
+
+        });
+
+    }
+
+});
+
+
+/* ===========================
+   DELETE MESSAGE
+=========================== */
+
+document.addEventListener("click", function(e){
+
+    if(
+        e.target.classList.contains(
+            "delete-message"
+        )
+    ){
+
+        e.preventDefault();
+
+        if(
+            !confirm(
+                "Delete this message?"
+            )
+        ){
+            return;
+        }
+
+        const messageId =
+        e.target.dataset.id;
+
+        fetch(
+            `/communication/message/${messageId}/delete/`,
+            {
+                method:"POST",
+
+                headers:{
+                    "X-CSRFToken":
+                    document.querySelector(
+                        "[name=csrfmiddlewaretoken]"
+                    ).value
+                }
+            }
+        )
+        .then(res => res.json())
+        .then(data => {
+
+            if(data.success){
+
+                forceRefresh = true;
+
+                loadMessages();
+
+            }
+
+        });
+
+    }
+
+});
+/* ===========================
+   INIT
+=========================== */
+
+loadMessages();
+setInterval(loadMessages, 1000);
+
+</script>
+
+
+{% endblock %}

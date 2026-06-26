@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="container mt-4">
+
+    <div class="card shadow">
+
+        <div class="card-header">
+            <h4>Create Channel</h4>
+        </div>
+
+        <div class="card-body">
+
+            <form method="post">
+
+                {% csrf_token %}
+
+                <div class="mb-3">
+
+                    <label class="form-label">
+                        Channel Name
+                    </label>
+
+                    <input type="text"
+                           name="name"
+                           class="form-control"
+                           required>
+
+                </div>
+
+                <div class="mb-3">
+
+                    <label class="form-label">
+                        Description
+                    </label>
+
+                    <textarea name="description"
+                              class="form-control"
+                              rows="3"></textarea>
+
+                </div>
+
+                <div class="mb-3">
+
+                    <label class="form-label">
+                        Channel Type
+                    </label>
+
+                    <select name="channel_type"
+                            class="form-select">
+
+                        <option value="public">
+                            Public
+                        </option>
+
+                        <option value="private">
+                            Private
+                        </option>
+
+                    </select>
+
+                </div>
+
+                <div class="mb-3">
+
+                    <label class="form-label">
+                        Select Members
+                    </label>
+
+                    <select name="members"
+                            multiple
+                            class="form-select"
+                            style="height:250px;">
+
+                        {% for user in users %}
+
+                        <option value="{{ user.id }}">
+    {{ user.get_display_name }}
+</option>
+                        {% endfor %}
+
+                    </select>
+
+                </div>
+
+                <button type="submit"
+                        class="btn btn-success">
+
+                    Create Channel
+
+                </button>
+
+                <a href="{% url 'channel_list' %}"
+                   class="btn btn-secondary">
+
+                    Cancel
+
+                </a>
+
+            </form>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

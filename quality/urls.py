@@ -28,7 +28,7 @@ urlpatterns = [
     path("msa/dashboard/",views.msa_dashboard,name="msa_dashboard"),
     path("msa/create/",views.msa_create,name="msa_create"),
     path("msa/<int:study_id>/",views.msa_detail,name="msa_detail"),
-    path("msa/<int:study_id>/add-reading/",views.msa_add_reading,name="msa_add_reading"),
+    path("msa/<int:study_id>/sheet/",views.msa_reading_sheet,name="msa_reading_sheet"),
     # ==========================================
     # SPC MODULE
     # ==========================================

@@ -190,6 +190,20 @@ class CalibrationRecord(models.Model):
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 class MSAStudy(models.Model):
 
     STUDY_TYPES = [
@@ -199,14 +213,20 @@ class MSAStudy(models.Model):
         ("STABILITY", "Stability"),
     ]
 
+    STATUS_CHOICES = [
+        ("PENDING", "Pending"),
+        ("ACCEPTED", "Accepted"),
+        ("CONDITIONAL", "Conditional"),
+        ("REJECTED", "Rejected"),
+    ]
+
+    # ==========================
+    # BASIC INFORMATION
+    # ==========================
+
     msa_no = models.CharField(
         max_length=50,
         unique=True
-    )
-
-    instrument = models.ForeignKey(
-        Instrument,
-        on_delete=models.PROTECT
     )
 
     study_type = models.CharField(
@@ -216,27 +236,60 @@ class MSAStudy(models.Model):
 
     study_date = models.DateField()
 
-    remarks = models.TextField(
-        blank=True,
-        null=True
+    # ==========================
+    # PART INFORMATION
+    # ==========================
+
+    part_name = models.CharField(
+        max_length=255,
+        blank=True
     )
 
-    created_by = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL,
-        null=True
-    )
-
-    created_at = models.DateTimeField(
-        auto_now_add=True
-    )
     part_number = models.CharField(
         max_length=100,
         blank=True
     )
 
-    operator_count = models.PositiveIntegerField(
-        default=3
+    # ==========================
+    # EQUIPMENT INFORMATION
+    # ==========================
+
+    instrument = models.ForeignKey(
+        Instrument,
+        on_delete=models.PROTECT
+    )
+
+    equipment_name = models.CharField(
+        max_length=255,
+        null=True,
+        blank=True
+    )
+
+    equipment_number = models.CharField(
+        max_length=100,
+        blank=True,
+        null=True,
+    )
+
+    least_count = models.DecimalField(
+        max_digits=12,
+        decimal_places=4,
+        null=True,
+        blank=True
+    )
+    mean_value = models.DecimalField(
+        max_digits=12,
+        decimal_places=4,
+        null=True,
+        blank=True
+    )
+    # ==========================
+    # STUDY PARAMETERS
+    # ==========================
+
+    operator_names = models.JSONField(
+        default=list,
+        blank=True
     )
 
     part_count = models.PositiveIntegerField(
@@ -247,6 +300,49 @@ class MSAStudy(models.Model):
         default=3
     )
 
+    # ==========================
+    # SPECIFICATION LIMITS
+    # ==========================
+
+    max_value = models.DecimalField(
+        max_digits=12,
+        decimal_places=4,
+        null=True,
+        blank=True
+    )
+
+    min_value = models.DecimalField(
+        max_digits=12,
+        decimal_places=4,
+        null=True,
+        blank=True
+    )
+
+    tolerance = models.DecimalField(
+        max_digits=12,
+        decimal_places=4,
+        null=True,
+        blank=True
+    )
+
+    # ==========================
+    # DOCUMENT CONTROL
+    # ==========================
+
+    record_number = models.CharField(
+        max_length=100,
+        blank=True
+    )
+
+    remarks = models.TextField(
+        blank=True,
+        null=True
+    )
+
+    # ==========================
+    # RESULTS
+    # ==========================
+
     grr_percentage = models.DecimalField(
         max_digits=6,
         decimal_places=2,
@@ -254,24 +350,102 @@ class MSAStudy(models.Model):
         blank=True
     )
 
-    STATUS_CHOICES = [
-
-        ("PENDING", "Pending"),
-
-        ("ACCEPTED", "Accepted"),
-
-        ("CONDITIONAL", "Conditional"),
-
-        ("REJECTED", "Rejected"),
-    ]
-
     study_status = models.CharField(
         max_length=20,
         choices=STATUS_CHOICES,
         default="PENDING"
     )
+
+    # Future AIAG values
+    ev = models.DecimalField(
+        max_digits=12,
+        decimal_places=6,
+        null=True,
+        blank=True
+    )
+
+    av = models.DecimalField(
+        max_digits=12,
+        decimal_places=6,
+        null=True,
+        blank=True
+    )
+
+    pv = models.DecimalField(
+        max_digits=12,
+        decimal_places=6,
+        null=True,
+        blank=True
+    )
+
+    tv = models.DecimalField(
+        max_digits=12,
+        decimal_places=6,
+        null=True,
+        blank=True
+    )
+    rr = models.DecimalField(
+        max_digits=12,
+        decimal_places=6,
+        null=True,
+        blank=True
+    )
+    ndc = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        null=True,
+        blank=True
+    )
+    percent_ev = models.DecimalField(
+        max_digits=8,
+        decimal_places=2,
+        null=True,
+        blank=True
+    )
+
+    percent_av = models.DecimalField(
+        max_digits=8,
+        decimal_places=2,
+        null=True,
+        blank=True
+    )
+
+    percent_rr = models.DecimalField(
+        max_digits=8,
+        decimal_places=2,
+        null=True,
+        blank=True
+    )
+
+    percent_pv = models.DecimalField(
+        max_digits=8,
+        decimal_places=2,
+        null=True,
+        blank=True
+    )
+    # ==========================
+    # AUDIT
+    # ==========================
+
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True
+    )
+
+    @property
+    def operator_count(self):
+        return len(self.operator_names or [])
+
     def __str__(self):
         return self.msa_no
+
+
+
 
 
 class MSAReading(models.Model):
@@ -294,7 +468,9 @@ class MSAReading(models.Model):
 
     measured_value = models.DecimalField(
         max_digits=12,
-        decimal_places=4
+        decimal_places=4,
+        null=True,
+        blank=True
     )
 
     def __str__(self):
@@ -302,6 +478,39 @@ class MSAReading(models.Model):
             f"{self.operator} - "
             f"{self.part_no}"
         )
+
+
+class MSAPart(models.Model):
+
+    study = models.ForeignKey(
+        MSAStudy,
+        on_delete=models.CASCADE,
+        related_name="parts"
+    )
+
+    part_no = models.CharField(
+        max_length=100
+    )
+
+    description = models.CharField(
+        max_length=255,
+        blank=True
+    )
+
+    class Meta:
+        ordering = ["id"]
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 class SPCControlPlan(models.Model):

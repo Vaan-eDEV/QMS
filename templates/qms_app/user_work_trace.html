@@ -242,6 +242,7 @@ ALTERNATING TIMELINE
                                 <th>User</th>
                                 <th>Status</th>
                                 <th>Created</th>
+                                <th>Assigned Operator</th>
                             </tr>
 
                         </thead>
@@ -378,7 +379,10 @@ ALTERNATING TIMELINE
 
                     <td class="fw-semibold">${p.part_id}</td>
                     <td>${p.lot || "-"}</td>
-                    <td>${p.user || "-"}</td>
+                    <td>
+                        <strong>Created:</strong> ${p.user || "-"}<br>
+                        <strong>Assigned:</strong> ${p.assigned_operator || "-"}
+                    </td>
 
                     <td>
 
@@ -396,6 +400,7 @@ ALTERNATING TIMELINE
                     </td>
 
                     <td>${p.created}</td>
+                    <td>${p.assigned_operator || "-"}</td>
 
                 </tr>
 
@@ -452,7 +457,8 @@ ALTERNATING TIMELINE
                                             </div>
 
                                             <div class="audit-user">
-                                                ${log.user}
+                                                <strong>User:</strong> ${log.user}<br>
+                                                <strong>Assigned Operator:</strong> ${log.assigned_operator}
                                             </div>
 
                                             <div class="audit-time">

@@ -72,6 +72,7 @@ INSTALLED_APPS = [
     'routine',
     'quality',
     'activity_log',
+    'communication',
 ]
 
 MIDDLEWARE = [

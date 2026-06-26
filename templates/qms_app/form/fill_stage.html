@@ -226,10 +226,33 @@
 </div>
 
 <script>
+
 document.addEventListener("DOMContentLoaded", function () {
 
     const form = document.getElementById("stageForm");
+    // Restore saved signatures from page
+    document.querySelectorAll(".signature-cell").forEach(cell => {
 
+        const ref = cell.querySelector(".text-primary");
+
+        if (!ref) return;
+
+        const signedBy =
+            cell.querySelector("strong")?.innerText || "";
+
+        const signedAt =
+            cell.querySelector("small")?.innerText || "";
+
+        const referenceCode =
+            ref.innerText.replace("Ref:", "").trim();
+
+        cell.closest("td").dataset.signature = JSON.stringify({
+            signed_by: signedBy,
+            signed_at: signedAt,
+            reference_code: referenceCode
+        });
+
+    });
     /* ============================================================
        🔥 FIX 1: CORRECT INPUT SELECTION (UNCHANGED)
     ============================================================ */

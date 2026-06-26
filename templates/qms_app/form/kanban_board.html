@@ -320,9 +320,16 @@ Lot : {{ part.batch.material_batch.lot_number }}<br>
 Part ID : {{ part.part_id }}<br>
 {% endif %}
 
-Created By: {{ part.created_by.email }}<br>
+<!-- Created By: {{ part.created_by.email }}<br>
+WorkOrder Item ID: {{ part.workorder_item.id }}<br> -->
+
 Assigned Operator:
-{{ part.workorder_item.assigned_to }}<br>
+{% if part.workorder_item and part.workorder_item.assigned_to %}
+    {{ part.workorder_item.assigned_to.get_full_name|default:part.workorder_item.assigned_to.email }}
+{% else %}
+    <span class="text-danger">Not Assigned</span>
+{% endif %}
+<br>
 {% if part.moved_by %}
 Sent By: {{ part.moved_by.email }}<br>
 {% endif %}

@@ -3197,10 +3197,42 @@ def edit_response(request, response_id):
     for key, value in data.items():
 
         # =============================================
-        # TABLE DATA
+        # TABLE DATA (CURRENT FORMAT)
         # =============================================
 
-        if isinstance(value, dict):
+        if isinstance(value, list):
+
+            fixed_rows = []
+
+            for row_data in value:
+
+                if not isinstance(row_data, dict):
+                    continue
+
+                for k, v in row_data.items():
+
+                    if isinstance(v, str) and "signed_by" in v:
+
+                        try:
+
+                            parsed = json.loads(
+                                v.replace("'", '"')
+                            )
+
+                            row_data[k] = parsed
+
+                        except:
+                            pass
+
+                fixed_rows.append(row_data)
+
+            data[key] = fixed_rows
+
+        # =============================================
+        # OLD TABLE FORMAT
+        # =============================================
+
+        elif isinstance(value, dict):
 
             fixed_rows = []
 
@@ -3213,27 +3245,20 @@ def edit_response(request, response_id):
 
                     row_data = value[row_index]
 
-                    # =============================================
-                    # KEEP SIGNATURE AS STRING
-                    # =============================================
-
                     for k, v in row_data.items():
 
-                        if isinstance(v, str):
+                        if isinstance(v, str) and "signed_by" in v:
 
-                            if "signed_by" in v:
+                            try:
 
-                                try:
+                                parsed = json.loads(
+                                    v.replace("'", '"')
+                                )
 
-                                    parsed = json.loads(
-                                        v.replace("'", '"')
-                                    )
+                                row_data[k] = parsed
 
-                                    # SAVE BACK AS REAL JSON STRING
-                                    row_data[k] = json.dumps(parsed)
-
-                                except:
-                                    pass
+                            except:
+                                pass
 
                     fixed_rows.append(row_data)
 
@@ -3256,11 +3281,10 @@ def edit_response(request, response_id):
                         value.replace("'", '"')
                     )
 
-                    data[key] = json.dumps(parsed)
+                    data[key] = parsed
 
                 except:
                     pass
-
     # =====================================================
     # POST
     # =====================================================
@@ -3529,7 +3553,10 @@ def edit_response(request, response_id):
             # table_id__row_id__column_id
 
             table_id, row_id, col_id = parts
-
+            print("================================")
+            print("POST KEY :", key)
+            print("ROW ID   :", row_id)
+            print("================================")
             # ==========================================
             # GET REAL OBJECTS
             # ==========================================
@@ -3621,52 +3648,122 @@ def edit_response(request, response_id):
             # =============================================
             # SIGNATURE
             # =============================================
-
             if col_type == "signature":
 
                 if values and str(values[0]).strip():
 
                     try:
+                        # Store as dictionary
+                        value = json.loads(values[0])
 
-                        # =====================================
-                        # KEEP SIGNATURE AS JSON STRING
-                        # =====================================
+                    except Exception:
+                        # Keep existing value if bad JSON comes
+                        try:
+                            old_rows = data.get(table, [])
 
-                        parsed_sign = json.loads(
-                            values[0]
-                        )
+                            value = ""
 
-                        value = json.dumps(
-                            parsed_sign
-                        )
+                            for r in old_rows:
 
-                    except:
+                                if str(r.get("_row_id", "")) == str(row):
+                                    value = r.get(col)
+                                    break
 
-                        value = values[0]
+                                # fallback by row name
+                                if (
+                                    r.get("row_name", "").strip().lower()
+                                    ==
+                                    (
+                                        TableRow.objects.filter(id=row)
+                                        .first().name.lower()
+                                        if str(row).isdigit()
+                                        and TableRow.objects.filter(id=row).exists()
+                                        else ""
+                                    )
+                                ):
+                                    value = r.get(col)
+                                    break
+
+                        except:
+                            value = ""
 
                 else:
 
                     try:
-
                         old_rows = data.get(table, [])
 
-                        value = (
-                            next(
+     
+                        value = ""
+
+                        for r in old_rows:
+
+                            if str(r.get("_row_id", "")) == str(row):
+                                value = r.get(col)
+                                break
+
+                            # fallback by row name
+                            if (
+                                r.get("row_name", "").strip().lower()
+                                ==
                                 (
-                                    r.get(col)
-                                    for r in old_rows
-                                    if str(
-                                        r.get("_row_id", "")
-                 
-                                    ) == str(row)
-                                ),
-                                ""
-                            )
-                        )
+                                    TableRow.objects.filter(id=row)
+                                    .first().name.lower()
+                                    if str(row).isdigit()
+                                    and TableRow.objects.filter(id=row).exists()
+                                    else ""
+                                )
+                            ):
+                                value = r.get(col)
+                                break
+
 
                     except:
-
                         value = ""
+            # if col_type == "signature":
+
+            #     if values and str(values[0]).strip():
+
+            #         try:
+
+            #             # =====================================
+            #             # KEEP SIGNATURE AS JSON STRING
+            #             # =====================================
+
+            #             parsed_sign = json.loads(
+            #                 values[0]
+            #             )
+
+            #             value = json.dumps(
+            #                 parsed_sign
+            #             )
+
+            #         except:
+
+            #             value = values[0]
+
+            #     else:
+
+            #         try:
+
+            #             old_rows = data.get(table, [])
+
+            #             value = (
+            #                 next(
+            #                     (
+            #                         r.get(col)
+            #                         for r in old_rows
+            #                         if str(
+            #                             r.get("_row_id", "")
+                 
+            #                         ) == str(row)
+            #                     ),
+            #                     ""
+            #                 )
+            #             )
+
+            #         except:
+
+            #             value = ""
 
             # =============================================
             # FILE / IMAGE
@@ -3812,10 +3909,21 @@ def edit_response(request, response_id):
             normalized_old_rows = []
 
             for old_row in old_rows:
+                
+                row_id = str(
+                    old_row.get("_row_id", "")
+                ).strip()
 
-                if "_row_id" not in old_row:
+                # FIX INVALID ROW IDS LIKE new_signature
+                if (
+                    not row_id
+                    or not row_id.isdigit()
+                ):
 
-                    row_name = old_row.get("row_name", "")
+                    row_name = old_row.get(
+                        "row_name",
+                        ""
+                    )
 
                     row_obj = TableRow.objects.filter(
                         table__name=table_name,
@@ -3824,7 +3932,21 @@ def edit_response(request, response_id):
 
                     if row_obj:
 
-                        old_row["_row_id"] = str(row_obj.id)
+                        old_row["_row_id"] = str(
+                            row_obj.id
+                        )
+                # if "_row_id" not in old_row:
+
+                #     row_name = old_row.get("row_name", "")
+
+                #     row_obj = TableRow.objects.filter(
+                #         table__name=table_name,
+                #         name=row_name
+                #     ).first()
+
+                #     if row_obj:
+
+                #         old_row["_row_id"] = str(row_obj.id)
 
                 normalized_old_rows.append(old_row)
 
@@ -5993,6 +6115,7 @@ def save_response(request, form_id):
     cleaned_data = {}
 
     table_data = {}
+    table_objects = {}
     # ==========================================
     # DYNAMIC ROW NAME STORAGE
     # ==========================================
@@ -6115,7 +6238,7 @@ def save_response(request, form_id):
                 # ==========================================
 
                 table_name = table_obj.name
-
+                table_objects[table_name] = table_obj
                 # ==========================================
                 # DYNAMIC ROW SUPPORT
                 # ==========================================
@@ -6219,9 +6342,7 @@ def save_response(request, form_id):
         # KEEP ORIGINAL ROW ORDER
         # ======================================================
 
-        table_obj = Table.objects.filter(
-            id=table_id
-        ).first()
+        table_obj = table_objects.get(table_name)
 
         # ======================================================
         # USE ACTUAL TABLE ROW ORDER
@@ -6327,10 +6448,27 @@ def save_response(request, form_id):
 
             ordered_row["row_name"] = row_name
 
+            print("===================================")
+            print("TABLE ID :", table_obj.id if table_obj else None)
+            print("TABLE    :", table_obj.name if table_obj else None)
+            print("ROW NAME :", repr(row_name))
+            print(
+                "DB ROWS  :",
+                list(
+                    table_obj.tablerow_set.values_list(
+                        "id",
+                        "name"
+                    )
+                ) if table_obj else []
+            )
+
             row_obj = TableRow.objects.filter(
                 table=table_obj,
                 name=row_name
             ).first()
+
+            print("FOUND :", row_obj)
+            print("===================================")
 
             if row_obj:
 
@@ -6350,7 +6488,6 @@ def save_response(request, form_id):
 
             row_list.append(ordered_row)
 
-# ------------------------------------------------------
         
         # ======================================================
         # SKIP EMPTY TABLE

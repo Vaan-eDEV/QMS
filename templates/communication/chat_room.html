@@ -1,0 +1,247 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<style>
+
+.chat-layout{
+    height:85vh;
+    display:flex;
+    flex-direction:column;
+    background:#f5f7fb;
+}
+
+.chat-header{
+    background:#fff;
+    padding:15px 20px;
+    border-bottom:1px solid #dee2e6;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+}
+
+.chat-header h5{
+    margin:0;
+    font-weight:600;
+}
+
+.chat-body{
+    flex:1;
+    overflow-y:auto;
+    padding:20px;
+}
+
+.message-row{
+    display:flex;
+    margin-bottom:15px;
+}
+
+.message-row.mine{
+    justify-content:flex-end;
+}
+
+.message-row.other{
+    justify-content:flex-start;
+}
+
+.message-card{
+    max-width:70%;
+    border-radius:12px;
+    padding:10px 15px;
+    box-shadow:0 2px 6px rgba(0,0,0,.08);
+}
+
+.mine .message-card{
+    background:#0d6efd;
+    color:white;
+}
+
+.other .message-card{
+    background:white;
+}
+
+.message-user{
+    font-size:13px;
+    font-weight:600;
+}
+
+.message-time{
+    font-size:11px;
+    opacity:.8;
+}
+
+.message-text{
+    margin-top:5px;
+    white-space:pre-wrap;
+}
+
+.attachments{
+    margin-top:8px;
+}
+
+.attachments a{
+    display:inline-block;
+    margin-right:5px;
+    margin-top:5px;
+}
+
+.chat-footer{
+    background:#fff;
+    border-top:1px solid #dee2e6;
+    padding:15px;
+}
+
+.chat-footer textarea{
+    resize:none;
+}
+
+</style>
+
+<div class="chat-layout">
+
+<div class="chat-header">
+
+    <div>
+        <h5># {{ channel.name }}</h5>
+        <small class="text-muted">
+            {{ channel.description }}
+        </small>
+    </div>
+
+    <a href="{% url 'channel_list' %}"
+       class="btn btn-outline-secondary btn-sm">
+
+        Back
+
+    </a>
+
+</div>
+
+<div class="chat-body"
+     id="chat-box">
+
+    {% for msg in chat_messages %}
+
+    <div class="message-row {% if msg.sender == request.user %}mine{% else %}other{% endif %}">
+
+        <div class="message-card">
+
+            <div class="d-flex justify-content-between">
+
+                <span class="message-user">
+                    {{ msg.sender.get_display_name }}
+                </span>
+
+                <span class="message-time">
+                    {{ msg.created_at|date:"d M H:i" }}
+                </span>
+
+            </div>
+
+            {% if msg.message %}
+
+            <div class="message-text">
+                {{ msg.message }}
+            </div>
+
+            {% endif %}
+
+            {% if msg.attachments.all %}
+
+            <div class="attachments">
+
+                {% for file in msg.attachments.all %}
+
+                <a href="{{ file.file.url }}"
+                   target="_blank"
+                   class="btn btn-sm btn-light">
+
+                    📎 {{ file.filename }}
+
+                </a>
+
+                {% endfor %}
+
+            </div>
+
+            {% endif %}
+
+        </div>
+
+    </div>
+
+    {% empty %}
+
+    <div class="alert alert-info">
+        No messages yet.
+    </div>
+
+    {% endfor %}
+
+</div>
+
+<div class="chat-footer">
+
+    <form id="message-form"
+          method="post"
+          action="{% url 'send_message' channel.id %}"
+          enctype="multipart/form-data">
+
+        {% csrf_token %}
+
+        <div class="row">
+
+            <div class="col-md-9">
+
+                <textarea
+                    name="message"
+                    id="message-input"
+                    rows="2"
+                    class="form-control"
+                    placeholder="Type your message..."></textarea>
+
+            </div>
+
+            <div class="col-md-2">
+
+                <input
+                    type="file"
+                    name="attachments"
+                    multiple
+                    class="form-control">
+
+            </div>
+
+            <div class="col-md-1">
+
+                <button
+                    type="submit"
+                    class="btn btn-primary w-100">
+
+                    Send
+
+                </button>
+
+            </div>
+
+        </div>
+
+    </form>
+
+</div>
+
+</div>
+
+<script>
+
+const chatBox =
+document.getElementById(
+"chat-box"
+);
+
+chatBox.scrollTop =
+chatBox.scrollHeight;
+
+</script>
+
+{% endblock %}

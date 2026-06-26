@@ -3898,6 +3898,7 @@ def start_form(request, form_id):
                     part_id=part_id,
                     current_stage=first_stage,
                     created_by=request.user,
+                    workorder_item=item, 
                     moved_by=request.user,
                     status="ACTIVE",
                     is_active=True
@@ -6789,7 +6790,9 @@ def user_work_trace(request):
         ).select_related(
             "batch",
             "batch__material_batch",
-            "created_by"
+            "created_by",
+            "workorder_item",
+            "workorder_item__assigned_to",
         ).order_by("part_id", "-created_at")
 
         # ------------------------------------------
@@ -6816,9 +6819,24 @@ def user_work_trace(request):
                 "id": part.id,
                 "part_id": part.part_id,
                 "lot": lot_number,
-                "user": part.created_by.email if part.created_by else "-",
+
+                "user": (
+                    part.created_by.get_display_name()
+                    if part.created_by else "-"
+                ),
+
+                "assigned_operator": (
+                    part.workorder_item.assigned_to.get_display_name()
+                    if part.workorder_item
+                    and part.workorder_item.assigned_to
+                    else "-"
+                ),
+
                 "status": part.get_status_display(),
-                "created": timezone.localtime(part.created_at).strftime("%d %b %Y %H:%M")
+
+                "created": timezone.localtime(
+                    part.created_at
+                ).strftime("%d %b %Y %H:%M")
             })
 
             # ------------------------------------------
@@ -6911,7 +6929,13 @@ def user_work_trace(request):
 @login_required
 def part_audit_logs(request, part_id):
 
-    part = get_object_or_404(BatchPart, id=part_id)
+    part = get_object_or_404(
+        BatchPart.objects.select_related(
+            "workorder_item",
+            "workorder_item__assigned_to"
+        ),
+        id=part_id
+    )
 
     logs = (
         AuditLog.objects
@@ -7015,6 +7039,14 @@ def part_audit_logs(request, part_id):
         data.append({
             "action": log.action,
             "user": log.user.email if log.user else "-",
+            "assigned_operator": (
+                part.workorder_item.assigned_to.get_display_name()
+                if (
+                    part.workorder_item
+                    and part.workorder_item.assigned_to
+                )
+                else "-"
+            ),
             "folder": folder_name,
             "form": form_name,
             "stage": stage_name,
@@ -8384,7 +8416,8 @@ def start_workorder_form(
 
                 part_id=part_display,
 
-                current_stage=first_stage
+                current_stage=first_stage,
+                workorder_item=item, 
 
             )
 

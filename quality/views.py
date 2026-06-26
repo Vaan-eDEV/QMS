@@ -3,10 +3,10 @@ from django.shortcuts import (
     redirect,
     get_object_or_404
 )
-
+from .models import MSAPart
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-
+from .calculations import *
 from .models import *
 
 # =====================================================
@@ -439,6 +439,9 @@ def msa_dashboard(request):
 
 
 
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
 
 @login_required
 def msa_list(request):
@@ -451,72 +454,179 @@ def msa_list(request):
 
     instruments = Instrument.objects.all()
 
+    users = User.objects.filter(
+        is_active=True
+    ).order_by(
+        "first_name",
+        "last_name"
+    )
+
     return render(
         request,
         "quality/msa/msa_list.html",
         {
             "studies": studies,
             "instruments": instruments,
+            "users": users,
         }
     )
 
-
-
-
 from django.contrib import messages
-from django.shortcuts import redirect, render
+from django.shortcuts import redirect
+from django.contrib.auth.decorators import login_required
+
+from .models import (
+    MSAStudy,
+    MSAPart,
+)
+
 
 @login_required
 def msa_create(request):
 
     if request.method == "POST":
 
-        MSAStudy.objects.create(
+        operator_names = [
+            name.strip()
+            for name in request.POST.getlist("operator_names")
+            if name.strip()
+        ]
+
+        part_count = int(
+            request.POST.get(
+                "part_count"
+            ) or 10
+        )
+
+        study = MSAStudy.objects.create(
+
+            # ==========================
+            # BASIC INFO
+            # ==========================
 
             msa_no=request.POST.get(
                 "msa_no"
-            ),
-
-            instrument_id=request.POST.get(
-                "instrument"
             ),
 
             study_type=request.POST.get(
                 "study_type"
             ),
 
+            study_date=request.POST.get(
+                "study_date"
+            ),
+
+            instrument_id=request.POST.get(
+                "instrument"
+            ),
+
+            # ==========================
+            # PART INFO
+            # ==========================
+
+            part_name=request.POST.get(
+                "part_name"
+            ),
+
             part_number=request.POST.get(
                 "part_number"
             ),
 
-            operator_count=request.POST.get(
-                "operator_count"
-            ) or 3,
+            # ==========================
+            # EQUIPMENT INFO
+            # ==========================
 
-            part_count=request.POST.get(
-                "part_count"
-            ) or 10,
+            equipment_name=request.POST.get(
+                "equipment_name"
+            ),
+
+            equipment_number=request.POST.get(
+                "equipment_number"
+            ),
+
+            least_count=request.POST.get(
+                "least_count"
+            ) or None,
+
+            # ==========================
+            # STUDY SETUP
+            # ==========================
+
+            operator_names=operator_names,
+
+            part_count=part_count,
 
             trial_count=request.POST.get(
                 "trial_count"
             ) or 3,
 
-            study_date=request.POST.get(
-                "study_date"
+            # ==========================
+            # SPECIFICATION LIMITS
+            # ==========================
+
+            min_value=request.POST.get(
+                "min_value"
+            ) or None,
+
+            max_value=request.POST.get(
+                "max_value"
+            ) or None,
+
+            tolerance=request.POST.get(
+                "tolerance"
+            ) or None,
+
+            mean_value=request.POST.get(
+                "mean_value"
+            ) or None,
+            # ==========================
+            # DOCUMENT CONTROL
+            # ==========================
+
+            record_number=request.POST.get(
+                "record_number"
             ),
 
             remarks=request.POST.get(
                 "remarks"
             ),
 
+            # ==========================
+            # STATUS
+            # ==========================
+
             study_status="PENDING",
 
             created_by=request.user
         )
 
+        # ==========================
+        # CREATE PART RECORDS
+        # ==========================
+
+        parts = []
+
+        for i in range(
+            1,
+            part_count + 1
+        ):
+
+            parts.append(
+
+                MSAPart(
+                    study=study,
+                    part_no=f"Part-{i}"
+                )
+
+            )
+
+        MSAPart.objects.bulk_create(
+            parts
+        )
+
         messages.success(
             request,
-            "MSA Study created successfully."
+            f"MSA Study {study.msa_no} created successfully."
         )
 
         return redirect(
@@ -560,123 +670,279 @@ def msa_detail(
 
 
 
-from statistics import stdev
+# from statistics import stdev
 
 
-def calculate_grr(study):
+# def calculate_aiag_grr(study):
 
-    readings = list(
-        study.readings.values_list(
-            "measured_value",
-            flat=True
-        )
-    )
+#     readings = list(
+#         study.readings.values_list(
+#             "measured_value",
+#             flat=True
+#         )
+#     )
 
-    if len(readings) < 2:
+#     if len(readings) < 2:
 
-        study.grr_percentage = None
-        study.study_status = "PENDING"
-        study.save()
+#         study.grr_percentage = None
+#         study.study_status = "PENDING"
+#         study.save()
 
-        return
+#         return
 
-    values = [
-        float(x)
-        for x in readings
-    ]
+#     values = [
+#         float(x)
+#         for x in readings
+#     ]
 
-    total_variation = stdev(values)
+#     total_variation = stdev(values)
 
-    if total_variation == 0:
+#     if total_variation == 0:
 
-        grr = 0
+#         grr = 0
 
-    else:
+#     else:
 
-        gauge_variation = (
-            total_variation * 0.20
-        )
+#         gauge_variation = (
+#             total_variation * 0.20
+#         )
 
-        grr = (
-            gauge_variation /
-            total_variation
-        ) * 100
+#         grr = (
+#             gauge_variation /
+#             total_variation
+#         ) * 100
 
-    study.grr_percentage = round(
-        grr,
-        2
-    )
+#     study.grr_percentage = round(
+#         grr,
+#         2
+#     )
 
-    if grr < 10:
+#     if grr < 10:
 
-        study.study_status = "ACCEPTED"
+#         study.study_status = "ACCEPTED"
 
-    elif grr <= 30:
+#     elif grr <= 30:
 
-        study.study_status = "CONDITIONAL"
+#         study.study_status = "CONDITIONAL"
 
-    else:
+#     else:
 
-        study.study_status = "REJECTED"
+#         study.study_status = "REJECTED"
 
-    study.save()
+#     study.save()
 
 
+
+
+# @login_required
+# def msa_add_reading(
+#     request,
+#     study_id
+# ):
+
+#     study = get_object_or_404(
+#         MSAStudy,
+#         id=study_id
+#     )
+
+#     if request.method == "POST":
+
+#         MSAReading.objects.create(
+
+#             study=study,
+
+#             operator=request.POST.get(
+#                 "operator"
+#             ),
+
+#             part_no=request.POST.get(
+#                 "part_no"
+#             ),
+
+#             trial_no=request.POST.get(
+#                 "trial_no"
+#             ),
+
+#             measured_value=request.POST.get(
+#                 "measured_value"
+#             )
+#         )
+#         calculate_grr(
+#             study
+#         )
+
+#         return redirect(
+#             "msa_add_reading",
+#             study.id
+#         )
+
+#     return render(
+#         request,
+#         "quality/msa/msa_add_reading.html",
+#         {
+#             "study": study
+#         }
+#     )
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import get_object_or_404, render, redirect
+
+from .models import *
+
+from .calculations import *
 
 
 @login_required
-def msa_add_reading(
-    request,
-    study_id
-):
+def msa_reading_sheet(request, study_id):
 
     study = get_object_or_404(
         MSAStudy,
         id=study_id
     )
 
+    parts = study.parts.all()
+
     if request.method == "POST":
 
-        MSAReading.objects.create(
+        # ------------------------------
+        # Save Part Numbers
+        # ------------------------------
 
-            study=study,
+        for part in parts:
 
-            operator=request.POST.get(
-                "operator"
-            ),
-
-            part_no=request.POST.get(
-                "part_no"
-            ),
-
-            trial_no=request.POST.get(
-                "trial_no"
-            ),
-
-            measured_value=request.POST.get(
-                "measured_value"
+            new_part_no = request.POST.get(
+                f"part_no_{part.id}"
             )
-        )
-        calculate_grr(
-            study
+
+            if new_part_no:
+
+                part.part_no = (
+                    new_part_no.strip()
+                )
+
+                part.save()
+
+        # Refresh parts
+        parts = study.parts.all()
+
+        # ------------------------------
+        # Remove Existing Readings
+        # ------------------------------
+
+        study.readings.all().delete()
+
+        readings = []
+
+        # ------------------------------
+        # Save New Readings
+        # ------------------------------
+
+        for operator in study.operator_names:
+
+            for part in parts:
+
+                for trial in range(
+                    1,
+                    study.trial_count + 1
+                ):
+
+                    field_name = (
+                        f"{operator}_{part.id}_{trial}"
+                    )
+
+                    value = request.POST.get(
+                        field_name
+                    )
+
+                    if value not in [None, ""]:
+
+                        readings.append(
+
+                            MSAReading(
+                                study=study,
+                                operator=operator,
+                                part_no=part.part_no,
+                                trial_no=trial,
+                                measured_value=value
+                            )
+
+                        )
+
+        if readings:
+
+            MSAReading.objects.bulk_create(
+                readings
+            )
+
+            calculate_aiag_grr(
+                study
+            )
+
+            study.refresh_from_db()
+
+        messages.success(
+            request,
+            "MSA readings saved successfully."
         )
 
         return redirect(
-            "msa_add_reading",
-            study.id
+            "msa_reading_sheet",
+            study_id=study.id
         )
+
+    # ------------------------------
+    # Existing Readings
+    # ------------------------------
+
+    reading_map = {}
+
+    for reading in study.readings.all():
+
+        reading_map[
+            (
+                reading.operator,
+                reading.part_no,
+                reading.trial_no
+            )
+        ] = reading.measured_value
+
+    # ------------------------------
+    # Operator Statistics
+    # ------------------------------
+
+    operator_summary = (
+        get_operator_summary(
+            study
+        )
+    )
+    chart_data = get_operator_charts(
+        study
+    )
+    context = {
+
+        "study": study,
+
+        "operators": study.operator_names,
+
+        "parts": parts,
+
+        "trials": range(
+            1,
+            study.trial_count + 1
+        ),
+
+        "reading_map": reading_map,
+
+        "operator_summary": operator_summary,
+
+        "chart_data": chart_data
+    }
 
     return render(
         request,
-        "quality/msa/msa_add_reading.html",
-        {
-            "study": study
-        }
+        "quality/msa/msa_reading_sheet.html",
+        context
     )
-
-
-
-
 # =============================================================================================
 # ============================================== SPC ==========================================
 # =============================================================================================
@@ -934,3 +1200,4 @@ def spc_delete_reading(
         "spc_add_reading",
         plan_id
     )
+

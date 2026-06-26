@@ -41,7 +41,7 @@
 
     <div class="kanban-wrapper">
 
-        <div class="row flex-nowrap overflow-auto gx-4 pb-4">
+        <div class="row flex-nowrap overflow-x:auto gx-4 pb-4">
 
             {% for stage_name, stage_items in stages.items %}
 
@@ -1289,6 +1289,9 @@ document.querySelectorAll(
 })
 
 
+
+
+
 </script>
 
 <!-- ======================================================= -->
@@ -1306,9 +1309,17 @@ body {
 .kanban-wrapper {
 
     overflow-x: auto;
+    overflow-y: hidden;
+
+    display: flex;
+    flex-direction: column-reverse;
 
 }
+.kanban-wrapper > .row {
 
+    flex-shrink: 0;
+
+}
 .kanban-stage {
 
     background: #e2e8f0;

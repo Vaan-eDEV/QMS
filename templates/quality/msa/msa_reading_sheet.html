@@ -1,0 +1,1115 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="container-fluid">
+
+    <!-- Header -->
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+
+        <div>
+
+            <h2 class="fw-bold mb-0">
+                {{ study.msa_no }}
+            </h2>
+
+            <small class="text-muted">
+                Measurement System Analysis Reading Sheet
+            </small>
+
+        </div>
+
+        <div>
+
+            <a href="{% url 'msa_list' %}"
+               class="btn btn-secondary">
+
+                Back
+
+            </a>
+
+        </div>
+
+    </div>
+
+    <!-- Study Information -->
+
+    <div class="card shadow-sm border-0 mb-4">
+
+        <div class="card-body">
+
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <strong>Instrument</strong><br>
+                    {{ study.instrument.name }}
+                </div>
+
+                <div class="col-md-3">
+                    <strong>Least Count</strong><br>
+                    {{ study.least_count|default:"-" }}
+                </div>
+
+                <div class="col-md-3">
+                    <strong>Study Type</strong><br>
+                    {{ study.get_study_type_display }}
+                </div>
+
+                <div class="col-md-3">
+                    <strong>Part Name</strong><br>
+                    {{ study.part_name|default:"-" }}
+                </div>
+
+                <div class="col-md-3">
+                    <strong>Mean Value</strong><br>
+                    {{ study.mean_value|default:"-" }}
+                </div>
+
+                <div class="col-md-3">
+                    <strong>Min Value</strong><br>
+                    {{ study.min_value }}
+                </div>
+                <div class="col-md-3">
+                    <strong>Max_value</strong><br>
+                    {{ study.max_value }}
+                </div>
+
+                <div class="col-md-3">
+                    <strong>Tolerance</strong><br>
+                    {{ study.tolerance|default:"-" }}
+                </div>
+                
+                <!-- <div class="col-md-3">
+                    <strong>Part Number</strong><br>
+                    {{ study.part_number|default:"-" }}
+                </div> -->
+
+                <div class="col-md-3">
+                    <strong>Operators</strong><br>
+                    {{ study.operator_count }}
+                </div>
+
+                <div class="col-md-3">
+                    <strong>Parts</strong><br>
+                    {{ study.part_count }}
+                </div>
+
+                <div class="col-md-3">
+                    <strong>Trials</strong><br>
+                    {{ study.trial_count }}
+                </div>
+
+                <div class="col-md-3">
+                    <strong>Status</strong><br>
+
+                    {% if study.study_status == "ACCEPTED" %}
+                        <span class="badge bg-success">
+                            ACCEPTED
+                        </span>
+
+                    {% elif study.study_status == "CONDITIONAL" %}
+                        <span class="badge bg-warning text-dark">
+                            CONDITIONAL
+                        </span>
+
+                    {% elif study.study_status == "REJECTED" %}
+                        <span class="badge bg-danger">
+                            REJECTED
+                        </span>
+
+                    {% else %}
+                        <span class="badge bg-secondary">
+                            PENDING
+                        </span>
+
+                    {% endif %}
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- Reading Entry Form -->
+
+    <form method="post">
+
+        {% csrf_token %}
+
+        <!-- Operator Tabs -->
+
+        <ul class="nav nav-tabs mb-3">
+
+            {% for operator in operators %}
+
+            <li class="nav-item">
+
+                <button
+                    class="nav-link {% if forloop.first %}active{% endif %}"
+                    data-bs-toggle="tab"
+                    data-bs-target="#operator{{ forloop.counter }}"
+                    type="button">
+
+                    {{ operator }}
+
+                </button>
+
+            </li>
+
+            {% endfor %}
+
+        </ul>
+
+        <!-- Operator Reading Tables -->
+
+        <div class="tab-content">
+
+            {% for operator in operators %}
+
+            <div
+                class="tab-pane fade {% if forloop.first %}show active{% endif %}"
+                id="operator{{ forloop.counter }}">
+
+                <div class="card shadow-sm border-0">
+
+                    <div class="card-header">
+
+                        <strong>
+                            {{ operator }}
+                        </strong>
+
+                    </div>
+
+                    <div class="card-body p-0">
+
+                        <div class="table-responsive">
+
+                            <table class="table table-bordered table-hover mb-0">
+
+                                <thead class="table-light">
+
+                                    <tr>
+
+                                        <th width="120">
+                                            Part No
+                                        </th>
+
+                                        {% for trial in trials %}
+
+                                        <th>
+                                            Trial {{ trial }}
+                                        </th>
+
+                                        {% endfor %}
+
+                                    </tr>
+
+                                </thead>
+
+                                <tbody>
+
+                                    {% for part in parts %}
+
+                                    <tr>
+                                        <td>
+
+                                            <input
+                                                type="text"
+                                                class="form-control mb-1"
+                                                name="part_no_{{ part.id }}"
+                                                value="{{ part.part_no }}">
+
+                                                {% if part.description %}
+                                                <small class="text-muted">
+                                                    {{ part.description }}
+                                                </small>
+                                                {% endif %}
+
+                                        </td>
+
+                                        {% for trial in trials %}
+
+                                        <td>
+
+                                            <input
+                                                type="number"
+                                                step="0.0001"
+                                                class="form-control"
+
+                                                name="{{ operator }}_{{ part.id }}_{{ trial }}"
+
+                                                value="{% for key,value in reading_map.items %}{% if key.0 == operator and key.1 == part.part_no and key.2 == trial %}{{ value }}{% endif %}{% endfor %}">
+
+                                        </td>
+
+                                        {% endfor %}
+
+                                    </tr>
+
+                                    {% endfor %}
+
+                                </tbody>
+
+                            </table>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            {% endfor %}
+
+        </div>
+
+        <!-- Save Button -->
+
+        <div class="text-end mt-4">
+
+            <button
+    type="submit"
+    class="btn btn-success btn-lg"
+    onclick="return confirm(
+        'Save readings and calculate Gauge R&R?'
+    )">
+
+                Save Readings
+
+            </button>
+
+        </div>
+
+    </form>
+
+    <!-- AIAG GRR RESULTS -->
+
+    <div class="card shadow-sm border-0 mt-4">
+
+        <div class="card-header">
+
+            <h5 class="mb-0">
+
+                Gauge R&R Results
+
+            </h5>
+
+        </div>
+
+        <div class="card-body">
+
+            <div class="row text-center">
+
+                <div class="col-md-2">
+                    <h6>EV</h6>
+                    {{ study.ev|default:"0" }}
+                </div>
+
+                <div class="col-md-2">
+                    <h6>AV</h6>
+                    {{ study.av|default:"0" }}
+                </div>
+
+                <div class="col-md-2">
+                    <h6>RR</h6>
+                    {{ study.rr|default:"0" }}
+                </div>
+
+                <div class="col-md-2">
+                    <h6>PV</h6>
+                    {{ study.pv|default:"0" }}
+                </div>
+
+                <div class="col-md-2">
+                    <h6>TV</h6>
+                    {{ study.tv|default:"0" }}
+                </div>
+
+                <div class="col-md-2">
+                    <h6>NDC</h6>
+                    {{ study.ndc|default:"0" }}
+                </div>
+
+            </div>
+
+            <hr>
+
+            <div class="row text-center">
+
+                <div class="col-md-3">
+
+                    <h6>%EV</h6>
+
+                    {{ study.percent_ev|default:"0" }}%
+
+                </div>
+
+                <div class="col-md-3">
+
+                    <h6>%AV</h6>
+
+                    {{ study.percent_av|default:"0" }}%
+
+                </div>
+
+                <div class="col-md-3">
+
+                    <h6>%RR</h6>
+
+                    {{ study.percent_rr|default:"0" }}%
+
+                </div>
+
+                <div class="col-md-3">
+
+                    <h6>%PV</h6>
+
+                    {{ study.percent_pv|default:"0" }}%
+
+                </div>
+
+            </div>
+
+            <hr>
+
+            <div class="row align-items-center">
+
+    <!-- Overall GRR -->
+    <div class="col-md-4 text-center border-end">
+
+        <h5 class="mb-3">
+            Overall Gauge R&amp;R
+        </h5>
+
+        <h2 class="text-primary fw-bold">
+            {{ study.grr_percentage|default:"0" }}%
+        </h2>
+
+    </div>
+
+    <!-- Formula -->
+   <!-- Formula -->
+<div class="col-md-8">
+
+    <div class="card border-0 shadow-sm">
+
+        <div class="card-header bg-light">
+
+            <strong>Gauge R&amp;R Calculation Summary</strong>
+
+        </div>
+
+        <div class="card-body p-0">
+
+            <table class="table table-bordered table-sm mb-0 align-middle">
+
+                <thead class="table-light">
+
+                    <tr>
+
+                        <th width="18%">Item</th>
+
+                        <th width="37%">Formula</th>
+
+                        <th width="45%">Calculated Value</th>
+
+                    </tr>
+
+                </thead>
+
+                <tbody>
+
+                    <tr>
+
+                        <td><strong>EV</strong></td>
+
+                        <td>R̄ × K₁</td>
+
+                        <td>{{ study.ev|floatformat:4 }}</td>
+
+                    </tr>
+
+                    <tr>
+
+                        <td><strong>AV</strong></td>
+
+                        <td>√[(X̄DIFF × K₂)² − (EV² / n × r)]</td>
+
+                        <td>{{ study.av|floatformat:4 }}</td>
+
+                    </tr>
+
+                    <tr>
+
+                        <td><strong>RR</strong></td>
+
+                        <td>√(EV² + AV²)</td>
+
+                        <td>{{ study.rr|floatformat:4 }}</td>
+
+                    </tr>
+
+                    <tr>
+
+                        <td><strong>PV</strong></td>
+
+                        <td>Rp × K₃</td>
+
+                        <td>{{ study.pv|floatformat:4 }}</td>
+
+                    </tr>
+
+                    <tr>
+
+                        <td><strong>TV</strong></td>
+
+                        <td>√(RR² + PV²)</td>
+
+                        <td>{{ study.tv|floatformat:4 }}</td>
+
+                    </tr>
+
+                    <tr>
+
+                        <td><strong>%EV</strong></td>
+
+                        <td>(EV ÷ TV) × 100</td>
+
+                        <td>{{ study.percent_ev|floatformat:2 }}%</td>
+
+                    </tr>
+
+                    <tr>
+
+                        <td><strong>%AV</strong></td>
+
+                        <td>(AV ÷ TV) × 100</td>
+
+                        <td>{{ study.percent_av|floatformat:2 }}%</td>
+
+                    </tr>
+
+                    <tr class="table-warning">
+
+                        <td><strong>%GRR</strong></td>
+
+                        <td>(RR ÷ TV) × 100</td>
+
+                        <td>
+
+                            <strong>
+
+                                {{ study.grr_percentage|floatformat:2 }}%
+
+                            </strong>
+
+                        </td>
+
+                    </tr>
+
+                    <tr>
+
+                        <td><strong>%PV</strong></td>
+
+                        <td>(PV ÷ TV) × 100</td>
+
+                        <td>{{ study.percent_pv|floatformat:2 }}%</td>
+
+                    </tr>
+
+                    <tr class="table-success">
+
+                        <td><strong>NDC</strong></td>
+
+                        <td>1.41 × (PV ÷ RR)</td>
+
+                        <td>{{ study.ndc|floatformat:2 }}</td>
+
+                    </tr>
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+</div>
+
+</div>
+
+        </div>
+
+    </div>
+
+
+
+  
+
+<div class="card shadow-sm border-0 mt-4">
+
+    <div class="card-header">
+
+        <ul class="nav nav-tabs">
+
+            {% for operator in operators %}
+
+            <li class="nav-item">
+
+                <button
+                    class="nav-link {% if forloop.first %}active{% endif %}"
+                    data-bs-toggle="tab"
+                    data-bs-target="#analysis{{ forloop.counter }}"
+                    type="button">
+
+                    {{ operator }}
+
+                </button>
+
+            </li>
+
+            {% endfor %}
+
+        </ul>
+
+    </div>
+
+    <div class="card-body">
+
+        <div class="tab-content">
+
+            {% for operator in operators %}
+
+            <div class="tab-pane fade {% if forloop.first %}show active{% endif %}"
+                 id="analysis{{ forloop.counter }}">
+
+                <!-- =============================== -->
+                <!-- Performance Summary -->
+                <!-- =============================== -->
+
+                <h5 class="mb-3">
+
+                    {{ operator }} Performance
+
+                </h5>
+
+                <div class="table-responsive">
+
+                    <table class="table table-bordered">
+
+    <thead>
+
+        <tr>
+
+            <th>Part</th>
+
+            <!-- {% for trial in trials %}
+            <th>Trial {{ trial }}</th>
+            {% endfor %} -->
+
+            <th>Average</th>
+            <!-- <th>Minimum</th>
+            <th>Maximum</th> -->
+            <th>Range</th>
+            <th>Std Dev</th>
+
+        </tr>
+
+    </thead>
+
+    <tbody>
+
+        {% for item in operator_summary %}
+
+            {% if item.operator == operator %}
+
+            <tr>
+
+                <td>{{ item.part }}</td>
+
+                <!-- {% for value in item.trials %}
+                    <td>{{ value }}</td>
+                {% endfor %} -->
+
+                <td>{{ item.average }}</td>
+                <!-- <td>{{ item.minimum }}</td>
+                <td>{{ item.maximum }}</td> -->
+                <td>{{ item.range }}</td>
+                <td>{{ item.std_dev }}</td>
+
+            </tr>
+
+            {% endif %}
+
+        {% endfor %}
+
+    </tbody>
+
+</table>
+
+                </div>
+
+                <hr>
+
+                <!-- =============================== -->
+                <!-- Charts -->
+                <!-- =============================== -->
+
+                {% for op, charts in chart_data.items %}
+
+                    {% if op == operator %}
+
+                    <div class="row">
+
+                        <div class="col-md-6">
+
+                            <div style="height:350px">
+
+                                <canvas id="xbar_chart_{{ forloop.counter }}"></canvas>
+
+                            </div>
+
+                        </div>
+
+                        <div class="col-md-6">
+
+                            <div style="height:350px">
+
+                                <canvas id="range_chart_{{ forloop.counter }}"></canvas>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    {% endif %}
+
+                {% endfor %}
+
+            </div>
+
+            {% endfor %}
+
+        </div>
+
+    </div>
+
+</div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+
+<script>
+
+Chart.register(ChartDataLabels);
+
+document.addEventListener(
+    "DOMContentLoaded",
+    function () {
+
+        {% for operator, charts in chart_data.items %}
+
+        // =====================================================
+        // XBAR CHART
+        // =====================================================
+
+        new Chart(
+            document.getElementById(
+                "xbar_chart_{{ forloop.counter }}"
+            ),
+            {
+
+                type: "line",
+
+                data: {
+
+                    labels: [
+                        {% for item in charts.xbar %}
+                        "{{ item.part }}",
+                        {% endfor %}
+                    ],
+
+                    datasets: [
+
+                        {
+                            label: "Average",
+
+                            data: [
+                                {% for item in charts.xbar %}
+                                {{ item.average }},
+                                {% endfor %}
+                            ],
+
+                            borderWidth: 2,
+                            tension: 0,
+                            pointRadius: 4,
+                            fill: false,
+
+                            datalabels: {
+                                display: false
+                            }
+                        },
+
+                        {
+                            label: "Mean",
+
+                            data: [
+                                {% for item in charts.xbar %}
+                                {{ charts.xbar_mean }},
+                                {% endfor %}
+                            ],
+
+                            borderDash: [5,5],
+                            borderWidth: 1,
+                            pointRadius: 0,
+
+                            datalabels: {
+
+                                display: function(context){
+
+                                    return context.dataIndex ===
+                                           context.dataset.data.length - 1;
+
+                                },
+
+                                anchor: "end",
+                                align: "top",
+
+                                formatter: function(value){
+
+                                    return "Mean: " +
+                                           value.toFixed(4);
+
+                                }
+                            }
+                        },
+
+                        {
+                            label: "Max",
+
+                            data: [
+                                {% for item in charts.xbar %}
+                                {{ charts.xbar_max }},
+                                {% endfor %}
+                            ],
+
+                            borderDash: [10,5],
+                            borderWidth: 1,
+                            pointRadius: 0,
+
+                            datalabels: {
+
+                                display: function(context){
+
+                                    return context.dataIndex ===
+                                           context.dataset.data.length - 1;
+
+                                },
+
+                                anchor: "end",
+                                align: "top",
+
+                                formatter: function(value){
+
+                                    return "Max: " +
+                                           value.toFixed(4);
+
+                                }
+                            }
+                        },
+
+                        {
+                            label: "Min",
+
+                            data: [
+                                {% for item in charts.xbar %}
+                                {{ charts.xbar_min }},
+                                {% endfor %}
+                            ],
+
+                            borderDash: [2,2],
+                            borderWidth: 1,
+                            pointRadius: 0,
+
+                            datalabels: {
+
+                                display: function(context){
+
+                                    return context.dataIndex ===
+                                           context.dataset.data.length - 1;
+
+                                },
+
+                                anchor: "end",
+                                align: "bottom",
+
+                                formatter: function(value){
+
+                                    return "Min: " +
+                                           value.toFixed(4);
+
+                                }
+                            }
+                        }
+
+                    ]
+                },
+
+                options: {
+
+                    responsive: true,
+                    maintainAspectRatio: false,
+
+                    plugins: {
+
+                        legend: {
+                            position: "top"
+                        },
+
+                        datalabels: {
+
+                            color: "#000",
+
+                            font: {
+                                size: 10,
+                                weight: "bold"
+                            }
+
+                        },
+
+                        title: {
+
+                            display: true,
+                            text: "{{ operator }} - X̄ Chart"
+
+                        }
+                    }
+                }
+            }
+        );
+
+        // =====================================================
+        // RANGE CHART
+        // =====================================================
+
+        new Chart(
+            document.getElementById(
+                "range_chart_{{ forloop.counter }}"
+            ),
+            {
+
+                type: "line",
+
+                data: {
+
+                    labels: [
+                        {% for item in charts.range %}
+                        "{{ item.part }}",
+                        {% endfor %}
+                    ],
+
+                    datasets: [
+
+                        {
+                            label: "Range",
+
+                            data: [
+                                {% for item in charts.range %}
+                                {{ item.range }},
+                                {% endfor %}
+                            ],
+
+                            borderWidth: 2,
+                            tension: 0,
+                            pointRadius: 4,
+
+                            datalabels: {
+                                display: false
+                            }
+                        },
+
+                        {
+                            label: "Mean",
+
+                            data: [
+                                {% for item in charts.range %}
+                                {{ charts.range_mean }},
+                                {% endfor %}
+                            ],
+
+                            borderDash: [5,5],
+                            borderWidth: 1,
+                            pointRadius: 0,
+
+                            datalabels: {
+
+                                display: function(context){
+
+                                    return context.dataIndex ===
+                                           context.dataset.data.length - 1;
+
+                                },
+
+                                anchor: "end",
+                                align: "top",
+
+                                formatter: function(value){
+
+                                    return "Mean: " +
+                                           value.toFixed(4);
+
+                                }
+                            }
+                        },
+
+                        {
+                            label: "Max",
+
+                            data: [
+                                {% for item in charts.range %}
+                                {{ charts.range_max }},
+                                {% endfor %}
+                            ],
+
+                            borderDash: [10,5],
+                            borderWidth: 1,
+                            pointRadius: 0,
+
+                            datalabels: {
+
+                                display: function(context){
+
+                                    return context.dataIndex ===
+                                           context.dataset.data.length - 1;
+
+                                },
+
+                                anchor: "end",
+                                align: "top",
+
+                                formatter: function(value){
+
+                                    return "Max: " +
+                                           value.toFixed(4);
+
+                                }
+                            }
+                        },
+
+                        {
+                            label: "Min",
+
+                            data: [
+                                {% for item in charts.range %}
+                                {{ charts.range_min }},
+                                {% endfor %}
+                            ],
+
+                            borderDash: [2,2],
+                            borderWidth: 1,
+                            pointRadius: 0,
+
+                            datalabels: {
+
+                                display: function(context){
+
+                                    return context.dataIndex ===
+                                           context.dataset.data.length - 1;
+
+                                },
+
+                                anchor: "end",
+                                align: "bottom",
+
+                                formatter: function(value){
+
+                                    return "Min: " +
+                                           value.toFixed(4);
+
+                                }
+                            }
+                        }
+
+                    ]
+                },
+
+                options: {
+
+                    responsive: true,
+                    maintainAspectRatio: false,
+
+                    plugins: {
+
+                        legend: {
+                            position: "top"
+                        },
+
+                        datalabels: {
+
+                            color: "#000",
+
+                            font: {
+                                size: 10,
+                                weight: "bold"
+                            }
+
+                        },
+
+                        title: {
+
+                            display: true,
+                            text: "{{ operator }} - R Chart"
+
+                        }
+                    }
+                }
+            }
+        );
+
+        {% endfor %}
+
+    }
+);
+
+</script>
+
+<script>
+
+document.addEventListener(
+    "keydown",
+    function(e){
+
+        if(e.key !== "Enter"){
+            return;
+        }
+
+        e.preventDefault();
+
+        const inputs = Array.from(
+            document.querySelectorAll(
+                "input[type='number']"
+            )
+        );
+
+        const index = inputs.indexOf(
+            document.activeElement
+        );
+
+        if(index >= 0 &&
+           index < inputs.length - 1){
+
+            inputs[index + 1].focus();
+            inputs[index + 1].select();
+        }
+    }
+);
+
+
+</script>
+
+{% endblock %}
